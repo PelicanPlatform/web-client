@@ -1,6 +1,6 @@
 {
   "name": "@pelicanplatform/web-client",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "Pelican web client",
   "main": "dist/index.js",
   "types": "src/index.d.ts",
