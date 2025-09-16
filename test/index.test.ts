@@ -1,5 +1,6 @@
-import Client, * as ClientFunctions from "../src/index"
-import { Metadata } from "../src/index.d";
+import {describe, expect, test} from '@jest/globals';
+
+import Client, * as ClientFunctions from "../src/Client"
 
 describe("Testing Client", () => {
 	let fetchMock: any = undefined;
@@ -51,7 +52,7 @@ describe("Testing Client", () => {
 
 		let client = new Client("https://example.com")
 
-		await expect(client.getFile("/test.txt"))
+		await expect(client.getObject("/test.txt"))
 				.rejects
 				.toThrow("Metadata does not contain director_endpoint")
 	})
@@ -88,7 +89,7 @@ describe("Testing Client", () => {
 
 		// Mock the download
 		let client = new Client("https://example.com")
-		await client.getFile(testFilePath)
+		await client.getObject(testFilePath)
 		expect(downloadUrlMock).toHaveBeenCalledWith("https://example.com" + testFilePath)
 	})
 
@@ -129,5 +130,12 @@ describe("Testing Client", () => {
 		expect(mLink.setAttribute.mock.calls[1]).toEqual(['download', '']);
 		expect(mLink.style.display).toBe('none');
 		expect(mLink.click).toBeCalled();
+	})
+})
+
+describe("Testing ClientFunctions", () => {
+	test("Download a Authenticated File", async () => {
+		const client = new Client("https://127.0.0.1:80")
+		await client.getObject("/mnt/test.txt")
 	})
 })

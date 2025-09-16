@@ -6,6 +6,7 @@ module.exports = {
   coverageReporters: [
     "json-summary"
   ],
+  globalSetup: "./test/setup.js",
   globals: {
     fetch: global.fetch,
   }

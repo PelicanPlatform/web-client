@@ -1,4 +1,4 @@
-# Pelican Web Client
+npm # Pelican Web Client
 
 ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FPelicanPlatform%2Fweb-client%2Fmain%2F.github%2Fcoverage%2Fcoverage-summary.json&query=%24.total.statements.pct&label=Code%20Coverage&color=%23cfe4ff) ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FPelicanPlatform%2Fweb-client%2Fmain%2F.github%2Ftests%2Ftest-summary.json&query=%24.numFailedTests&label=Failed%20Tests&color=%23abffae)
 
@@ -24,7 +24,7 @@ const filePath = "/example/file/path.txt" // Example file path
 const webClient = new Client(discoveryUrl);
 
 try {
-	webClient.getFile(filePath) // Downloads file to path.txt
+	webClient.getObject(filePath) // Downloads file to path.txt
 } catch (e) {
 	pass
 }

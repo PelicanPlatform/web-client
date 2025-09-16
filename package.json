@@ -3,7 +3,7 @@
   "version": "0.0.4",
   "description": "Pelican web client",
   "main": "dist/index.js",
-  "types": "src/index.d.ts",
+  "types": "src/types.ts",
   "scripts": {
     "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
     "build": "tsc",
@@ -16,7 +16,8 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/preset-typescript": "^7.23.3",
+    "@babel/preset-typescript": "^7.26.0",
+    "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.8",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",

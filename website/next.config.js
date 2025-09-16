@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	output: "export",
-	basePath: "/web-client",
+	basePath: process.env.NODE_ENV === 'production' ? "/web-client" : "",
 	images: {
 		loader: "custom",
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
