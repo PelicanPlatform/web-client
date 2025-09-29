@@ -13,7 +13,15 @@ export interface AuthorizationClient {
 
 export interface Token {
 	expiration: number;
-  accessToken: string;
+  accessToken: {
+		value: string;
+		iss: string;
+		sub: string;
+		aud: string;
+		exp: number;
+		iat: number;
+		scope: string;
+	}
 	refreshToken: string;
 }
 
@@ -57,7 +65,7 @@ export interface QueuedRequest {
 	federationHostname: string;
 	path: string;
 	namespace: string;
-	type: "GET" | "PUT"
+	type: "GET" | "PUT" | "PROPFIND";
 	createdAt: number;
 }
 
@@ -67,4 +75,23 @@ export interface TokenSuccessResponse {
 	expires_in: number;
 	scope: string;
 	id_token: string;
+}
+
+export interface ObjectList {
+	href: string;
+	getcontentlength: number;
+	getlastmodified: string;
+	resourcetype: string;
+	iscollection: boolean;
+	executable: string;
+	status: string;
+}
+
+export interface DynamicClientPayload {
+	redirect_uris: string[];
+	token_endpoint_auth_method: string;
+	grant_types: string[];
+	response_types: string[];
+	client_name: string;
+	scope: string;
 }
