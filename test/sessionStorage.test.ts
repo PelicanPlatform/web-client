@@ -51,4 +51,20 @@ describe("Testing sessionObject", () => {
 		expect(obj.b.c).toEqual([2, 3, 4]);
 		expect(sessionStorage.getItem("testKey")).toBe(JSON.stringify({a: 1, b: {c: [2, 3, 4]}}));
 	});
+
+	test("Delete a value from a list and check session storage is updated", () => {
+		sessionStorage.clear();
+		let obj = SessionStorage<any>("testKey", {a: 1, b: {c: [2, 3, 4]}});
+		obj.b.c.splice(1, 1);
+		expect(obj.b.c).toEqual([2, 4]);
+		expect(sessionStorage.getItem("testKey")).toBe(JSON.stringify({a: 1, b: {c: [2, 4]}}));
+	})
+
+	test("Delete a value from a nested object and check session storage is updated", () => {
+		sessionStorage.clear();
+		let obj = SessionStorage<any>("testKey", {a: 1, b: {c: {d: 2, e: 3}}});
+		delete obj.b.c.d;
+		expect(obj.b.c.d).toBeUndefined();
+		expect(sessionStorage.getItem("testKey")).toBe(JSON.stringify({a: 1, b: {c: {e: 3}}}));
+	})
 })

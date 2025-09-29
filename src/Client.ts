@@ -1,22 +1,23 @@
 
 import {
-	AuthorizationClient,
 	Federation,
-	FederationConfiguration, Namespace,
-	OidcConfiguration, QueuedRequest, ObjectList
+	Namespace,
+	QueuedRequest,
+	ObjectList,
+	TokenPermission
 } from "./types"
 import {
-	fetchOpenIDConfiguration,
-	fetchNamespaceMetadata,
+	fetchNamespace,
 	getObjectToken,
-	parsePelicanObjectUrl, fetchFederationConfiguration
+	parsePelicanObjectUrl,
+	fetchFederationConfiguration
 } from "./pelican";
 import {downloadResponse} from "./download";
 import {
 	generateCodeChallengeFromVerifier,
 	generateCodeVerifier,
 	getToken,
-	getAuthorizationCode, registerClient
+	getAuthorizationCode
 } from "./security";
 import {parseOauthState, parseWebDavXmlToJson} from "./util"
 import sessionObject, {ProxiedValue} from "./sessionObject";
@@ -24,12 +25,14 @@ import sessionObject, {ProxiedValue} from "./sessionObject";
 export default class Client {
 
 	federations: Record<string, Federation>
+	prefixToNamespace: Record<string, string>
 	requestQueue: ProxiedValue<QueuedRequest[]>
   codeVerifier: ProxiedValue<string>
 
 	constructor() {
 		// Set up and load/initialize session storage objects
 		this.federations = sessionObject<Record<string, Federation>>("federations")
+		this.prefixToNamespace = sessionObject<Record<string, string>>('prefixToNamespace')
 		this.requestQueue = sessionObject<ProxiedValue<QueuedRequest[]>>("requestQueue", {value: []})
 		this.codeVerifier = sessionObject<ProxiedValue<string>>("codeVerifier", {value: generateCodeVerifier()})
 
@@ -40,22 +43,18 @@ export default class Client {
 	/**
 	 * Get an object from a pelican federation
 	 * @param objectUrl pelican://<federation-hostname>/<object-path>
-	 * @param token Optional token to use for the request if resource is protected
 	 */
-	async get(objectUrl: string, token?: string) : Promise<void> {
+	async get(objectUrl: string) : Promise<void> {
 
 		const {federationHostname, objectPath} = parsePelicanObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
-
-		// Check for and use a token if we have one
-		if(token === undefined){
-			token = await getObjectToken(objectPath, federation)
-		}
+		const namespace = await this.getNamespace(objectPath, federation)
+		const token = await getObjectToken(objectPath, namespace)
 
 		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
 			headers: {
-				"Authorization": `Bearer ${token}`
+				"Authorization": `Bearer ${token?.value}`
 			}
 		})
 
@@ -70,20 +69,17 @@ export default class Client {
 		}
 	}
 
-	async list(federationPath: string, token?: string) : Promise<ObjectList[] | undefined> {
+	async list(federationPath: string) : Promise<ObjectList[] | undefined> {
 		const {federationHostname, objectPath} = parsePelicanObjectUrl(federationPath)
 		const federation = await this.getFederation(federationHostname)
-
-		// Check for and use a token if we have one
-		if(token === undefined){
-			token = await getObjectToken(objectPath, federation)
-		}
+		const namespace = await this.getNamespace(objectPath, federation)
+		const token = await getObjectToken(objectPath, namespace)
 
 		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
 			method: "PROPFIND",
 			headers: {
-				"Authorization": `Bearer ${token}`,
+				"Authorization": `Bearer ${token?.value}`,
 				"Depth": "4"
 			}
 		})
@@ -99,21 +95,18 @@ export default class Client {
 		}
 	}
 
-	async put(objectUrl: string, file: File, token?: string) : Promise<void> {
+	async put(objectUrl: string, file: File) : Promise<void> {
 
 		const { federationHostname, objectPath } = parsePelicanObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
+		const namespace = await this.getNamespace(objectPath, federation)
+		const token = await getObjectToken(objectPath, namespace)
 
-		// Check for and use a token if we have one
-		if (token === undefined) {
-			token = await getObjectToken(objectPath, federation)
-		}
-
-		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`) // TODO: ${federation.configuration.director_endpoint}
+		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
 			method: "PUT",
 			headers: {
-				"Authorization": `Bearer ${token}`
+				"Authorization": `Bearer ${token?.value}`
 			},
 			body: file
 		})
@@ -128,24 +121,21 @@ export default class Client {
 	}
 
 	/**
-	 *
+	 * Test if we have a valid token for the object URL
+	 * @param objectUrl
 	 */
+	async permissions(objectUrl: string): Promise<TokenPermission[]> {
+		const { federationHostname, objectPath } = parsePelicanObjectUrl(objectUrl)
+		const federation = await this.getFederation(federationHostname)
+		const namespace = await this.getNamespace(objectPath, federation)
+		const token = await getObjectToken(objectPath, namespace)
 
-	/**
-	 * Register a client via the dynamic client registration endpoint on the Origin's issuer
-	 * @param issuerConfiguration Issuer's OIDC configuration
-	 */
-	async registerAuthorizationClient(issuerConfiguration: OidcConfiguration): Promise<AuthorizationClient> {
-		const dynamicClientPayload = {
-			redirect_uris: [window.location.origin],
-			token_endpoint_auth_method: "client_secret_basic",
-			grant_types: ["refresh_token", "authorization_code"],
-			response_types: ["code"],
-			client_name: "Pelican Web Client",
-			scope: "openid storage.create:/ storage.modify:/ storage.read:/",
-		}
+		if(!token) return []
 
-		return await registerClient(issuerConfiguration.registration_endpoint, dynamicClientPayload)
+		return token.value
+			.split(' ')
+			.filter(scope => scope.startsWith('storage.'))
+			.map(scope => scope.split(':')[0] as TokenPermission)
 	}
 
 	/**
@@ -160,57 +150,15 @@ export default class Client {
 			const {federation: federationHostname, namespace: namespacePrefix} = parseOauthState(new URL(window.location.href))
 			const namespace = this.federations[federationHostname]?.namespaces[namespacePrefix]
 
-			// Check if we have a auth code to exchange for a token
+			// Check if we have an auth code to exchange for a token
 			const token = await getToken(namespace.oidcConfiguration, this.codeVerifier.value, namespace.clientId, namespace.clientSecret, authCode)
 
 			// Save the token to the namespace
-			this.federations[federationHostname].namespaces = {
-				...this.federations[federationHostname],
-				namespaces: {
-					...this.federations[federationHostname].namespaces,
-					[namespacePrefix]: {
-						...namespace,
-						token: token
-					}
-				}
-			}
+			this.federations[federationHostname].namespaces[namespacePrefix].token = token.accessToken
 		} catch {}
 
 		// Clean up the window
 		window.history.replaceState({}, document.title, window.location.pathname)
-	}
-
-	/**
-	 * Queries the director for a namespaces metadata and saves it to the session
-	 * @param objectPath
-	 * @param federationHostname
-	 */
-	async registerNamespace(objectPath: string, federationHostname: string) {
-
-		const federation = await this.getFederation(federationHostname)
-		const namespaceMetadata = await fetchNamespaceMetadata(objectPath, federation)
-		const issuerOidcConfiguration = await fetchOpenIDConfiguration(namespaceMetadata.issuer)
-		const authorizationClient = await this.registerAuthorizationClient(issuerOidcConfiguration)
-
-		// Check that the issuer has the expected data
-		if(issuerOidcConfiguration.authorization_endpoint === undefined){
-			throw new Error(`Issuer ${namespaceMetadata.issuer} does not have an authorization endpoint`)
-		}
-
-		// Save the namespace information
-		this.federations[federation.hostname] = {
-			...federation,
-			namespaces: {
-				...federation.namespaces,
-				[namespaceMetadata.namespace.namespace]: {
-					prefix: namespaceMetadata.namespace.namespace,
-					token: undefined,
-					clientId: authorizationClient.clientId,
-					clientSecret: authorizationClient.clientSecret,
-					oidcConfiguration: issuerOidcConfiguration
-				}
-			}
-		}
 	}
 
 	/**
@@ -224,56 +172,89 @@ export default class Client {
 		return this.federations[federationHostname]
 	}
 
-	async queueRequestAndStartFlow(objectPath: string, federation: Federation) : Promise<void> {
+	/**
+	 * Get a namespace's configuration from the federation and save it to session cache
+	 * @param objectPath
+	 * @param federation
+	 */
+	async getNamespace(objectPath: string, federation: Federation) : Promise<Namespace> {
 
-		// Get metadata from the director
-		const namespaceMetadata = await fetchNamespaceMetadata(objectPath, federation)
-		const issuerOidcConfiguration = await fetchOpenIDConfiguration(namespaceMetadata.issuer)
-		const authorizationClient = await this.registerAuthorizationClient(issuerOidcConfiguration)
+		const {objectPrefix} = parsePelicanObjectUrl(objectPath)
 
-		// Check that the issuer has the expected data
-		if(issuerOidcConfiguration.authorization_endpoint === undefined){
-			throw new Error(`Issuer ${namespaceMetadata.issuer} does not have an authorization endpoint`)
+		// Check if we have already cached the namespace for this prefix
+		if(this.prefixToNamespace?.[objectPrefix]){
+			const namespacePrefix = this.prefixToNamespace[objectPrefix]
+			if(federation.namespaces?.[namespacePrefix]){
+				return federation.namespaces[namespacePrefix]
+			}
 		}
 
+		// Fetch and save the namespace information
+		const requestNamespace = await fetchNamespace(objectPath, federation)
+		this.prefixToNamespace[objectPrefix] = requestNamespace.prefix
+		this.federations[federation.hostname].namespaces[requestNamespace.prefix] = requestNamespace
+		return requestNamespace
+	}
 
+	/**
+	 * Queue a request that needs authorization and start the authorization code flow
+	 * @param objectPath
+	 * @param federation
+	 */
+	async queueRequestAndStartFlow(objectPath: string, federation: Federation) : Promise<void> {
+
+		// Fetch and save the namespace information
+		const requestNamespace = await fetchNamespace(objectPath, federation)
+		this.federations[federation.hostname].namespaces[requestNamespace.prefix] = requestNamespace
 
 		// Queue the file request
-		this.requestQueue.value = [
-			...this.requestQueue.value,
-			{
-				objectUrl: `pelican://${federation.hostname}${objectPath}`,
-				federationHostname: federation.hostname,
-				path: objectPath,
-				namespace: namespaceMetadata.namespace.namespace,
-				type: "GET",
-				createdAt: new Date().getTime()
-			}
-		]
+		this.requestQueue.value.push({
+			objectUrl: `pelican://${federation.hostname}${objectPath}`,
+			federationHostname: federation.hostname,
+			path: objectPath,
+			namespace: requestNamespace.prefix,
+			type: "GET",
+			createdAt: new Date().getTime()
+		})
+
+		// Start the authorization code flow
+		await this.startAuthorizationCodeFlow(objectPath, requestNamespace, federation)
+	}
+
+	/**
+	 * Start the OIDC authorization code flow to get a token for a namespace
+	 * @param objectPath
+	 * @param namespace
+	 * @param federation
+	 */
+	async startAuthorizationCodeFlow(objectPath: string, namespace: Namespace, federation: Federation) : Promise<void> {
 
 		// Determine the token scopes
 		const scope = objectPath
 			.replace('pelican://', '')
 			.replace(federation.hostname, '')
-			.replace(namespaceMetadata.namespace.namespace, '')
+			.replace(namespace.prefix, '')
 			.trim()
 
 		// Build the Oauth URL
 		const codeChallenge = await generateCodeChallengeFromVerifier(this.codeVerifier.value)
-		const authorizationUrl = new URL(issuerOidcConfiguration.authorization_endpoint)
-		authorizationUrl.searchParams.append("client_id", authorizationClient.clientId)
+		const authorizationUrl = new URL(namespace.oidcConfiguration.authorization_endpoint)
+		authorizationUrl.searchParams.append("client_id", namespace.clientId)
 		authorizationUrl.searchParams.append("response_type", "code")
 		authorizationUrl.searchParams.append("scope", `storage.read:${scope} storage.create:${scope}`)
 		authorizationUrl.searchParams.append("redirect_uri", "http://localhost:3000")
 		authorizationUrl.searchParams.append("code_challenge", codeChallenge)
 		authorizationUrl.searchParams.append("code_challenge_method", "S256")
-		authorizationUrl.searchParams.append("state", `namespace:${namespaceMetadata.namespace.namespace};federation:${federation.hostname}`)
+		authorizationUrl.searchParams.append("state", `namespace:${namespace.prefix};federation:${federation.hostname}`)
 		authorizationUrl.searchParams.append("action", "")
 
 		// Begin the authorization code flow to get a token
 		window.location.href = authorizationUrl.toString()
 	}
 
+	/**
+	 * Process any queued requests that were waiting for a token
+	 */
 	async processQueuedObjectRequest() {
 		for(const req of this.requestQueue.value) {
 			switch (req.type) {

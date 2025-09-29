@@ -6,7 +6,7 @@ import {DirectorNamespaceMetadata, Federation} from "../types";
  * @param objectPath
  * @param federation
  */
-async function fetchNamespaceMetadata(objectPath: string, federation: Federation) : Promise<DirectorNamespaceMetadata> {
+async function fetchDirectorNamespaceMetadata(objectPath: string, federation: Federation) : Promise<DirectorNamespaceMetadata> {
 
 	// Construct the request URL asking to not be redirected to the object endpoint so we can read the metadata headers
 	const httpEndpoint = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
@@ -50,4 +50,4 @@ const transformNoRedirectResponseToPathMetadata = (response: Response) : Directo
 	}
 }
 
-export default fetchNamespaceMetadata;
+export default fetchDirectorNamespaceMetadata;

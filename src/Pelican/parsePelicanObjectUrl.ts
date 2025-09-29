@@ -2,7 +2,7 @@
  * Parse an object url and extract its federation hostname and object path
  * @param objectUrl URL in the form pelican://(federation_hostname)/(object_path)
  */
-function parsePelicanObjectUrl(objectUrl: string): {federationHostname: string, objectPath: string} {
+function parsePelicanObjectUrl(objectUrl: string): {federationHostname: string, objectPath: string, objectPrefix: string} {
 	const federationHostnameRegex = objectUrl.match(/pelican:\/\/([^\/]+).*/)
 	const objectPathRegex = objectUrl.match(/pelican:\/\/[^\/]+(.*)/)
 
@@ -11,9 +11,15 @@ function parsePelicanObjectUrl(objectUrl: string): {federationHostname: string, 
 		throw new Error(`Invalid pelican object url: ${objectUrl}`)
 	}
 
+	const objectPath = objectPathRegex[1]
+
+	// Pull out the directory path
+	const objectPrefix = objectPath.split('/').slice(0, -1).join('/')
+
 	return {
 		federationHostname: federationHostnameRegex[1],
-		objectPath: objectPathRegex[1]
+		objectPath,
+		objectPrefix
 	}
 }
 

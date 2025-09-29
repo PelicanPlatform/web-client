@@ -12,17 +12,13 @@ export interface AuthorizationClient {
 }
 
 export interface Token {
-	expiration: number;
-  accessToken: {
-		value: string;
-		iss: string;
-		sub: string;
-		aud: string;
-		exp: number;
-		iat: number;
-		scope: string;
-	}
-	refreshToken: string;
+	value: string;
+	iss: string;
+	sub: string;
+	aud: string;
+	exp: number;
+	iat: number;
+	scope: string;
 }
 
 export interface FederationConfiguration {
@@ -95,3 +91,5 @@ export interface DynamicClientPayload {
 	client_name: string;
 	scope: string;
 }
+
+export type TokenPermission = 'storage.read' | 'storage.create' | 'storage.modify'

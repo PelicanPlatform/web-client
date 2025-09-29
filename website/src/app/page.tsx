@@ -6,21 +6,15 @@ import { Button} from "@mui/material";
 import {Grid} from "@mui/material";
 import {useEffect, useState} from "react";
 import Client from "../../../src/Client";
-import { ObjectList } from "../../../src/types"
+import { ObjectList, TokenPermission } from "../../../src/types"
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
 
-interface FederationName {
-  label: string,
-  value: string
-}
-
-const filter = createFilterOptions<FederationName>();
-
 export default function Home() {
 
   let [objectPath, setObjectPath] = useState<string>("pelican://osg-htc.org/ospool/ap40/data/cannon.lock/protected.txt");
+	let [permissions, setPermissions] = useState<TokenPermission[] | undefined>(undefined);
   let [object, setObject] = useState<File | undefined>(undefined);
   let [objectPathError, setObjectPathError] = useState<string | undefined>(undefined);
   let [client, setClient] = useState<Client | undefined>(undefined);
@@ -31,6 +25,12 @@ export default function Home() {
     setClient(new Client());
   }, []);
 
+	// Check your file permissions for the entered object
+	useEffect(() => {
+		(async () => {
+			setPermissions(await client?.permissions(objectPath))
+		})()
+	}, [objectPath, client])
 
   const submit = async () => {
 
@@ -43,9 +43,9 @@ export default function Home() {
     if(!isValid) return;
 
     if(object){
-      await client.put(objectPath, object)
+      await client?.put(objectPath, object)
     } else {
-      await client.get(objectPath)
+      await client?.get(objectPath)
     }
 
 		setClient(new Client());
@@ -59,6 +59,9 @@ export default function Home() {
             <Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
               <Box pt={2}>
                 <TextField fullWidth onChange={e => {setObjectPath(e.target.value)}} value={objectPath} id="outlined-basic" label="Object Name" variant="outlined" />
+								<Typography variant={'subtitle2'}>
+									Namespace Permissions: {permissions ? permissions.join(", ") : "Unknown"}
+								</Typography>
                 <Box mt={2}>
                   <input
                       type="file"
