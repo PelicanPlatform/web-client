@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import {TextField, Typography, Autocomplete, createFilterOptions} from "@mui/material";
 import { Button} from "@mui/material";
 import {Grid} from "@mui/material";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import Client from "../../../src/Client";
 import { ObjectList, TokenPermission } from "../../../src/types"
 import Card from "@mui/material/Card";
@@ -47,10 +47,9 @@ export default function Home() {
     } else {
       await client?.get(objectPath)
     }
-
-		setClient(new Client());
   }
 
+	const federations = useMemo(() => client?.federations.value, [client?.federations.value]);
 
   return (
       <Box minHeight={"90vh"}>
@@ -84,7 +83,7 @@ export default function Home() {
                 <Button variant="contained" onClick={submit}>{object ? 'Upload' : 'Download'}</Button>
                 <Button onClick={() => {
                   if(client) {
-                    Object.keys(client.federations).forEach(k => delete client?.federations[k]);
+                    client.federations.value = {};
                   }
                 }}>Clear Federations</Button>
               </Box>
@@ -117,7 +116,7 @@ export default function Home() {
 							<Box overflow={'auto'}>
 								<pre>
 									<code>
-										{JSON.stringify(client?.federations, null, 2)}
+										{JSON.stringify(federations, null, 2)}
 									</code>
 								</pre>
 							</Box>

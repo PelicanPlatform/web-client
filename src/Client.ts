@@ -1,3 +1,4 @@
+'use client';
 
 import {
 	Federation,
@@ -6,6 +7,9 @@ import {
 	ObjectList,
 	TokenPermission
 } from "./types"
+import {
+	cloneDeep
+} from 'lodash-es';
 import {
 	fetchNamespace,
 	getObjectToken,
@@ -24,14 +28,14 @@ import sessionObject, {ProxiedValue} from "./sessionObject";
 
 export default class Client {
 
-	federations: Record<string, Federation>
+	federations: ProxiedValue<Record<string, Federation>>
 	prefixToNamespace: Record<string, string>
 	requestQueue: ProxiedValue<QueuedRequest[]>
   codeVerifier: ProxiedValue<string>
 
 	constructor() {
 		// Set up and load/initialize session storage objects
-		this.federations = sessionObject<Record<string, Federation>>("federations")
+		this.federations = sessionObject<ProxiedValue<Record<string, Federation>>>("federations", {value: {}})
 		this.prefixToNamespace = sessionObject<Record<string, string>>('prefixToNamespace')
 		this.requestQueue = sessionObject<ProxiedValue<QueuedRequest[]>>("requestQueue", {value: []})
 		this.codeVerifier = sessionObject<ProxiedValue<string>>("codeVerifier", {value: generateCodeVerifier()})
@@ -48,8 +52,8 @@ export default class Client {
 
 		const {federationHostname, objectPath} = parsePelicanObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
-		const namespace = await this.getNamespace(objectPath, federation)
-		const token = await getObjectToken(objectPath, namespace)
+		const namespace = await this.getNamespace(objectUrl, federation)
+		const token = await getObjectToken(namespace)
 
 		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
@@ -63,17 +67,17 @@ export default class Client {
 
 			// If we get a 403, queue this request call it after getting a token
 		} else if(response.status === 403 && !token){
-			await this.queueRequestAndStartFlow(objectPath, federation)
+			await this.queueRequestAndStartFlow(objectUrl, federation)
 		} else {
 			throw new Error(`Could not get object: ${response.status} ${response.statusText}`)
 		}
 	}
 
-	async list(federationPath: string) : Promise<ObjectList[] | undefined> {
-		const {federationHostname, objectPath} = parsePelicanObjectUrl(federationPath)
+	async list(collectionUrl: string) : Promise<ObjectList[] | undefined> {
+		const {federationHostname, objectPath} = parsePelicanObjectUrl(collectionUrl)
 		const federation = await this.getFederation(federationHostname)
-		const namespace = await this.getNamespace(objectPath, federation)
-		const token = await getObjectToken(objectPath, namespace)
+		const namespace = await this.getNamespace(collectionUrl, federation)
+		const token = await getObjectToken(namespace)
 
 		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
@@ -89,7 +93,7 @@ export default class Client {
 
 			// If we get a 403, queue this request call it after getting a token
 		} else if(response.status === 403){
-			await this.queueRequestAndStartFlow(objectPath, federation)
+			await this.queueRequestAndStartFlow(collectionUrl, federation)
 		} else {
 			throw new Error(`Could not list directory: ${response.status} ${response.statusText}`)
 		}
@@ -99,8 +103,8 @@ export default class Client {
 
 		const { federationHostname, objectPath } = parsePelicanObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
-		const namespace = await this.getNamespace(objectPath, federation)
-		const token = await getObjectToken(objectPath, namespace)
+		const namespace = await this.getNamespace(objectUrl, federation)
+		const token = await getObjectToken(namespace)
 
 		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
 		const response = await fetch(objectHttpUrl, {
@@ -114,7 +118,7 @@ export default class Client {
 		if (response.status === 200 || response.status === 201) {
 			return
 		} else if (response.status === 403) {
-			await this.queueRequestAndStartFlow(objectPath, federation)
+			await this.queueRequestAndStartFlow(objectUrl, federation)
 		} else {
 			throw new Error(`Could not upload object: ${response.status} ${response.statusText}`)
 		}
@@ -125,10 +129,10 @@ export default class Client {
 	 * @param objectUrl
 	 */
 	async permissions(objectUrl: string): Promise<TokenPermission[]> {
-		const { federationHostname, objectPath } = parsePelicanObjectUrl(objectUrl)
+		const { federationHostname } = parsePelicanObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
-		const namespace = await this.getNamespace(objectPath, federation)
-		const token = await getObjectToken(objectPath, namespace)
+		const namespace = await this.getNamespace(objectUrl, federation)
+		const token = await getObjectToken(namespace)
 
 		if(!token) return []
 
@@ -148,13 +152,15 @@ export default class Client {
 		try {
 			// Get the namespace and federation from the state parameter
 			const {federation: federationHostname, namespace: namespacePrefix} = parseOauthState(new URL(window.location.href))
-			const namespace = this.federations[federationHostname]?.namespaces[namespacePrefix]
+			const namespace = this.federations.value[federationHostname]?.namespaces[namespacePrefix]
 
 			// Check if we have an auth code to exchange for a token
 			const token = await getToken(namespace.oidcConfiguration, this.codeVerifier.value, namespace.clientId, namespace.clientSecret, authCode)
 
 			// Save the token to the namespace
-			this.federations[federationHostname].namespaces[namespacePrefix].token = token.accessToken
+			const federationsClone = cloneDeep(this.federations.value)
+			federationsClone[federationHostname].namespaces[namespacePrefix].token = token.accessToken
+			this.federations.value = federationsClone
 		} catch {}
 
 		// Clean up the window
@@ -166,20 +172,23 @@ export default class Client {
 	 * @param federationHostname
 	 */
 	async getFederation(federationHostname: string) : Promise<Federation> {
-		if(!this.federations?.[federationHostname]) {
-			this.federations[federationHostname] = await fetchFederationConfiguration(federationHostname)
+		if(!this.federations.value?.[federationHostname]) {
+			this.federations.value = {
+				...this.federations.value,
+				[federationHostname]: await fetchFederationConfiguration(federationHostname)
+			}
 		}
-		return this.federations[federationHostname]
+		return this.federations.value[federationHostname]
 	}
 
 	/**
 	 * Get a namespace's configuration from the federation and save it to session cache
-	 * @param objectPath
+	 * @param objectUrl
 	 * @param federation
 	 */
-	async getNamespace(objectPath: string, federation: Federation) : Promise<Namespace> {
+	async getNamespace(objectUrl: string, federation: Federation) : Promise<Namespace> {
 
-		const {objectPrefix} = parsePelicanObjectUrl(objectPath)
+		const {objectPrefix, objectPath} = parsePelicanObjectUrl(objectUrl)
 
 		// Check if we have already cached the namespace for this prefix
 		if(this.prefixToNamespace?.[objectPrefix]){
@@ -192,33 +201,37 @@ export default class Client {
 		// Fetch and save the namespace information
 		const requestNamespace = await fetchNamespace(objectPath, federation)
 		this.prefixToNamespace[objectPrefix] = requestNamespace.prefix
-		this.federations[federation.hostname].namespaces[requestNamespace.prefix] = requestNamespace
+		const federationsClone = cloneDeep(this.federations.value)
+		federationsClone[federation.hostname].namespaces[requestNamespace.prefix] = requestNamespace
+		this.federations.value = federationsClone
+
 		return requestNamespace
 	}
 
 	/**
 	 * Queue a request that needs authorization and start the authorization code flow
-	 * @param objectPath
+	 * @param objectUrl
 	 * @param federation
 	 */
-	async queueRequestAndStartFlow(objectPath: string, federation: Federation) : Promise<void> {
+	async queueRequestAndStartFlow(objectUrl: string, federation: Federation) : Promise<void> {
 
 		// Fetch and save the namespace information
-		const requestNamespace = await fetchNamespace(objectPath, federation)
-		this.federations[federation.hostname].namespaces[requestNamespace.prefix] = requestNamespace
+		const namespace = await this.getNamespace(objectUrl, federation)
+
+		const {objectPath} = parsePelicanObjectUrl(objectUrl)
 
 		// Queue the file request
 		this.requestQueue.value.push({
-			objectUrl: `pelican://${federation.hostname}${objectPath}`,
+			objectUrl,
 			federationHostname: federation.hostname,
 			path: objectPath,
-			namespace: requestNamespace.prefix,
+			namespace: namespace.prefix,
 			type: "GET",
 			createdAt: new Date().getTime()
 		})
 
 		// Start the authorization code flow
-		await this.startAuthorizationCodeFlow(objectPath, requestNamespace, federation)
+		await this.startAuthorizationCodeFlow(objectPath, namespace, federation)
 	}
 
 	/**

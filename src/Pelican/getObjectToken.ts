@@ -3,10 +3,9 @@ import {Namespace, Token} from "../types";
 /**
  * Get the best fit token for the given object path and federation or undefined if none are readily available
  *
- * @param objectPath Object path - pelican://<federation-hostname>/<object-path>
  * @param namespace Federation hosting the requested object
  */
-const getObjectToken = async (objectPath: string, namespace: Namespace) : Promise<Token | undefined> => {
+const getObjectToken = async (namespace: Namespace) : Promise<Token | undefined> => {
 
 	// Check if we have a token for this namespace and that it is not expired
 	if(namespaceTokenIsExpired(namespace)){
