@@ -16,15 +16,19 @@ import {
 	parsePelicanObjectUrl,
 	fetchFederationConfiguration
 } from "./pelican";
-import {downloadResponse} from "./download";
 import {
 	generateCodeChallengeFromVerifier,
 	generateCodeVerifier,
 	getToken,
 	getAuthorizationCode
 } from "./security";
-import {parseOauthState, parseWebDavXmlToJson} from "./util"
-import sessionObject, {ProxiedValue} from "./sessionObject";
+import {
+	parseOauthState,
+	parseWebDavXmlToJson,
+	sessionObject,
+	downloadResponse,
+	ProxiedValue
+} from "./util"
 
 export default class Client {
 

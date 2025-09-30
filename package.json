@@ -1,17 +1,29 @@
 {
   "name": "@pelicanplatform/web-client",
-  "version": "0.0.4",
+  "version": "1.0.0-alpha.1",
+  "homepage": "https://pelicanplatform.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PelicanPlatform/web-client.git"
+  },
   "description": "Pelican web client",
   "main": "dist/index.js",
   "types": "src/types.ts",
   "scripts": {
     "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
     "build": "tsc",
-    "publish": "npm publish --access public"
+    "prepublish": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "files": [
     "dist",
-    "src/index.d.ts"
+    "README.md",
+    "package.json"
   ],
   "author": "",
   "license": "Apache-2.0",

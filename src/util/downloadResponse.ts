@@ -1,15 +1,12 @@
 
-export function downloadResponse(response: Response) {
+function downloadResponse(response: Response) {
 	response.blob().then(blob => {
 		let url = window.URL.createObjectURL(blob)
 		downloadUrl(response.url?.split("/")?.at(-1)?.split("?")?.at(0) , url)
 	})
 }
 
-export function downloadUrl(objectName:string = "object", url: string) {
-
-	console.log(`Downloading ${objectName}`)
-
+function downloadUrl(objectName:string = "object", url: string) {
 	let a = document.createElement("a")
 	a.setAttribute('href', url)
 	a.setAttribute("download", objectName)
@@ -17,3 +14,5 @@ export function downloadUrl(objectName:string = "object", url: string) {
 	a.style.display = 'none';
 	a.click()
 }
+
+export default downloadResponse;
