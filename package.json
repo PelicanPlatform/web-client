@@ -1,6 +1,6 @@
 {
   "name": "@pelicanplatform/web-client",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.1",
   "homepage": "https://pelicanplatform.org",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     }
   },
   "files": [
-    "dist",
+    "dist/*",
     "README.md",
     "package.json"
   ],
