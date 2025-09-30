@@ -30,7 +30,7 @@ import {
 	ProxiedValue
 } from "./util"
 
-export default class Client {
+export class Client {
 
 	federations: ProxiedValue<Record<string, Federation>>
 	prefixToNamespace: Record<string, string>
@@ -288,3 +288,5 @@ export default class Client {
 		}
 	}
 }
+
+export default Client;

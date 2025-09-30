@@ -1,6 +1,6 @@
 {
   "name": "@pelicanplatform/web-client",
-  "version": "1.0.1",
+  "version": "1.0.9",
   "homepage": "https://pelicanplatform.org",
   "repository": {
     "type": "git",
@@ -8,7 +8,7 @@
   },
   "description": "Pelican web client",
   "main": "dist/index.js",
-  "types": "src/types.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
     "build": "tsc",
