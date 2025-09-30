@@ -147,6 +147,16 @@ export class Client {
 	}
 
 	/**
+	 * Parse an object URL for its federation and namespace
+	 */
+	async parseObjectUrl(objectUrl: string) : Promise<{federation: string, namespace: string}> {
+		const { federationHostname } = parsePelicanObjectUrl(objectUrl)
+		const federation = await this.getFederation(federationHostname)
+		const namespace = await this.getNamespace(objectUrl, federation)
+		return {federation: federation.hostname, namespace: namespace.prefix}
+	}
+
+	/**
 	 * If there is an authorization code in the URL, exchange it for a token and save it to the appropriate namespace
 	 */
 	async exchangeCodeForToken() {
