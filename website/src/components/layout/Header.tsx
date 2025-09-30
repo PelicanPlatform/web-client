@@ -1,11 +1,10 @@
 'use client'
 
-import ExportedImage from "next-image-export-optimizer";
+
 import githubMark from "../../../public/static/images/github-mark.png"
 import {useState, useEffect} from "react";
-import {Grid, Box, Container, Divider} from "@mui/material";
+import {Box} from "@mui/material";
 import styles from "../../app/page.module.css"
-import {Poppins} from "next/font/google";
 import Link from "next/link";
 
 import PelicanLogo from "../../../public/static/images/PelicanPlatformLogo_Icon.png"
@@ -35,7 +34,7 @@ export const Header = () => {
 			<Box display={"flex"}>
 				<Link href={"/"}>
 					<Box style={{display: "flex"}}>
-						<ExportedImage src={PelicanLogo} alt={"Pelican Logo"} height={36}/>
+						<img src={PelicanLogo.src} alt={"Pelican Logo"} height={36}/>
 						<Typography variant={"h5"} pl={1} my={"auto"}>Web Client Example</Typography>
 					</Box>
 				</Link>
@@ -43,8 +42,8 @@ export const Header = () => {
 
 			<div>
 				<a href={"https://github.com/PelicanPlatform"}>
-					<ExportedImage
-							src={githubMark}
+					<img
+							src={githubMark.src}
 							alt={"Github Mark"}
 							height={32}
 					/>
