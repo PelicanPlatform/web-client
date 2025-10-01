@@ -1,5 +1,7 @@
 'use client';
 
+import { makeAutoObservable } from "mobx"
+
 import {
 	Federation,
 	Namespace,
@@ -13,8 +15,12 @@ import {
 import {
 	fetchNamespace,
 	getObjectToken,
-	parsePelicanObjectUrl,
-	fetchFederationConfiguration
+	parseObjectUrl,
+	fetchFederation,
+	get,
+	list,
+	put,
+	UnauthenticatedError
 } from "./pelican";
 import {
 	generateCodeChallengeFromVerifier,
@@ -29,6 +35,7 @@ import {
 	downloadResponse,
 	ProxiedValue
 } from "./util"
+import startAuthorizationCodeFlow from "./security/startAuthorizationCodeFlow";
 
 export class Client {
 
@@ -46,6 +53,9 @@ export class Client {
 
 		// If there is a code in the URL, exchange it for a token
 		this.exchangeCodeForToken()
+
+		// For React
+		makeAutoObservable(this)
 	}
 
 	/**
@@ -54,77 +64,53 @@ export class Client {
 	 */
 	async get(objectUrl: string) : Promise<void> {
 
-		const {federationHostname, objectPath} = parsePelicanObjectUrl(objectUrl)
+		const {federationHostname} = parseObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
 		const namespace = await this.getNamespace(objectUrl, federation)
-		const token = await getObjectToken(namespace)
 
-		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
-		const response = await fetch(objectHttpUrl, {
-			headers: {
-				"Authorization": `Bearer ${token?.value}`
-			}
-		})
-
-		if(response.status === 200){
+		try {
+			const response = await get(objectUrl, federation, namespace)
 			downloadResponse(response)
-
-			// If we get a 403, queue this request call it after getting a token
-		} else if(response.status === 403 && !token){
-			await this.queueRequestAndStartFlow(objectUrl, federation)
-		} else {
-			throw new Error(`Could not get object: ${response.status} ${response.statusText}`)
+		} catch (error) {
+			if (error instanceof UnauthenticatedError) {
+				await this.queueRequestAndStartFlow(objectUrl, federation)
+			} else {
+				throw error
+			}
 		}
 	}
 
 	async list(collectionUrl: string) : Promise<ObjectList[] | undefined> {
-		const {federationHostname, objectPath} = parsePelicanObjectUrl(collectionUrl)
+
+		const {federationHostname} = parseObjectUrl(collectionUrl)
 		const federation = await this.getFederation(federationHostname)
 		const namespace = await this.getNamespace(collectionUrl, federation)
-		const token = await getObjectToken(namespace)
 
-		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
-		const response = await fetch(objectHttpUrl, {
-			method: "PROPFIND",
-			headers: {
-				"Authorization": `Bearer ${token?.value}`,
-				"Depth": "4"
+		try {
+			return list(collectionUrl, federation, namespace)
+		} catch (error) {
+			if (error instanceof UnauthenticatedError) {
+				await this.queueRequestAndStartFlow(collectionUrl, federation)
+			} else {
+				throw error
 			}
-		})
-
-		if(response.status === 207){
-			return parseWebDavXmlToJson(await response.text())
-
-			// If we get a 403, queue this request call it after getting a token
-		} else if(response.status === 403){
-			await this.queueRequestAndStartFlow(collectionUrl, federation)
-		} else {
-			throw new Error(`Could not list directory: ${response.status} ${response.statusText}`)
 		}
 	}
 
 	async put(objectUrl: string, file: File) : Promise<void> {
 
-		const { federationHostname, objectPath } = parsePelicanObjectUrl(objectUrl)
+		const { federationHostname, objectPath } = parseObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
 		const namespace = await this.getNamespace(objectUrl, federation)
-		const token = await getObjectToken(namespace)
 
-		const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`)
-		const response = await fetch(objectHttpUrl, {
-			method: "PUT",
-			headers: {
-				"Authorization": `Bearer ${token?.value}`
-			},
-			body: file
-		})
-
-		if (response.status === 200 || response.status === 201) {
-			return
-		} else if (response.status === 403) {
-			await this.queueRequestAndStartFlow(objectUrl, federation)
-		} else {
-			throw new Error(`Could not upload object: ${response.status} ${response.statusText}`)
+		try {
+			await put(objectUrl, file, federation, namespace)
+		} catch (error) {
+			if (error instanceof UnauthenticatedError) {
+				await this.queueRequestAndStartFlow(objectUrl, federation)
+			} else {
+				throw error
+			}
 		}
 	}
 
@@ -133,7 +119,7 @@ export class Client {
 	 * @param objectUrl
 	 */
 	async permissions(objectUrl: string): Promise<TokenPermission[]> {
-		const { federationHostname } = parsePelicanObjectUrl(objectUrl)
+		const { federationHostname } = parseObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
 		const namespace = await this.getNamespace(objectUrl, federation)
 		const token = await getObjectToken(namespace)
@@ -150,7 +136,7 @@ export class Client {
 	 * Parse an object URL for its federation and namespace
 	 */
 	async parseObjectUrl(objectUrl: string) : Promise<{federation: string, namespace: string}> {
-		const { federationHostname } = parsePelicanObjectUrl(objectUrl)
+		const { federationHostname } = parseObjectUrl(objectUrl)
 		const federation = await this.getFederation(federationHostname)
 		const namespace = await this.getNamespace(objectUrl, federation)
 		return {federation: federation.hostname, namespace: namespace.prefix}
@@ -161,7 +147,7 @@ export class Client {
 	 */
 	async exchangeCodeForToken() {
 		const authCode = getAuthorizationCode();
-		if(authCode === null) return;
+		if(authCode.code === null) return;
 
 		try {
 			// Get the namespace and federation from the state parameter
@@ -169,7 +155,7 @@ export class Client {
 			const namespace = this.federations.value[federationHostname]?.namespaces[namespacePrefix]
 
 			// Check if we have an auth code to exchange for a token
-			const token = await getToken(namespace.oidcConfiguration, this.codeVerifier.value, namespace.clientId, namespace.clientSecret, authCode)
+			const token = await getToken(namespace.oidcConfiguration, this.codeVerifier.value, namespace.clientId, namespace.clientSecret, authCode.code)
 
 			// Save the token to the namespace
 			const federationsClone = cloneDeep(this.federations.value)
@@ -189,7 +175,7 @@ export class Client {
 		if(!this.federations.value?.[federationHostname]) {
 			this.federations.value = {
 				...this.federations.value,
-				[federationHostname]: await fetchFederationConfiguration(federationHostname)
+				[federationHostname]: await fetchFederation(federationHostname)
 			}
 		}
 		return this.federations.value[federationHostname]
@@ -202,7 +188,7 @@ export class Client {
 	 */
 	async getNamespace(objectUrl: string, federation: Federation) : Promise<Namespace> {
 
-		const {objectPrefix, objectPath} = parsePelicanObjectUrl(objectUrl)
+		const {objectPrefix, objectPath} = parseObjectUrl(objectUrl)
 
 		// Check if we have already cached the namespace for this prefix
 		if(this.prefixToNamespace?.[objectPrefix]){
@@ -232,7 +218,7 @@ export class Client {
 		// Fetch and save the namespace information
 		const namespace = await this.getNamespace(objectUrl, federation)
 
-		const {objectPath} = parsePelicanObjectUrl(objectUrl)
+		const {objectPath} = parseObjectUrl(objectUrl)
 
 		// Queue the file request
 		this.requestQueue.value.push({
@@ -245,38 +231,7 @@ export class Client {
 		})
 
 		// Start the authorization code flow
-		await this.startAuthorizationCodeFlow(objectPath, namespace, federation)
-	}
-
-	/**
-	 * Start the OIDC authorization code flow to get a token for a namespace
-	 * @param objectPath
-	 * @param namespace
-	 * @param federation
-	 */
-	async startAuthorizationCodeFlow(objectPath: string, namespace: Namespace, federation: Federation) : Promise<void> {
-
-		// Determine the token scopes
-		const scope = objectPath
-			.replace('pelican://', '')
-			.replace(federation.hostname, '')
-			.replace(namespace.prefix, '')
-			.trim()
-
-		// Build the Oauth URL
-		const codeChallenge = await generateCodeChallengeFromVerifier(this.codeVerifier.value)
-		const authorizationUrl = new URL(namespace.oidcConfiguration.authorization_endpoint)
-		authorizationUrl.searchParams.append("client_id", namespace.clientId)
-		authorizationUrl.searchParams.append("response_type", "code")
-		authorizationUrl.searchParams.append("scope", `storage.read:${scope} storage.create:${scope}`)
-		authorizationUrl.searchParams.append("redirect_uri", "http://localhost:3000")
-		authorizationUrl.searchParams.append("code_challenge", codeChallenge)
-		authorizationUrl.searchParams.append("code_challenge_method", "S256")
-		authorizationUrl.searchParams.append("state", `namespace:${namespace.prefix};federation:${federation.hostname}`)
-		authorizationUrl.searchParams.append("action", "")
-
-		// Begin the authorization code flow to get a token
-		window.location.href = authorizationUrl.toString()
+		await startAuthorizationCodeFlow(this.codeVerifier.value, namespace, federation)
 	}
 
 	/**

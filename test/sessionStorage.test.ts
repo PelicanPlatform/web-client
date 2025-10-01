@@ -1,6 +1,6 @@
 import {describe, expect, test} from '@jest/globals';
 
-import SessionStorage from '../src/sessionObject';
+import SessionStorage from '../src/util/sessionObject';
 
 describe("Testing sessionObject", () => {
 	test("Create a session backed object", () => {
@@ -66,5 +66,13 @@ describe("Testing sessionObject", () => {
 		delete obj.b.c.d;
 		expect(obj.b.c.d).toBeUndefined();
 		expect(sessionStorage.getItem("testKey")).toBe(JSON.stringify({a: 1, b: {c: {e: 3}}}));
+	})
+
+	test("Create a proxied object then set its value to a empty object", () => {
+		sessionStorage.clear();
+		let obj = SessionStorage<any>("testKey", {value: {a: 1, b: {c: 2}}});
+		obj.value = {};
+		expect(obj.value).toEqual({});
+		expect(sessionStorage.getItem("testKey")).toBe(JSON.stringify({value: {}}));
 	})
 })

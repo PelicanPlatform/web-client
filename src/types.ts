@@ -1,3 +1,7 @@
+export interface ObjectPrefixToNamespaceKeyMap {
+	[prefix: string]: {federation: string, namespace: string};
+}
+
 export interface Namespace {
 	prefix: string;
 	token?: Token;

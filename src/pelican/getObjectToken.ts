@@ -17,7 +17,7 @@ const getObjectToken = async (namespace: Namespace) : Promise<Token | undefined>
 }
 
 function namespaceTokenIsExpired(namespace: Namespace) {
-	if(!namespace.token){
+	if(!namespace?.token){
 		return true
 	}
 	const now = Math.floor(Date.now() / 1000)
