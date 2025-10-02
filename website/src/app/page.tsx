@@ -124,20 +124,6 @@ function Page() {
 									}}
 								/>
 							</Box>
-							<Button onClick={async () => {
-								try {
-									const {federationHostname, objectPrefix} = parseObjectUrl(objectUrl)
-									setObjectList(await list(objectUrl, federations[federationHostname], federations[federationHostname]?.namespaces[prefixToNamespace[objectPrefix].namespace]) )
-								} catch (e) {
-									if(e instanceof UnauthenticatedError) {
-
-									}
-								}
-							}}>List</Button>
-						</Box>
-						<Box pt={1} mx={"auto"}>
-							{/*<Button variant="contained" onClick={submit}>{object ? 'Upload' : 'Download'}</Button>*/}
-							<Button onClick={() => setFederations({})}>Clear Federations</Button>
 						</Box>
 					</Box>
 					<Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
@@ -164,7 +150,14 @@ function Page() {
 						</Box>
 					</Box>
 				</Grid>
-				<Grid size={{xl: 7, md: 8, xs: 11}} display={"flex"}>
+				<Grid size={{xl: 7, md: 8, xs: 11}} display={"flex"} flexDirection={"column"}>
+					<Box pt={1} mx={"auto"}>
+						{/*<Button variant="contained" onClick={submit}>{object ? 'Upload' : 'Download'}</Button>*/}
+						<Button onClick={() => {
+							setFederations({})
+							setPrefixToNamespace({})
+						}}>Clear Federations</Button>
+					</Box>
 					<Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
 						<Typography variant="h6" gutterBottom>Client Federations ( for debug only )</Typography>
 						<Box overflow={'auto'}>
@@ -241,15 +234,22 @@ const onObjectUrlChange = async (objectUrl: string, federations: Record<string, 
 
 	// Check permissions
 	try {
-		const perms = await permissions(objectUrl, federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])
-		setPermissions(perms)
+		if(federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]){
+			const perms = await permissions(objectUrl, federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])
+			setPermissions(perms)
+		}
 	} catch {}
 
 
 	// Try to list
 	try {
-		setObjectList(await list(objectUrl, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
-		setLoginRequired(false)
+		try {
+			setObjectList(await list(`pelican://${objectPrefix}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+			setLoginRequired(false)
+		} catch (e) {
+			setObjectList(await list(`pelican://${objectPath}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+			setLoginRequired(false)
+		}
 	} catch (e) {
 		if(e instanceof UnauthenticatedError) {
 			setLoginRequired(true)
