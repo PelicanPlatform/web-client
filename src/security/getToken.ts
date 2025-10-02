@@ -7,7 +7,7 @@ async function getToken(oidcConfiguration: OidcConfiguration, codeVerifier: stri
 	const params = new URLSearchParams();
 	params.append("grant_type", "authorization_code");
 	params.append("code", authCode);
-	params.append("redirect_uri", "http://localhost:3000");
+	params.append("redirect_uri", window.location.href);
 	params.append("code_verifier", codeVerifier);
 	params.append("client_id", clientId);
 	params.append("client_secret", clientSecret);
