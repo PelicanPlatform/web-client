@@ -246,7 +246,7 @@ const onObjectUrlChange = async (objectUrl: string, federations: Record<string, 
 			setObjectList(await list(`pelican://${objectPrefix}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
 			setLoginRequired(false)
 		} catch (e) {
-			setObjectList(await list(`pelican://${objectPath}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+			setObjectList(await list(`pelican:/${objectPath}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
 			setLoginRequired(false)
 		}
 	} catch (e) {
