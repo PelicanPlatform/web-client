@@ -1,6 +1,6 @@
 import { getObjectToken } from "./index";
 import {Namespace, TokenPermission} from "../types";
-import {parsePelicanObjectUrl} from "../../dist/pelican";
+import {parseObjectUrl} from "../pelican";
 
 /**
  * Reports the permissions associated with the objectUrl prefix
@@ -14,7 +14,7 @@ import {parsePelicanObjectUrl} from "../../dist/pelican";
  */
 const permissions = async (objectUrl: string, namespace: Namespace): Promise<TokenPermission[]> => {
 
-	const {federationHostname, objectPrefix} = parsePelicanObjectUrl(objectUrl)
+	const {federationHostname, objectPrefix} = parseObjectUrl(objectUrl)
 	const token = await getObjectToken(namespace)
 
 	// Pull out the federation and namespace paths that the token will be relative to
