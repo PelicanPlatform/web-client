@@ -81,7 +81,7 @@ function Page() {
 
 	// UI State
 	let [loginRequired, setLoginRequired] = useState<boolean>(false);
-	let [objectUrl, _setObjectUrl] = useState<string>("pelican://osg-htc.org/ncar");
+	let [objectUrl, _setObjectUrl] = useSessionStorage<string>('objectUrl', "pelican://osg-htc.org/ncar");
 	let [permissions, setPermissions] = useState<TokenPermission[] | undefined>(undefined);
 	let [object, setObject] = useState<File | undefined>(undefined);
 	let [objectList, setObjectList] = useState<ObjectList[] | undefined>([]);
