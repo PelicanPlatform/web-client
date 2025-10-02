@@ -9,7 +9,7 @@ import {AuthorizationClient, OidcConfiguration} from "../types";
  */
 const fetchDynamicClient = async (issuerConfiguration: OidcConfiguration): Promise<AuthorizationClient> => {
 	const dynamicClientPayload = {
-		redirect_uris: [window.location.origin],
+		redirect_uris: [window.location.href],
 		token_endpoint_auth_method: "client_secret_basic",
 		grant_types: ["refresh_token", "authorization_code"],
 		response_types: ["code"],
