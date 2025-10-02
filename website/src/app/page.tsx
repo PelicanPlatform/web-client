@@ -8,8 +8,9 @@ import {useCallback, useEffect, useMemo, useState} from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
+import LinearProgress from "@mui/material/LinearProgress";
 import { useSessionStorage } from "usehooks-ts";
-import {Lock} from "@mui/icons-material";
+import {MenuOpen, Download, Lock} from "@mui/icons-material";
 
 import {
 	ObjectList,
@@ -28,7 +29,8 @@ import {
 	get,
 	put,
 	permissions
-} from "@pelicanplatform/web-client";
+} from "../../../src/index";
+import {downloadResponse} from "../../../src/util";
 
 function Page() {
 
@@ -79,10 +81,20 @@ function Page() {
 
 	// UI State
 	let [loginRequired, setLoginRequired] = useState<boolean>(false);
-	let [objectUrl, setObjectUrl] = useState<string>("pelican://osg-htc.org/ncar");
+	let [objectUrl, _setObjectUrl] = useState<string>("pelican://osg-htc.org/ncar");
 	let [permissions, setPermissions] = useState<TokenPermission[] | undefined>(undefined);
 	let [object, setObject] = useState<File | undefined>(undefined);
 	let [objectList, setObjectList] = useState<ObjectList[] | undefined>([]);
+	let [loading, setLoading] = useState<boolean>(false);
+
+	let {federationHostname, objectPrefix, objectPath} = useMemo(() => parseObjectUrl(objectUrl), [objectUrl])
+
+	const setObjectUrl = useCallback(async (url: string) => {
+		setLoading(true);
+		_setObjectUrl(url)
+		await onObjectUrlChange(url, federations, setFederations, prefixToNamespace, setPrefixToNamespace, setPermissions, setLoginRequired, setObjectList)
+		setLoading(false)
+	}, [federations, prefixToNamespace])
 
 	return (
 		<Box minHeight={"90vh"}>
@@ -90,25 +102,29 @@ function Page() {
 				<Grid size={{xl: 4, md: 8, xs: 11}} display={"flex"} flexDirection={"column"}>
 					<Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
 						<Box pt={2}>
-							<TextField fullWidth onChange={async (e) => {
-								setObjectUrl(e.target.value)
-								await onObjectUrlChange(e.target.value, federations, setFederations, prefixToNamespace, setPrefixToNamespace, setPermissions, setLoginRequired, setObjectList)
-							}} value={objectUrl} id="outlined-basic" label="Object Name" variant="outlined"/>
-							{loginRequired && codeVerifier && (
-								<IconButton
-									onClick={async () => {
-										const {federationHostname, objectPrefix} = parseObjectUrl(objectUrl)
+							<Box display={'flex'} flexDirection={'column'}>
+								<Box display={'flex'} alignItems={'center'}>
+									<TextField fullWidth onChange={async (e) => {
+										await setObjectUrl(e.target.value)
+									}} value={objectUrl} id="outlined-basic" label="Object Name" variant="outlined"/>
+									{loginRequired && codeVerifier && (
+										<IconButton
+											onClick={async () => {
+												const {federationHostname, objectPrefix} = parseObjectUrl(objectUrl)
 
-										const federation = federations[federationHostname]
-										const namespaceKey = prefixToNamespace[objectPrefix]
-										const namespace = federation.namespaces[namespaceKey.namespace]
+												const federation = federations[federationHostname]
+												const namespaceKey = prefixToNamespace[objectPrefix]
+												const namespace = federation.namespaces[namespaceKey.namespace]
 
-										startAuthorizationCodeFlow(codeVerifier, namespace, federation)
-									}}
-								>
-									<Lock/>
-								</IconButton>
-							)}
+												startAuthorizationCodeFlow(codeVerifier, namespace, federation)
+											}}
+										>
+											<Lock/>
+										</IconButton>
+									)}
+								</Box>
+								{loading && <LinearProgress />}
+							</Box>
 							<Typography variant={'subtitle2'}>
 								Namespace Permissions: {permissions ? permissions.join(", ") : "Unknown"}
 							</Typography>
@@ -133,7 +149,27 @@ function Page() {
 								objectList?.map((obj, index) => (
 									<Card key={index} sx={{mb: 2}} variant="outlined">
 										<CardContent>
-											<Typography variant="h6" gutterBottom>{obj.href}</Typography>
+											<Box display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
+												<Typography variant="h6" gutterBottom>{obj.href}</Typography>
+												{ obj.iscollection &&
+														<Button endIcon={<MenuOpen/>} onClick={() => setObjectUrl(`pelican://${federationHostname}${obj.href}/`)}>
+															Explore
+														</Button>
+												}
+												{ !obj.iscollection &&
+														<Button
+																endIcon={<Download/>}
+																onClick={async () => {
+																	try {
+																		downloadResponse(await get(`pelican://${federationHostname}${obj.href}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+																	} catch{}
+																}}
+														>
+															Download
+														</Button>
+												}
+											</Box>
+
 											<Divider sx={{my: 1}}/>
 											<Typography
 												variant="body2"><strong>Type:</strong> {obj.resourcetype}{obj.iscollection ? " (Collection)" : ""}
@@ -230,23 +266,13 @@ const onObjectUrlChange = async (objectUrl: string, federations: Record<string, 
 		}
 	} catch {}
 
-
-	// Check permissions
-	try {
-		if(federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]){
-			const perms = await permissions(objectUrl, federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])
-			setPermissions(perms)
-		}
-	} catch {}
-
-
 	// Try to list
 	try {
 		try {
-			setObjectList(await list(`pelican://${objectPrefix}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+			setObjectList((await list(`pelican://${objectPrefix}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])).reverse())
 			setLoginRequired(false)
 		} catch (e) {
-			setObjectList(await list(`pelican://${federationHostname}${objectPath}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]))
+			setObjectList((await list(`pelican://${federationHostname}${objectPath}`, federations[federationHostname], federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])).reverse())
 			setLoginRequired(false)
 		}
 	} catch (e) {
@@ -255,6 +281,14 @@ const onObjectUrlChange = async (objectUrl: string, federations: Record<string, 
 			setObjectList([])
 		}
 	}
+
+	// Check permissions
+	try {
+		if(federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]){
+			const perms = await permissions(objectUrl, federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace])
+			setPermissions(perms)
+		}
+	} catch {}
 }
 
 export default Page;
