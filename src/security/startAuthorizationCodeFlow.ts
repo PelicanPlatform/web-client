@@ -15,7 +15,7 @@ const startAuthorizationCodeFlow = async (codeVerifier: string, namespace: Names
 	authorizationUrl.searchParams.append("client_id", namespace.clientId)
 	authorizationUrl.searchParams.append("response_type", "code")
 	authorizationUrl.searchParams.append("scope", `storage.read:/cannon.lock storage.create:/cannon.lock`) // TODO: Don't hardcode scopes
-	authorizationUrl.searchParams.append("redirect_uri", "http://localhost:3000")
+	authorizationUrl.searchParams.append("redirect_uri", window.location.href)
 	authorizationUrl.searchParams.append("code_challenge", codeChallenge)
 	authorizationUrl.searchParams.append("code_challenge_method", "S256")
 	authorizationUrl.searchParams.append("state", `namespace:${namespace.prefix};federation:${federation.hostname}`)
