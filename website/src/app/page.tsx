@@ -16,10 +16,11 @@ import {
 	TokenPermission,
 	Federation,
 	ObjectPrefixToNamespaceKeyMap,
-	UnauthenticatedError
-} from "../../../src/index"
-import {generateCodeVerifier, getAuthorizationCode, getToken} from "../../../src/security";
-import {
+	UnauthenticatedError,
+	generateCodeVerifier,
+	getAuthorizationCode,
+	getToken,
+	startAuthorizationCodeFlow,
 	parseObjectUrl,
 	fetchFederation,
 	fetchNamespace,
@@ -27,9 +28,7 @@ import {
 	get,
 	put,
 	permissions
-} from "../../../src/index";
-import startAuthorizationCodeFlow from "../../../src/security/startAuthorizationCodeFlow";
-
+} from "@pelicanplatform/web-client";
 
 function Page() {
 
