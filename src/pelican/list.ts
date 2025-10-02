@@ -14,8 +14,7 @@ const list = async (collectionUrl: string, federation: Federation, namespace?: N
 	const response = await fetch(objectHttpUrl, {
 		method: "PROPFIND",
 		headers: {
-			"Authorization": `Bearer ${token?.value}`,
-			"Depth": "4"
+			"Authorization": `Bearer ${token?.value}`
 		}
 	})
 
