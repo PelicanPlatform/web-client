@@ -1,7 +1,5 @@
 'use client';
 
-import { makeAutoObservable } from "mobx"
-
 import {
 	Federation,
 	Namespace,
@@ -53,9 +51,6 @@ export class Client {
 
 		// If there is a code in the URL, exchange it for a token
 		this.exchangeCodeForToken()
-
-		// For React
-		makeAutoObservable(this)
 	}
 
 	/**
