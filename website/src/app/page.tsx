@@ -1,7 +1,18 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { Box } from "@mui/material";
+
+import PelicanWebClient from "@/components/client/PelicanWebClient";
+import { useSessionStorage } from "usehooks-ts";
 
 function Page() {
-    redirect("/v1");
+    const [objectUrl] = useSessionStorage<string>("pelican-object-url", "pelican://osg-htc.org/ncar/");
+
+    return (
+        <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
+            <PelicanWebClient startingUrl={objectUrl} />
+        </Box>
+    );
 }
 
 export default Page;

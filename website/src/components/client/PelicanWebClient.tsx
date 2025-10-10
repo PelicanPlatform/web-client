@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSessionStorage } from "usehooks-ts";
 
@@ -29,13 +29,13 @@ import ClientMetadata from "./ClientMetadata";
 interface PelicanWebClientProps {
     /** The initial object URL to load */
     startingUrl?: string;
-    /** Whether to enable authentication features */
-    authentication?: boolean;
-    /** Whether to enable read-only mode (disables uploading and deleting) */
-    readonly?: boolean;
+    /** Whether to enable authentication/upload/metadata features */
+    compact?: boolean;
 }
 
-function PelicanWebClient({ startingUrl = "", authentication = true, readonly = false }: PelicanWebClientProps = {}) {
+function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) {
+    const [objectUrl, setObjectUrl] = useState<string>(startingUrl ?? "");
+
     // Pelican client state
     const [federations, setFederations] = useSessionStorage<Record<string, Federation>>(
         "pelican-web-client-federations",
@@ -59,7 +59,7 @@ function PelicanWebClient({ startingUrl = "", authentication = true, readonly = 
         if (!codeVerifier) {
             setCodeVerifier(generateCodeVerifier());
         }
-    }, [codeVerifier]);
+    }, [codeVerifier, setCodeVerifier]);
 
     // Run list on load
     useEffect(() => {
@@ -75,7 +75,7 @@ function PelicanWebClient({ startingUrl = "", authentication = true, readonly = 
                 setObjectList
             );
         })();
-    }, []);
+    }, [federations, objectUrl, prefixToNamespace, setFederations, setPrefixToNamespace]);
 
     // On load, check if there is a code in the URL to exchange for a token
     useEffect(() => {
@@ -107,11 +107,10 @@ function PelicanWebClient({ startingUrl = "", authentication = true, readonly = 
                 });
             }
         })();
-    }, [federations, codeVerifier]);
+    }, [federations, setFederations, codeVerifier]);
 
     // UI State
     const [loginRequired, setLoginRequired] = useState<boolean>(false);
-    const [objectUrl, setObjectUrl] = useState<string>(startingUrl ?? "");
     const [permissions, setPermissions] = useState<TokenPermission[] | undefined>(undefined);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -142,7 +141,7 @@ function PelicanWebClient({ startingUrl = "", authentication = true, readonly = 
             );
             setLoading(false);
         },
-        [federations, prefixToNamespace]
+        [federations, setFederations, prefixToNamespace, setPrefixToNamespace]
     );
 
     const handleLogin = useCallback(async () => {
@@ -193,12 +192,13 @@ function PelicanWebClient({ startingUrl = "", authentication = true, readonly = 
                         onRefetchObject={handleRefetchObject}
                         loading={loading}
                     />
-                    <ClientMetadata
-                        permissions={permissions}
-                        readonly={readonly}
-                        showDirectories={showDirectories}
-                        setShowDirectories={setShowDirectories}
-                    />
+                    {!compact && (
+                        <ClientMetadata
+                            permissions={permissions}
+                            showDirectories={showDirectories}
+                            setShowDirectories={setShowDirectories}
+                        />
+                    )}
                 </Box>
             </Box>
             <ObjectListComponent
