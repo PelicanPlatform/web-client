@@ -10,10 +10,10 @@ interface ObjectInputProps {
     /** objectUrl is the actual text value used by the UI */
     setObjectUrl: (url: string) => void;
     /**
-     * onRefetchObject is a debounced callback for when the user stops typing,
+     * onChange is a debounced callback for when the user stops typing,
      * signifying to change the object.
      */
-    onRefetchObject: (url: string) => void;
+    onChange: (url: string) => void;
 
     loading: boolean;
 }
@@ -22,8 +22,8 @@ interface ObjectInputProps {
  * The ObjectInput component allows users to input an object URL, handles authentication if required,
  * and displays a loading indicator during asynchronous operations.
  */
-function ObjectInput({ objectUrl, setObjectUrl, onRefetchObject, loading }: ObjectInputProps) {
-    const debounced = useDebounceCallback(onRefetchObject, 300);
+function ObjectInput({ objectUrl, setObjectUrl, onChange, loading }: ObjectInputProps) {
+    const debounced = useDebounceCallback(onChange, 300);
 
     return (
         <Box display={"flex"} flexDirection={"column"}>

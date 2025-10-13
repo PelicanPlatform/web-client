@@ -34,7 +34,7 @@ interface PelicanWebClientProps {
 }
 
 function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) {
-    const [objectUrl, setObjectUrl] = useState<string>(startingUrl ?? "");
+    const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
 
     // Pelican client state
     const [federations, setFederations] = useSessionStorage<Record<string, Federation>>(
@@ -189,7 +189,7 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
                     <ObjectInput
                         objectUrl={objectUrl}
                         setObjectUrl={setObjectUrl}
-                        onRefetchObject={handleRefetchObject}
+                        onChange={handleRefetchObject}
                         loading={loading}
                     />
                     {!compact && (

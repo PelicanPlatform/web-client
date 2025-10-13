@@ -5,25 +5,27 @@ import { AuthorizationClient, DynamicClientPayload } from "../types";
  * @param registrationEndpoint The registration endpoint of the OIDC provider
  * @param dynamicClientPayload The dynamic client registration request payload
  */
-export async function registerClient(registrationEndpoint: string, dynamicClientPayload: DynamicClientPayload): Promise<AuthorizationClient> {
+export async function registerClient(
+    registrationEndpoint: string,
+    dynamicClientPayload: DynamicClientPayload,
+): Promise<AuthorizationClient> {
+    const response = await fetch(registrationEndpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dynamicClientPayload),
+    });
 
-	const response = await fetch(registrationEndpoint, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(dynamicClientPayload)
-	})
+    if (response.status === 201) {
+        const { client_id, client_secret, ..._ } = await response.json();
+        return {
+            clientId: client_id,
+            clientSecret: client_secret,
+        };
+    }
 
-	if(response.status === 201){
-		const {client_id, client_secret, ..._} = await response.json()
-		return {
-			clientId: client_id,
-			clientSecret: client_secret
-		}
-	}
-
-	throw new Error("Was not able to register client at " + registrationEndpoint)
+    throw new Error("Was not able to register client at " + registrationEndpoint);
 }
 
 export default registerClient;
