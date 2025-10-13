@@ -214,7 +214,7 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
 /**
  * Pull in objectUrl related information into React state.
  */
-const updateObjectUrlState = async (
+async function updateObjectUrlState(
     objectUrl: string,
     federations: Record<string, Federation>,
     setFederations: (f: Record<string, Federation>) => void,
@@ -223,7 +223,7 @@ const updateObjectUrlState = async (
     setPermissions: (p: TokenPermission[]) => void,
     setLoginRequired: (b: boolean) => void,
     setObjectList: (l: ObjectList[]) => void
-) => {
+) {
     // Parse the object URL
     let federationHostname, objectPrefix, objectPath;
     try {
@@ -231,9 +231,7 @@ const updateObjectUrlState = async (
         federationHostname = parsed.federationHostname;
         objectPrefix = parsed.objectPrefix;
         objectPath = parsed.objectPath;
-    } catch {}
-
-    if (!federationHostname || !objectPrefix || !objectPath) {
+    } catch {
         // Total failure to parse URL, reset everything
         setLoginRequired(false);
         setPermissions([]);
@@ -242,21 +240,22 @@ const updateObjectUrlState = async (
     }
 
     // If we haven't registered the federation
-    try {
-        if (!(federationHostname in federations)) {
+    if (!(federationHostname in federations)) {
+        try {
             const federation = await fetchFederation(federationHostname);
             federations = {
                 ...federations,
                 [federationHostname]: federation,
             };
             setFederations(federations);
-        }
-    } catch {}
+        } catch {}
+    }
 
+    const federation = federations[federationHostname];
     // If we haven't mapped this prefix to a namespace
-    try {
-        if (!(objectPrefix in prefixToNamespace)) {
-            const namespace = await fetchNamespace(objectPath, federations[federationHostname]);
+    if (!(objectPrefix in prefixToNamespace)) {
+        try {
+            const namespace = await fetchNamespace(objectPath, federation);
             prefixToNamespace = {
                 ...prefixToNamespace,
                 [objectPrefix]: {
@@ -267,20 +266,22 @@ const updateObjectUrlState = async (
             setPrefixToNamespace(prefixToNamespace);
 
             // If we haven't registered this namespace
-            if (!(namespace.prefix in federations[federationHostname].namespaces)) {
+            if (!(namespace.prefix in federation.namespaces)) {
                 setFederations({
                     ...federations,
                     [federationHostname]: {
-                        ...federations[federationHostname],
+                        ...federation,
                         namespaces: {
-                            ...federations[federationHostname]?.namespaces,
+                            ...federation.namespaces,
                             [namespace.prefix]: namespace,
                         },
                     },
                 });
             }
-        }
-    } catch {}
+        } catch {}
+    }
+
+    const namespace = federation.namespaces?.[prefixToNamespace[objectPrefix]?.namespace];
 
     // Try to list
     try {
@@ -288,36 +289,18 @@ const updateObjectUrlState = async (
 
         // 1. Find normal objects
         try {
-            objects = await list(
-                `pelican://${objectPrefix}`,
-                federations[federationHostname],
-                federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
-            );
+            objects = await list(`pelican://${objectPrefix}`, federation, namespace);
             setLoginRequired(false);
         } catch (e) {
-            objects = await list(
-                `pelican://${federationHostname}${objectPath}`,
-                federations[federationHostname],
-                federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
-            );
+            objects = await list(`pelican://${federationHostname}${objectPath}`, federation, namespace);
             setLoginRequired(false);
         }
 
-        // 2. Filter out the current directory entry (often shows up as "." or the current path)
-        const currentDirName =
-            objectPath
-                .split("/")
-                .filter((part) => part.length > 0)
-                .pop() || "";
-        objects = objects.filter((obj) => {
-            // Remove entries that represent the current directory
-            const objName =
-                obj.href
-                    .split("/")
-                    .filter((part) => part.length > 0)
-                    .pop() || obj.href;
-            return objName !== "." && objName !== currentDirName && obj.href !== objectPath;
-        });
+        // 2. Filter out the current directory entry
+        const objectPathTrimmed = objectPath.endsWith("/")
+            ? objectPath.substring(0, objectPath.length - 1)
+            : objectPath;
+        objects = objects.filter((obj) => obj.href !== objectPathTrimmed);
 
         // 3. Insert synthetic ".." object if we're not at the root
         const pathParts = objectPath.split("/").filter((part) => part.length > 0);
@@ -336,13 +319,11 @@ const updateObjectUrlState = async (
                 status: "",
             };
 
-            // Reverse first, then add ".." to the beginning
-            objects = objects.reverse();
-            objects = [parentObject, ...objects];
-        } else {
-            objects = objects.reverse();
+            // Note: We push first, so parent is at end, and then reverse, so it ends up at the front.
+            objects.push(parentObject);
         }
 
+        objects = objects.reverse();
         setObjectList(objects);
     } catch (e) {
         if (e instanceof UnauthenticatedError) {
@@ -353,14 +334,9 @@ const updateObjectUrlState = async (
 
     // Check permissions
     try {
-        if (federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]) {
-            const perms = await permissions(
-                objectUrl,
-                federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
-            );
-            setPermissions(perms);
-        }
+        const perms = await permissions(objectUrl, namespace);
+        setPermissions(perms);
     } catch {}
-};
+}
 
 export default PelicanWebClient;
