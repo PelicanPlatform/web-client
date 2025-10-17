@@ -1,5 +1,9 @@
-export interface ObjectPrefixToNamespaceKeyMap {
+export interface ObjectPrefixStore {
     [prefix: string]: { federation: string; namespace: string };
+}
+
+export interface FederationStore {
+    [hostname: string]: Federation;
 }
 
 export interface Namespace {

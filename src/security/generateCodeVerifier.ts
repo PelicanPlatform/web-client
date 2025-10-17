@@ -1,6 +1,6 @@
 function generateCodeVerifier() {
     let array = new Uint32Array(56 / 2);
-    window.crypto.getRandomValues(array);
+    (window ? window.crypto : require("crypto").webcrypto).getRandomValues(array);
     return Array.from(array, dec2hex).join("");
 }
 
