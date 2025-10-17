@@ -1,7 +1,7 @@
 import { Box, Chip, FormControlLabel, Switch, Typography } from "@mui/material";
 
 interface ClientMetadataProps {
-    permissions: string[] | undefined;
+    permissions: string[] | null;
     showDirectories: boolean;
     setShowDirectories: (show: boolean) => void;
 }

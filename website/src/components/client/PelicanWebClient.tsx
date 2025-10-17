@@ -8,8 +8,9 @@ import ObjectInput from "@/components/client/ObjectInput";
 import ObjectListComponent from "@/components/client/ObjectView";
 import {
     Federation,
+    FederationStore,
     ObjectList,
-    ObjectPrefixToNamespaceKeyMap,
+    ObjectPrefixStore,
     TokenPermission,
     UnauthenticatedError,
     fetchFederation,
@@ -34,89 +35,30 @@ interface PelicanWebClientProps {
 }
 
 function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) {
+    // Current object URL
     const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
-
-    // Pelican client state
-    const [federations, setFederations] = useSessionStorage<Record<string, Federation>>(
-        "pelican-web-client-federations",
-        {}
-    );
-
+    // Map of federation hostname to Federation
+    const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     // Map of object prefix to federation and namespace
-    const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixToNamespaceKeyMap>(
-        "pelican-web-client-prefixToNamespace",
-        {}
-    );
+    const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
 
     // PKCE Code Verifier for OIDC Authorization Code Flow
-    const [codeVerifier, setCodeVerifier] = useSessionStorage<string | undefined>(
-        "pelican-web-client-codeVerifier",
-        undefined
-    );
-
-    // Initialize the code verifier if not present
-    useEffect(() => {
-        if (!codeVerifier) {
-            setCodeVerifier(generateCodeVerifier());
-        }
-    }, [codeVerifier, setCodeVerifier]);
-
-    // Run list on load
-    useEffect(() => {
-        (async () => {
-            await updateObjectUrlState(
-                objectUrl,
-                federations,
-                setFederations,
-                prefixToNamespace,
-                setPrefixToNamespace,
-                setPermissions,
-                setLoginRequired,
-                setObjectList
-            );
-        })();
-    }, [federations, objectUrl, prefixToNamespace, setFederations, setPrefixToNamespace]);
+    // Initializes with a new code verifier if one doesn't exist (via the function)
+    const [codeVerifier] = useSessionStorage("pelican-wc-cv", generateCodeVerifier);
 
     // On load, check if there is a code in the URL to exchange for a token
     useEffect(() => {
-        (async () => {
-            const { federationHostname, namespacePrefix, code } = getAuthorizationCode();
-
-            // If there is a code in the URL, exchange it for a token
-            if (code && federationHostname && namespacePrefix && codeVerifier) {
-                const namespace = federations[federationHostname]?.namespaces[namespacePrefix];
-                const token = await getToken(
-                    namespace?.oidcConfiguration,
-                    codeVerifier,
-                    namespace?.clientId,
-                    namespace?.clientSecret,
-                    code
-                );
-                setFederations({
-                    ...federations,
-                    [federationHostname]: {
-                        ...federations[federationHostname],
-                        namespaces: {
-                            ...federations[federationHostname]?.namespaces,
-                            [namespacePrefix]: {
-                                ...federations[federationHostname]?.namespaces[namespacePrefix],
-                                token: token.accessToken,
-                            },
-                        },
-                    },
-                });
-            }
-        })();
-    }, [federations, setFederations, codeVerifier]);
+        exchangeCodeForToken(codeVerifier, federations, setFederations) satisfies Promise<void>;
+    }, [codeVerifier, federations, setFederations]);
 
     // UI State
-    const [loginRequired, setLoginRequired] = useState<boolean>(false);
-    const [permissions, setPermissions] = useState<TokenPermission[] | undefined>(undefined);
+    const [loginRequired, setLoginRequired] = useState(false);
+    const [permissions, setPermissions] = useState<TokenPermission[] | null>(null);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [showDirectories, setShowDirectories] = useState<boolean>(true);
+    const [loading, setLoading] = useState(false);
+    const [showDirectories, setShowDirectories] = useState(true);
 
-    const { federationHostname, objectPrefix, objectPath } = useMemo(() => {
+    const { federationHostname, objectPrefix } = useMemo(() => {
         try {
             return parseObjectUrl(objectUrl);
         } catch {
@@ -148,7 +90,6 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
         if (!codeVerifier) return;
 
         try {
-            const { federationHostname, objectPrefix } = parseObjectUrl(objectUrl);
             const federation = federations[federationHostname];
             const namespaceKey = prefixToNamespace[objectPrefix];
             const namespace = federation.namespaces[namespaceKey.namespace];
@@ -157,7 +98,7 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
         } catch (error) {
             console.error("Login failed:", error);
         }
-    }, [codeVerifier, objectUrl, federations, prefixToNamespace]);
+    }, [codeVerifier, federations, prefixToNamespace, federationHostname, objectPrefix]);
 
     const handleExplore = useCallback(
         (href: string) => {
@@ -165,6 +106,11 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
         },
         [federationHostname, handleRefetchObject]
     );
+
+    // On initial load, if there is a valid object URL, try to fetch it
+    useEffect(() => {
+        handleRefetchObject(objectUrl) satisfies Promise<void>;
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleDownload = useCallback(
         async (href: string) => {
@@ -218,8 +164,8 @@ async function updateObjectUrlState(
     objectUrl: string,
     federations: Record<string, Federation>,
     setFederations: (f: Record<string, Federation>) => void,
-    prefixToNamespace: ObjectPrefixToNamespaceKeyMap,
-    setPrefixToNamespace: (m: ObjectPrefixToNamespaceKeyMap) => void,
+    prefixToNamespace: ObjectPrefixStore,
+    setPrefixToNamespace: (m: ObjectPrefixStore) => void,
     setPermissions: (p: TokenPermission[]) => void,
     setLoginRequired: (b: boolean) => void,
     setObjectList: (l: ObjectList[]) => void
@@ -337,6 +283,40 @@ async function updateObjectUrlState(
         const perms = await permissions(objectUrl, namespace);
         setPermissions(perms);
     } catch {}
+}
+
+async function exchangeCodeForToken(
+    codeVerifier: string,
+    federations: Record<string, Federation>,
+    setFederations: (f: Record<string, Federation>) => void
+) {
+    const { federationHostname, namespacePrefix, code } = getAuthorizationCode();
+
+    // If there is a code in the URL, exchange it for a token
+    if (code && federationHostname && namespacePrefix && codeVerifier) {
+        const namespace = federations[federationHostname]?.namespaces[namespacePrefix];
+        const token = await getToken(
+            namespace?.oidcConfiguration,
+            codeVerifier,
+            namespace?.clientId,
+            namespace?.clientSecret,
+            code
+        );
+
+        setFederations({
+            ...federations,
+            [federationHostname]: {
+                ...federations[federationHostname],
+                namespaces: {
+                    ...federations[federationHostname]?.namespaces,
+                    [namespacePrefix]: {
+                        ...federations[federationHostname]?.namespaces[namespacePrefix],
+                        token: token.accessToken,
+                    },
+                },
+            },
+        });
+    }
 }
 
 export default PelicanWebClient;
