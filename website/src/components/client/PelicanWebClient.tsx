@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSessionStorage } from "usehooks-ts";
 
 import ObjectInput from "@/components/client/ObjectInput";
-import ObjectListComponent from "@/components/client/ObjectView";
+import ObjectView from "@/components/client/ObjectView";
 import {
     Federation,
     FederationStore,
@@ -147,11 +147,13 @@ function PelicanWebClient({ startingUrl, compact }: PelicanWebClientProps = {}) 
                     )}
                 </Box>
             </Box>
-            <ObjectListComponent
+            <ObjectView
                 objectList={objectList}
                 showCollections={showDirectories}
                 onExplore={handleExplore}
                 onDownload={handleDownload}
+                loginRequired={loginRequired}
+                onLoginRequest={handleLogin}
             />
         </Box>
     );
@@ -233,13 +235,15 @@ async function updateObjectUrlState(
     try {
         let objects: ObjectList[] = [];
 
+        // On every refetch, reset login state.
+        // Otherwise, if there was an error within the URL, loginRequired would persist incorrectly.
+        setLoginRequired(false);
+
         // 1. Find normal objects
         try {
             objects = await list(`pelican://${objectPrefix}`, federation, namespace);
-            setLoginRequired(false);
         } catch (e) {
             objects = await list(`pelican://${federationHostname}${objectPath}`, federation, namespace);
-            setLoginRequired(false);
         }
 
         // 2. Filter out the current directory entry

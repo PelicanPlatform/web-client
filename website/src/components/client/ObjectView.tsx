@@ -26,9 +26,18 @@ interface ObjectListProps {
     showCollections?: boolean;
     onExplore: (href: string) => void;
     onDownload: (href: string) => void;
+    loginRequired: boolean;
+    onLoginRequest: () => void;
 }
 
-function ObjectListComponent({ objectList, showCollections = true, onExplore, onDownload }: ObjectListProps) {
+function ObjectListComponent({
+    objectList,
+    showCollections = true,
+    onExplore,
+    onDownload,
+    loginRequired,
+    onLoginRequest,
+}: ObjectListProps) {
     const [sortColumn, setSortColumn] = useState<SortableColumn>("href");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -86,85 +95,107 @@ function ObjectListComponent({ objectList, showCollections = true, onExplore, on
             });
     }, [objectList, showCollections, sortColumn, sortDirection]);
 
-    if (!objectList || objectList.length === 0) {
-        return (
-            <Box pt={4} display="flex" alignItems="center" justifyContent="center" minHeight={300}>
-                <Typography variant="h6" color="textSecondary" align="center">
-                    Enter Pelican Collection URL to View Contents:
-                    <br />
-                    <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
-                </Typography>
-            </Box>
-        );
-    }
-
     return (
         <Box pt={2}>
-            <TableContainer component={Paper} variant="outlined">
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>
-                                <TableSortLabel
-                                    active={sortColumn === "href"}
-                                    direction={sortColumn === "href" ? sortDirection : "asc"}
-                                    onClick={() => handleSort("href")}
-                                >
-                                    Name
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell>
-                                <TableSortLabel
-                                    active={sortColumn === "getcontentlength"}
-                                    direction={sortColumn === "getcontentlength" ? sortDirection : "asc"}
-                                    onClick={() => handleSort("getcontentlength")}
-                                >
-                                    Size
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell>
-                                <TableSortLabel
-                                    active={sortColumn === "getlastmodified"}
-                                    direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
-                                    onClick={() => handleSort("getlastmodified")}
-                                >
-                                    Updated
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell>Action</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {sortedObjectList.map((obj, index) => (
-                            <TableRow
-                                key={index}
-                                hover
-                                onClick={() => handleRowClick(obj)}
-                                style={{ cursor: "pointer" }}
-                            >
-                                <TableCell sx={{ px: 2, py: 1 }}>
-                                    <ObjectName {...obj} />
+            {loginRequired || !objectList || objectList.length === 0 ? (
+                // Login prompt / Empty state
+                <Box pt={4} display="flex" alignItems="center" justifyContent="center" minHeight={300}>
+                    <Typography variant="h6" color="textSecondary" align="center">
+                        {loginRequired ? (
+                            <>
+                                Login is required to view this collection.
+                                <br />
+                                <Button variant="contained" color="primary" onClick={onLoginRequest} sx={{ mt: 2 }}>
+                                    Login
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                Enter Pelican Collection URL to View Contents:
+                                <br />
+                                <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
+                            </>
+                        )}
+                    </Typography>
+                </Box>
+            ) : (
+                // Full object list table
+                <TableContainer component={Paper} variant="outlined">
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    <TableSortLabel
+                                        active={sortColumn === "href"}
+                                        direction={sortColumn === "href" ? sortDirection : "asc"}
+                                        onClick={() => handleSort("href")}
+                                    >
+                                        Name
+                                    </TableSortLabel>
                                 </TableCell>
-                                <TableCell sx={{ px: 2, py: 1 }}>
-                                    {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
+                                <TableCell>
+                                    <TableSortLabel
+                                        active={sortColumn === "getcontentlength"}
+                                        direction={sortColumn === "getcontentlength" ? sortDirection : "asc"}
+                                        onClick={() => handleSort("getcontentlength")}
+                                    >
+                                        Size
+                                    </TableSortLabel>
                                 </TableCell>
-                                <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
-                                <TableCell sx={{ px: 2, py: 1 }}>
-                                    {obj.iscollection ? (
-                                        <Button endIcon={<MenuOpen />} onClick={() => onExplore(obj.href)}>
-                                            Explore
-                                        </Button>
-                                    ) : (
-                                        <Button endIcon={<Download />} onClick={() => onDownload(obj.href)}>
-                                            Download
-                                        </Button>
-                                    )}
+                                <TableCell>
+                                    <TableSortLabel
+                                        active={sortColumn === "getlastmodified"}
+                                        direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
+                                        onClick={() => handleSort("getlastmodified")}
+                                    >
+                                        Updated
+                                    </TableSortLabel>
                                 </TableCell>
+                                <TableCell>Action</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {sortedObjectList.map((obj, index) => (
+                                <TableRow
+                                    key={index}
+                                    hover
+                                    onClick={() => handleRowClick(obj)}
+                                    style={{ cursor: "pointer" }}
+                                >
+                                    <TableCell sx={{ px: 2, py: 1 }}>
+                                        <ObjectName {...obj} />
+                                    </TableCell>
+                                    <TableCell sx={{ px: 2, py: 1 }}>
+                                        {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
+                                    </TableCell>
+                                    <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
+                                    <TableCell sx={{ px: 2, py: 1 }}>
+                                        {obj.iscollection ? (
+                                            <Button
+                                                variant="text"
+                                                color="inherit"
+                                                endIcon={<MenuOpen />}
+                                                onClick={() => onExplore(obj.href)}
+                                            >
+                                                Explore
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="text"
+                                                color="inherit"
+                                                endIcon={<Download />}
+                                                onClick={() => onDownload(obj.href)}
+                                            >
+                                                Download
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
         </Box>
     );
 }
