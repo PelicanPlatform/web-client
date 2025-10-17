@@ -235,11 +235,9 @@ async function updateObjectUrlState(
     try {
         let objects: ObjectList[] = [];
 
-        // On every refetch, reset login state.
-        // Otherwise, if there was an error within the URL, loginRequired would persist incorrectly.
-        setLoginRequired(false);
-
         // 1. Find normal objects
+        // Also set loginRequired to false on every refetch, since list could fail due to 404
+        setLoginRequired(false);
         try {
             objects = await list(`pelican://${objectPrefix}`, federation, namespace);
         } catch (e) {

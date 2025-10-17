@@ -171,23 +171,49 @@ function ObjectListComponent({
                                     <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
                                     <TableCell sx={{ px: 2, py: 1 }}>
                                         {obj.iscollection ? (
-                                            <Button
-                                                variant="text"
-                                                color="inherit"
-                                                endIcon={<MenuOpen />}
-                                                onClick={() => onExplore(obj.href)}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onExplore(obj.href);
+                                                }}
+                                                aria-label={`Explore ${obj.href}`}
+                                                style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    color: "var(--mui-palette-text-primary, #000)",
+                                                    padding: 0,
+                                                    cursor: "pointer",
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    gap: 6,
+                                                    fontSize: "0.95rem",
+                                                }}
                                             >
-                                                Explore
-                                            </Button>
+                                                <MenuOpen fontSize="small" />
+                                                <span style={{ opacity: 0.85 }}>Explore</span>
+                                            </button>
                                         ) : (
-                                            <Button
-                                                variant="text"
-                                                color="inherit"
-                                                endIcon={<Download />}
-                                                onClick={() => onDownload(obj.href)}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDownload(obj.href);
+                                                }}
+                                                aria-label={`Download ${obj.href}`}
+                                                style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    color: "var(--mui-palette-text-primary, #000)",
+                                                    padding: 0,
+                                                    cursor: "pointer",
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    gap: 6,
+                                                    fontSize: "0.95rem",
+                                                }}
                                             >
-                                                Download
-                                            </Button>
+                                                <Download fontSize="small" />
+                                                <span style={{ opacity: 0.85 }}>Download</span>
+                                            </button>
                                         )}
                                     </TableCell>
                                 </TableRow>
