@@ -27,12 +27,14 @@ import {
 import { downloadResponse } from "../../../../src/util";
 import ClientMetadata from "./ClientMetadata";
 
-interface PelicanWebClientProps {
+interface PelicanWebClientROProps {
     /** The initial object URL to load */
     startingUrl?: string;
+    /** Whether to enable authentication/upload/metadata features */
+    compact?: boolean;
 }
 
-function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
+function PelicanWebClientRO({ startingUrl, compact }: PelicanWebClientROProps = {}) {
     // Current object URL
     const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
     // Map of federation hostname to Federation
@@ -40,18 +42,8 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
     // Map of object prefix to federation and namespace
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
 
-    // PKCE Code Verifier for OIDC Authorization Code Flow
-    // Initializes with a new code verifier if one doesn't exist (via the function)
-    const [codeVerifier] = useSessionStorage("pelican-wc-cv", generateCodeVerifier);
-
-    // On load, check if there is a code in the URL to exchange for a token
-    useEffect(() => {
-        exchangeCodeForToken(codeVerifier, federations, setFederations) satisfies Promise<void>;
-    }, [codeVerifier, federations, setFederations]);
-
     // UI State
     const [loginRequired, setLoginRequired] = useState(false);
-    const [permissions, setPermissions] = useState<TokenPermission[] | null>(null);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
     const [loading, setLoading] = useState(false);
     const [showDirectories, setShowDirectories] = useState(true);
@@ -75,7 +67,6 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
                 setFederations,
                 prefixToNamespace,
                 setPrefixToNamespace,
-                setPermissions,
                 setLoginRequired,
                 setObjectList
             );
@@ -83,20 +74,6 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
         },
         [federations, setFederations, prefixToNamespace, setPrefixToNamespace]
     );
-
-    const handleLogin = useCallback(async () => {
-        if (!codeVerifier) return;
-
-        try {
-            const federation = federations[federationHostname];
-            const namespaceKey = prefixToNamespace[objectPrefix];
-            const namespace = federation.namespaces[namespaceKey.namespace];
-
-            startAuthorizationCodeFlow(codeVerifier, namespace, federation);
-        } catch (error) {
-            console.error("Login failed:", error);
-        }
-    }, [codeVerifier, federations, prefixToNamespace, federationHostname, objectPrefix]);
 
     const handleExplore = useCallback(
         (href: string) => {
@@ -137,7 +114,7 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
                         loading={loading}
                     />
                     <ClientMetadata
-                        permissions={permissions}
+                        permissions={null}
                         showDirectories={showDirectories}
                         setShowDirectories={setShowDirectories}
                     />
@@ -149,8 +126,7 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
                 onExplore={handleExplore}
                 onDownload={handleDownload}
                 loginRequired={loginRequired}
-                onLoginRequest={handleLogin}
-                canLogin={true}
+                canLogin={false}
             />
         </Box>
     );
@@ -165,7 +141,6 @@ async function updateObjectUrlState(
     setFederations: (f: Record<string, Federation>) => void,
     prefixToNamespace: ObjectPrefixStore,
     setPrefixToNamespace: (m: ObjectPrefixStore) => void,
-    setPermissions: (p: TokenPermission[]) => void,
     setLoginRequired: (b: boolean) => void,
     setObjectList: (l: ObjectList[]) => void
 ) {
@@ -179,7 +154,6 @@ async function updateObjectUrlState(
     } catch {
         // Total failure to parse URL, reset everything
         setLoginRequired(false);
-        setPermissions([]);
         setObjectList([]);
         return;
     }
@@ -276,12 +250,6 @@ async function updateObjectUrlState(
             setObjectList([]);
         }
     }
-
-    // Check permissions
-    try {
-        const perms = await permissions(objectUrl, namespace);
-        setPermissions(perms);
-    } catch {}
 }
 
 async function exchangeCodeForToken(
@@ -318,4 +286,4 @@ async function exchangeCodeForToken(
     }
 }
 
-export default PelicanWebClient;
+export default PelicanWebClientRO;

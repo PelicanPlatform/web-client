@@ -26,8 +26,9 @@ interface ObjectListProps {
     showCollections?: boolean;
     onExplore: (href: string) => void;
     onDownload: (href: string) => void;
+    canLogin: boolean;
     loginRequired: boolean;
-    onLoginRequest: () => void;
+    onLoginRequest?: () => void;
 }
 
 function ObjectListComponent({
@@ -36,6 +37,7 @@ function ObjectListComponent({
     onExplore,
     onDownload,
     loginRequired,
+    canLogin,
     onLoginRequest,
 }: ObjectListProps) {
     const [sortColumn, setSortColumn] = useState<SortableColumn>("href");
@@ -102,14 +104,18 @@ function ObjectListComponent({
                 <Box pt={4} display="flex" alignItems="center" justifyContent="center" minHeight={300}>
                     <Typography variant="h6" color="textSecondary" align="center">
                         {loginRequired ? (
+                            // Login prompt
                             <>
-                                Login is required to view this collection.
+                                Authentication is required to view this collection.
                                 <br />
-                                <Button variant="contained" color="primary" onClick={onLoginRequest} sx={{ mt: 2 }}>
-                                    Login
-                                </Button>
+                                {loginRequired && canLogin && (
+                                    <Button variant="contained" color="primary" onClick={onLoginRequest} sx={{ mt: 2 }}>
+                                        Login
+                                    </Button>
+                                )}
                             </>
                         ) : (
+                            // Empty state
                             <>
                                 Enter Pelican Collection URL to View Contents:
                                 <br />
