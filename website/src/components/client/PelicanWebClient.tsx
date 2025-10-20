@@ -92,7 +92,9 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
             const namespaceKey = prefixToNamespace[objectPrefix];
             const namespace = federation.namespaces[namespaceKey.namespace];
 
-            startAuthorizationCodeFlow(codeVerifier, namespace, federation);
+            startAuthorizationCodeFlow(codeVerifier, namespace, federation, {
+                // objectUrl,
+            });
         } catch (error) {
             console.error("Login failed:", error);
         }
@@ -107,6 +109,7 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
 
     // On initial load, if there is a valid object URL, try to fetch it
     useEffect(() => {
+        console.log(federations);
         handleRefetchObject(objectUrl) satisfies Promise<void>;
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -286,14 +289,21 @@ async function updateObjectUrlState(
 
 async function exchangeCodeForToken(
     codeVerifier: string,
-    federations: Record<string, Federation>,
-    setFederations: (f: Record<string, Federation>) => void
+    federations: FederationStore,
+    setFederations: (f: FederationStore) => void
 ) {
     const { federationHostname, namespacePrefix, code } = getAuthorizationCode();
 
     // If there is a code in the URL, exchange it for a token
     if (code && federationHostname && namespacePrefix && codeVerifier) {
         const namespace = federations[federationHostname]?.namespaces[namespacePrefix];
+        console.log({
+            a: namespace?.oidcConfiguration,
+            b: codeVerifier,
+            c: namespace?.clientId,
+            d: namespace?.clientSecret,
+            e: code,
+        });
         const token = await getToken(
             namespace?.oidcConfiguration,
             codeVerifier,

@@ -11,30 +11,24 @@ import {
     FederationStore,
     ObjectList,
     ObjectPrefixStore,
-    TokenPermission,
     UnauthenticatedError,
     fetchFederation,
     fetchNamespace,
-    generateCodeVerifier,
     get,
     getAuthorizationCode,
     getToken,
     list,
     parseObjectUrl,
-    permissions,
-    startAuthorizationCodeFlow,
 } from "../../../../src/index";
 import { downloadResponse } from "../../../../src/util";
 import ClientMetadata from "./ClientMetadata";
 
 interface PelicanWebClientROProps {
     /** The initial object URL to load */
-    startingUrl?: string;
-    /** Whether to enable authentication/upload/metadata features */
-    compact?: boolean;
+    startingUrl?: string | null | undefined;
 }
 
-function PelicanWebClientRO({ startingUrl, compact }: PelicanWebClientROProps = {}) {
+function PelicanWebClientRO({ startingUrl }: PelicanWebClientROProps = {}) {
     // Current object URL
     const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
     // Map of federation hostname to Federation
@@ -254,8 +248,8 @@ async function updateObjectUrlState(
 
 async function exchangeCodeForToken(
     codeVerifier: string,
-    federations: Record<string, Federation>,
-    setFederations: (f: Record<string, Federation>) => void
+    federations: FederationStore,
+    setFederations: (f: FederationStore) => void
 ) {
     const { federationHostname, namespacePrefix, code } = getAuthorizationCode();
 

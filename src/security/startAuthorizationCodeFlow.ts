@@ -7,17 +7,27 @@ import { Federation, Namespace } from "../types";
  * @param namespace
  * @param federation
  */
-const startAuthorizationCodeFlow = async (codeVerifier: string, namespace: Namespace, federation: Federation) => {
+const startAuthorizationCodeFlow = async (
+    codeVerifier: string,
+    namespace: Namespace,
+    federation: Federation,
+    state: Record<string, string>
+) => {
     // Build the Oauth URL
     const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);
     const authorizationUrl = new URL(namespace.oidcConfiguration.authorization_endpoint);
+    const stateString = [
+        `namespace:${namespace.prefix}`,
+        `federation:${federation.hostname}`,
+        ...Object.entries(state).map(([key, value]) => `${key}:${value}`),
+    ].join(";");
     authorizationUrl.searchParams.append("client_id", namespace.clientId);
     authorizationUrl.searchParams.append("response_type", "code");
-    authorizationUrl.searchParams.append("scope", `storage.read:/cannon.lock storage.create:/cannon.lock`); // TODO: Don't hardcode scopes
+    authorizationUrl.searchParams.append("scope", `storage.read:/austin.schneider storage.create:/austin.schneider`); // TODO: Don't hardcode scopes
     authorizationUrl.searchParams.append("redirect_uri", window.location.href);
     authorizationUrl.searchParams.append("code_challenge", codeChallenge);
     authorizationUrl.searchParams.append("code_challenge_method", "S256");
-    authorizationUrl.searchParams.append("state", `namespace:${namespace.prefix};federation:${federation.hostname}`);
+    authorizationUrl.searchParams.append("state", stateString);
     authorizationUrl.searchParams.append("action", "");
 
     // Begin the authorization code flow to get a token

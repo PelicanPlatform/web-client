@@ -4,10 +4,31 @@ import { Box } from "@mui/material";
 
 import PelicanWebClient from "@/components/client/PelicanWebClient";
 import PelicanWebClientRO from "@/components/client/PelicanWebClientRO";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+function parseStateParam(state: string | null): Record<string, string> {
+    if (!state) return {};
+
+    return state.split(";").reduce((acc, pair) => {
+        const colonIndex = pair.indexOf(":");
+        if (colonIndex === -1) return acc;
+
+        const key = pair.substring(0, colonIndex);
+        const value = pair.substring(colonIndex + 1);
+        acc[key] = value;
+        return acc;
+    }, {} as Record<string, string>);
+}
+
 function Page() {
-    const [readOnly, setReadOnly] = useState(true);
+    const searchParams = useSearchParams();
+    const state = searchParams.get("state");
+
+    const providedObjectUrl = parseStateParam(state)["objectUrl"];
+    const objectUrl = providedObjectUrl ?? "pelican://osg-htc.org/ncar/";
+
+    const [readOnly, setReadOnly] = useState(false);
 
     return (
         <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
@@ -23,11 +44,7 @@ function Page() {
                 </label>
             </Box>
 
-            {readOnly ? (
-                <PelicanWebClientRO startingUrl="pelican://osg-htc.org/ncar/" />
-            ) : (
-                <PelicanWebClient startingUrl="pelican://osg-htc.org/ncar/" />
-            )}
+            {readOnly ? <PelicanWebClientRO startingUrl={objectUrl} /> : <PelicanWebClient startingUrl={objectUrl} />}
         </Box>
     );
 }

@@ -5,7 +5,7 @@ async function getToken(
     codeVerifier: string,
     clientId: string,
     clientSecret: string,
-    authCode: string,
+    authCode: string
 ) {
     const postUrl = oidcConfiguration.token_endpoint;
 
