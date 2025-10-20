@@ -42,10 +42,20 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
 
     // PKCE Code Verifier for OIDC Authorization Code Flow
     // Initializes with a new code verifier if one doesn't exist (via the function)
-    const [codeVerifier] = useSessionStorage("pelican-wc-cv", generateCodeVerifier);
+    const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
+
+    // On load, generate a code verifier
+    useEffect(() => {
+        if (!codeVerifier) {
+            const code = generateCodeVerifier();
+            console.log("Generated code verifier:", code);
+            setCodeVerifier(code);
+        }
+    }, [codeVerifier]);
 
     // On load, check if there is a code in the URL to exchange for a token
     useEffect(() => {
+        if (!codeVerifier) return;
         exchangeCodeForToken(codeVerifier, federations, setFederations) satisfies Promise<void>;
     }, [codeVerifier, federations, setFederations]);
 
@@ -86,17 +96,23 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
 
     const handleLogin = useCallback(async () => {
         if (!codeVerifier) return;
+        // if (loading) return;
 
+        // prevent multiple login attempts
+        setLoading(true);
         try {
             const federation = federations[federationHostname];
             const namespaceKey = prefixToNamespace[objectPrefix];
             const namespace = federation.namespaces[namespaceKey.namespace];
 
             startAuthorizationCodeFlow(codeVerifier, namespace, federation, {
-                // objectUrl,
+                objectUrl,
             });
         } catch (error) {
             console.error("Login failed:", error);
+        } finally {
+            // startAuthorizationCodeFlow will redirect, but just incase there's an error
+            setLoading(false);
         }
     }, [codeVerifier, federations, prefixToNamespace, federationHostname, objectPrefix]);
 
@@ -106,12 +122,6 @@ function PelicanWebClient({ startingUrl }: PelicanWebClientProps = {}) {
         },
         [federationHostname, handleRefetchObject]
     );
-
-    // On initial load, if there is a valid object URL, try to fetch it
-    useEffect(() => {
-        console.log(federations);
-        handleRefetchObject(objectUrl) satisfies Promise<void>;
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleDownload = useCallback(
         async (href: string) => {
@@ -297,13 +307,6 @@ async function exchangeCodeForToken(
     // If there is a code in the URL, exchange it for a token
     if (code && federationHostname && namespacePrefix && codeVerifier) {
         const namespace = federations[federationHostname]?.namespaces[namespacePrefix];
-        console.log({
-            a: namespace?.oidcConfiguration,
-            b: codeVerifier,
-            c: namespace?.clientId,
-            d: namespace?.clientSecret,
-            e: code,
-        });
         const token = await getToken(
             namespace?.oidcConfiguration,
             codeVerifier,
