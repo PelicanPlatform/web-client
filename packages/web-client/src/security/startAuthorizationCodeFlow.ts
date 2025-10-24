@@ -11,7 +11,7 @@ const startAuthorizationCodeFlow = async (
     codeVerifier: string,
     namespace: Namespace,
     federation: Federation,
-    state: Record<string, string>
+    state: Record<string, string> = {}
 ) => {
     // Build the Oauth URL
     const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);

@@ -2,10 +2,10 @@
 
 import { Box } from "@mui/material";
 
-import PelicanWebClient from "@/components/client/PelicanWebClient";
-import PelicanWebClientRO from "@/components/client/PelicanWebClientRO";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+
+import Client from "../../../packages/components/src/Client"
 
 function parseStateParam(state: string | null): Record<string, string> {
     if (!state) return {};
@@ -28,7 +28,7 @@ function Page() {
     const providedObjectUrl = parseStateParam(state)["objectUrl"];
     const objectUrl = providedObjectUrl ?? "pelican://osg-htc.org/ncar/";
 
-    const [readOnly, setReadOnly] = useState(false);
+    const [publicClient, setPublicClient] = useState(false);
 
     return (
         <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
@@ -36,15 +36,14 @@ function Page() {
                 <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input
                         type="checkbox"
-                        checked={readOnly}
-                        onChange={() => setReadOnly((r) => !r)}
+                        checked={publicClient}
+                        onChange={() => setPublicClient((r) => !r)}
                         aria-label="Toggle read-write"
                     />
                     <span>Read-only Mode</span>
                 </label>
             </Box>
-
-            {readOnly ? <PelicanWebClientRO startingUrl={objectUrl} /> : <PelicanWebClient startingUrl={objectUrl} />}
+						<Client startingUrl={objectUrl} enableAuth={!publicClient} />
         </Box>
     );
 }

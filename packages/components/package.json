@@ -1,0 +1,50 @@
+{
+  "name": "@pelicanplatform/components",
+  "version": "0.0.0",
+  "homepage": "https://pelicanplatform.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PelicanPlatform/web-client.git"
+  },
+  "description": "Pelican Client Components",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
+    "build": "tsc --file ./tsconfig.build.json",
+    "prepublish": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist/*",
+    "README.md",
+    "package.json"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.3",
+    "@mui/material": "^7.3.3",
+    "@pelicanplatform/web-client": "workspaces:*",
+    "lodash-es": "^4.17.21",
+    "next": "^14.2.31",
+    "react": "^18",
+    "react-dom": "^18",
+    "usehooks-ts": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.2",
+    "typescript": "^5"
+  }
+}

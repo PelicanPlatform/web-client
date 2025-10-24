@@ -1,47 +1,9 @@
 {
-    "name": "@pelicanplatform/web-client",
-    "version": "1.0.14",
-    "homepage": "https://pelicanplatform.org",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/PelicanPlatform/web-client.git"
-    },
-    "description": "Pelican web client",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "scripts": {
-        "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
-        "build": "tsc",
-        "prepublish": "npm run build"
-    },
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
-        }
-    },
-    "files": [
-        "dist/*",
-        "README.md",
-        "package.json"
-    ],
-    "author": "",
-    "license": "Apache-2.0",
-    "devDependencies": {
-        "@babel/preset-typescript": "^7.26.0",
-        "@jest/globals": "^29.7.0",
-        "@types/jest": "^29.5.8",
-        "@types/lodash-es": "^4.17.12",
-        "i": "^0.3.7",
-        "jest": "^29.7.0",
-        "jest-environment-jsdom": "^29.7.0",
-        "ts-jest": "^29.1.1",
-        "typescript": "^5.2.2"
-    },
-    "dependencies": {
-        "lodash-es": "^4.17.21",
-        "mobx": "^6.15.0",
-        "mobx-react-lite": "^4.1.1",
-        "xmldom": "^0.6.0"
-    }
+  "name": "web-client-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*"
+  ]
 }
+
