@@ -1,2 +1,2 @@
-export {default} from './ObjectInput';
-export * from './ObjectInput';
+export { default } from "./ObjectInput";
+export * from "./ObjectInput";

@@ -14,15 +14,12 @@ function parseRecordHeader<T extends Record<string, string>>(header: string | nu
         return undefined;
     }
 
-    return header.split(",").reduce(
-        (a, s) => {
-            // Split the records in form key=value and add them to the object
-            let [key, value] = s.split("=").map((x) => x.trim());
-            a[key] = value;
-            return a;
-        },
-        {} as Record<string, string>,
-    ) as T;
+    return header.split(",").reduce((a, s) => {
+        // Split the records in form key=value and add them to the object
+        let [key, value] = s.split("=").map((x) => x.trim());
+        a[key] = value;
+        return a;
+    }, {} as Record<string, string>) as T;
 }
 
 export default parseRecordHeader;

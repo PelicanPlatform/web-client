@@ -7,7 +7,7 @@ import { AuthorizationClient, DynamicClientPayload } from "../types";
  */
 export async function registerClient(
     registrationEndpoint: string,
-    dynamicClientPayload: DynamicClientPayload,
+    dynamicClientPayload: DynamicClientPayload
 ): Promise<AuthorizationClient> {
     const response = await fetch(registrationEndpoint, {
         method: "POST",

@@ -5,14 +5,11 @@ function parseOauthState(url: URL): Record<string, string> {
         return {};
     }
 
-    const stateParams = state.split(";").reduce(
-        (acc, param) => {
-            const [key, value] = param.split(":");
-            acc[key] = value;
-            return acc;
-        },
-        {} as Record<string, string>,
-    );
+    const stateParams = state.split(";").reduce((acc, param) => {
+        const [key, value] = param.split(":");
+        acc[key] = value;
+        return acc;
+    }, {} as Record<string, string>);
 
     return stateParams;
 }

@@ -1,2 +1,2 @@
-export {default} from './ClientMetadata';
-export * from './ClientMetadata';
+export { default } from "./ClientMetadata";
+export * from "./ClientMetadata";

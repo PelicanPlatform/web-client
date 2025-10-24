@@ -2,7 +2,7 @@
  * Parse a link header into an array of objects with url and rel properties
  */
 export function parseLinkHeader(
-    header: string | null,
+    header: string | null
 ): { url: string; rel: string; pri: number; depth: number }[] | null {
     if (header === null) {
         return [];

@@ -29,7 +29,7 @@ function createSessionObjectHandler<T extends object>(key: string): ProxyHandler
             if (isObjectOrArray(value)) {
                 return new Proxy(
                     value,
-                    createSessionObjectChildHandler(() => sessionStorage.setItem(key, JSON.stringify(target))),
+                    createSessionObjectChildHandler(() => sessionStorage.setItem(key, JSON.stringify(target)))
                 );
             }
 
@@ -40,7 +40,7 @@ function createSessionObjectHandler<T extends object>(key: string): ProxyHandler
             if (isObjectOrArray(value)) {
                 value = new Proxy(
                     value,
-                    createSessionObjectChildHandler(() => sessionStorage.setItem(key, JSON.stringify(target))),
+                    createSessionObjectChildHandler(() => sessionStorage.setItem(key, JSON.stringify(target)))
                 );
             }
             const success = Reflect.set(target, prop, value);

@@ -1,2 +1,2 @@
-export {default} from './PublicClient';
-export * from './PublicClient';
+export { default } from "./PublicClient";
+export * from "./PublicClient";

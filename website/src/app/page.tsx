@@ -5,20 +5,23 @@ import { Box } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import Client from "../../../packages/components/src/Client"
+import Client from "../../../packages/components/src/Client";
 
 function parseStateParam(state: string | null): Record<string, string> {
     if (!state) return {};
 
-    return state.split(";").reduce((acc, pair) => {
-        const colonIndex = pair.indexOf(":");
-        if (colonIndex === -1) return acc;
+    return state.split(";").reduce(
+        (acc, pair) => {
+            const colonIndex = pair.indexOf(":");
+            if (colonIndex === -1) return acc;
 
-        const key = pair.substring(0, colonIndex);
-        const value = pair.substring(colonIndex + 1);
-        acc[key] = value;
-        return acc;
-    }, {} as Record<string, string>);
+            const key = pair.substring(0, colonIndex);
+            const value = pair.substring(colonIndex + 1);
+            acc[key] = value;
+            return acc;
+        },
+        {} as Record<string, string>,
+    );
 }
 
 function Page() {
@@ -43,7 +46,7 @@ function Page() {
                     <span>Read-only Mode</span>
                 </label>
             </Box>
-						<Client startingUrl={objectUrl} enableAuth={!publicClient} />
+            <Client startingUrl={objectUrl} enableAuth={!publicClient} />
         </Box>
     );
 }

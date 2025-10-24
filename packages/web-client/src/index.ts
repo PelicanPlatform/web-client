@@ -4,4 +4,4 @@ export * from "./pelican";
 
 export * from "./security";
 
-export * from "./util"
+export * from "./util";

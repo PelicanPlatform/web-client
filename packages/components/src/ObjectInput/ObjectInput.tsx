@@ -5,17 +5,17 @@ import { Box, InputAdornment, LinearProgress, TextField } from "@mui/material";
 import { useDebounceCallback } from "usehooks-ts";
 
 interface ObjectInputProps {
-	objectUrl: string;
+    objectUrl: string;
 
-	/** objectUrl is the actual text value used by the UI */
-	setObjectUrl: (url: string) => void;
-	/**
-	 * onChange is a debounced callback for when the user stops typing,
-	 * signifying to change the object.
-	 */
-	onChange: (url: string) => void;
+    /** objectUrl is the actual text value used by the UI */
+    setObjectUrl: (url: string) => void;
+    /**
+     * onChange is a debounced callback for when the user stops typing,
+     * signifying to change the object.
+     */
+    onChange: (url: string) => void;
 
-	loading: boolean;
+    loading: boolean;
 }
 
 /**
@@ -23,43 +23,43 @@ interface ObjectInputProps {
  * and displays a loading indicator during asynchronous operations.
  */
 function ObjectInput({ objectUrl, setObjectUrl, onChange, loading }: ObjectInputProps) {
-	const debounced = useDebounceCallback(onChange, 300);
+    const debounced = useDebounceCallback(onChange, 300);
 
-	return (
-		<Box display={"flex"} flexDirection={"column"}>
-			<Box display={"flex"} alignItems={"center"}>
-				<TextField
-					fullWidth
-					onChange={(e) => {
-						setObjectUrl(e.target.value);
-						debounced(e.target.value);
-					}}
-					value={objectUrl}
-					id="pelican-url"
-					placeholder={"Enter Pelican URL ( pelican://<federation>/<namespace>/* )"}
-					variant="outlined"
-					size="medium"
-					slotProps={{
-						input: {
-							startAdornment: (
-								<InputAdornment position="start">
-									<KeyboardDoubleArrowRight />
-								</InputAdornment>
-							),
-							// endAdornment: loginRequired && onLoginClick && (
-							//     <InputAdornment position="end">
-							//         <IconButton onClick={onLoginClick} edge="end">
-							//             <Lock />
-							//         </IconButton>
-							//     </InputAdornment>
-							// ),
-						},
-					}}
-				/>
-			</Box>
-			{loading && <LinearProgress />}
-		</Box>
-	);
+    return (
+        <Box display={"flex"} flexDirection={"column"}>
+            <Box display={"flex"} alignItems={"center"}>
+                <TextField
+                    fullWidth
+                    onChange={(e) => {
+                        setObjectUrl(e.target.value);
+                        debounced(e.target.value);
+                    }}
+                    value={objectUrl}
+                    id="pelican-url"
+                    placeholder={"Enter Pelican URL ( pelican://<federation>/<namespace>/* )"}
+                    variant="outlined"
+                    size="medium"
+                    slotProps={{
+                        input: {
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <KeyboardDoubleArrowRight />
+                                </InputAdornment>
+                            ),
+                            // endAdornment: loginRequired && onLoginClick && (
+                            //     <InputAdornment position="end">
+                            //         <IconButton onClick={onLoginClick} edge="end">
+                            //             <Lock />
+                            //         </IconButton>
+                            //     </InputAdornment>
+                            // ),
+                        },
+                    }}
+                />
+            </Box>
+            {loading && <LinearProgress />}
+        </Box>
+    );
 }
 
 export default ObjectInput;

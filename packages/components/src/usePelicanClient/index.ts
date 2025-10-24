@@ -1,2 +1,2 @@
-export {default} from './usePelicanClient';
-export * from './usePelicanClient';
+export { default } from "./usePelicanClient";
+export * from "./usePelicanClient";

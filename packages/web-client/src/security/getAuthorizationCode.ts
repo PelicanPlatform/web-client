@@ -4,7 +4,7 @@ export function getAuthorizationCode() {
     let url = new URL(window.location.href);
     const code = url.searchParams.get("code") || url.searchParams.get("CODE");
     const { federation: federationHostname, namespace: namespacePrefix } = parseOauthState(
-        new URL(window.location.href),
+        new URL(window.location.href)
     );
 
     // Clean up the window

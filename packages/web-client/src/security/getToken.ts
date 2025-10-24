@@ -26,7 +26,7 @@ async function getToken(
     });
 
     if (!response.ok) {
-        throw new Error(`Failed to get token: ${response.statusText}`);
+        throw new Error(`Failed to get token: ${response.statusText}. Response: ${await response.text()}`);
     }
 
     const { access_token, refresh_token, expires_in } = (await response.json()) as TokenSuccessResponse;

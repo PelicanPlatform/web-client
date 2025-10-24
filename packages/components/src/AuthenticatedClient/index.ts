@@ -1,2 +1,2 @@
-export {default} from './AuthenticatedClient';
-export * from './AuthenticatedClient';
+export { default } from "./AuthenticatedClient";
+export * from "./AuthenticatedClient";

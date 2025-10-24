@@ -8,7 +8,7 @@ import { DirectorNamespaceMetadata, Federation } from "../types";
  */
 async function fetchDirectorNamespaceMetadata(
     objectPath: string,
-    federation: Federation,
+    federation: Federation
 ): Promise<DirectorNamespaceMetadata> {
     // Construct the request URL asking to not be redirected to the object endpoint so we can read the metadata headers
     const httpEndpoint = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
@@ -31,10 +31,10 @@ const transformNoRedirectResponseToPathMetadata = (response: Response): Director
         // TODO: Check for a X-Collections-Header
         const { issuer: authIssuer } = parseRecordHeader(response.headers.get("X-Pelican-Authorization"));
         const { namespace, requireToken, collectionUrl } = parseRecordHeader(
-            response.headers.get("X-Pelican-Namespace"),
+            response.headers.get("X-Pelican-Namespace")
         );
         const { issuer, maxScopeDepth, strategy, basePath } = parseRecordHeader(
-            response.headers.get("X-Pelican-Token-Generation"),
+            response.headers.get("X-Pelican-Token-Generation")
         );
 
         return {
