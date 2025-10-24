@@ -32,7 +32,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.3",
     "@mui/material": "^7.3.3",
-    "@pelicanplatform/web-client": "workspaces:*",
+    "@pelicanplatform/web-client": "workspace:*",
     "lodash-es": "^4.17.21",
     "next": "^14.2.31",
     "react": "^18",
