@@ -34,7 +34,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
     const [objectUrl, setObjectUrl] = useState(startingUrl);
     const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
-    const [codeVerifier] = useSessionStorage("pelican-wc-cv", generateCodeVerifier);
+    const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
 
     const [permissionsState, setPermissions] = useState<TokenPermission[] | null>(null);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
@@ -79,6 +79,9 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             }
 
             const federation = federations[federationHostnameLocal];
+            if (!federation) {
+                throw new Error("Federation not found (which should be impossible due to prior fetch).");
+            }
 
             // ensure prefix -> namespace
             if (!(objectPrefixLocal in prefixToNamespace)) {
@@ -106,6 +109,11 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             }
 
             const namespace = federation.namespaces?.[prefixToNamespace[objectPrefixLocal]?.namespace];
+            if (!namespace) {
+                console.error("Namespace missing for prefix:", objectPrefixLocal);
+                console.error("Current prefixToNamespace mapping:", prefixToNamespace);
+                throw new Error("Namespace not found (which should be impossible due to prior fetch).");
+            }
 
             // list
             try {
@@ -149,7 +157,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                 setPermissions(perms);
             } catch {}
         },
-        [federations, prefixToNamespace, setFederations, setPrefixToNamespace],
+        [federations, prefixToNamespace, setFederations, setPrefixToNamespace]
     );
 
     // expose handlers
@@ -160,14 +168,14 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             await updateObjectUrlState(url);
             setLoading(false);
         },
-        [updateObjectUrlState],
+        [updateObjectUrlState]
     );
 
     const handleExplore = useCallback(
         (href: string) => {
             handleRefetchObject(`pelican://${federationHostname}${href}/`);
         },
-        [federationHostname, handleRefetchObject],
+        [federationHostname, handleRefetchObject]
     );
 
     const handleDownload = useCallback(
@@ -176,14 +184,14 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                 const response = await get(
                     `pelican://${federationHostname}${href}`,
                     federations[federationHostname],
-                    federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace],
+                    federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
                 );
                 downloadResponse(response);
             } catch (e) {
                 console.error("Download failed:", e);
             }
         },
-        [federationHostname, federations, prefixToNamespace, objectPrefix],
+        [federationHostname, federations, prefixToNamespace, objectPrefix]
     );
 
     const handleLogin = useCallback(async () => {
@@ -212,7 +220,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                     codeVerifier,
                     namespace?.clientId,
                     namespace?.clientSecret,
-                    code,
+                    code
                 );
 
                 setFederations({
@@ -243,6 +251,14 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
     useEffect(() => {
         if (!enableAuth) setLoginRequired(false);
     }, [enableAuth]);
+
+    // if no code verifier, generate one
+    useEffect(() => {
+        if (!codeVerifier) {
+            const cv = generateCodeVerifier();
+            setCodeVerifier(cv);
+        }
+    }, [codeVerifier]);
 
     return {
         objectUrl,

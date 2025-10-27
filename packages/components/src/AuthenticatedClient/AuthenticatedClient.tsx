@@ -26,6 +26,7 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
         handleRefetchObject,
         handleExplore,
         handleDownload,
+        federations,
     } = usePelicanClient({ startingUrl, enableAuth: true });
 
     return (
@@ -54,6 +55,7 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
                 onLoginRequest={handleLogin}
                 canLogin={true}
             />
+            <pre>{JSON.stringify(federations, null, 2)}</pre>
         </Box>
     );
 }
