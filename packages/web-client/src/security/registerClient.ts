@@ -9,7 +9,7 @@ export async function registerClient(
     registrationEndpoint: string,
     dynamicClientPayload: DynamicClientPayload
 ): Promise<AuthorizationClient | null> {
-    if (!registrationEndpoint) {
+    if (typeof registrationEndpoint !== "string") {
         throw new Error("No registration endpoint provided for dynamic client registration.");
     }
 

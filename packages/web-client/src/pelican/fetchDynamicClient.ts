@@ -8,8 +8,8 @@ import { AuthorizationClient, OidcConfiguration } from "../types";
  * @param issuerConfiguration Issuer's OIDC configuration
  */
 const fetchDynamicClient = async (issuerConfiguration: OidcConfiguration): Promise<AuthorizationClient | null> => {
-    if (!issuerConfiguration.registration_endpoint) {
-        console.warn("No registration endpoint found in issuer configuration:", issuerConfiguration.issuer);
+    if (issuerConfiguration.registration_endpoint === undefined) {
+        console.log("No registration endpoint found in issuer configuration:", issuerConfiguration.issuer);
         return null;
     }
 

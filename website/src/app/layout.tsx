@@ -1,5 +1,4 @@
 import { Header } from "@/components/layout/Header";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProviderClient } from "../../public/theme";
 import "./globals.css";
 import styles from "./page.module.css";
@@ -12,14 +11,12 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <AppRouterCacheProvider>
-                <ThemeProviderClient>
-                    <body>
-                        <Header />
-                        <main className={styles.main}>{children}</main>
-                    </body>
-                </ThemeProviderClient>
-            </AppRouterCacheProvider>
+            <ThemeProviderClient>
+                <body>
+                    <Header />
+                    <main className={styles.main}>{children}</main>
+                </body>
+            </ThemeProviderClient>
         </html>
     );
 }
