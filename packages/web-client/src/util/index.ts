@@ -1,5 +1,7 @@
 export { default as downloadResponse } from "./downloadResponse";
 
+export { default as formatBytes } from "./formatBytes";
+
 export { default as parseLinkHeader } from "./parseLinkHeader";
 
 export { default as parseRecordHeader } from "./parseRecordHeader";

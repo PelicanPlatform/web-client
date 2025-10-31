@@ -1,6 +1,5 @@
 "use client";
 
-import { formatBytes } from "@/util/bytes";
 import { ArrowUpward, Download, Folder, InsertDriveFile, MenuOpen } from "@mui/icons-material";
 import {
     Box,
@@ -16,7 +15,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useMemo, useState } from "react";
-import { ObjectList } from "../../../../src";
+import { ObjectList, formatBytes } from "@pelicanplatform/web-client";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
 type SortDirection = "asc" | "desc";
