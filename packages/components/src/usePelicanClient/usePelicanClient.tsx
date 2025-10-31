@@ -1,46 +1,48 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSessionStorage } from "./useSessionStorage";
 import {
     FederationStore,
     ObjectList,
     ObjectPrefixStore,
     TokenPermission,
     UnauthenticatedError,
+    downloadResponse,
     fetchFederation,
     fetchNamespace,
+    permissions as fetchPermissions,
     generateCodeVerifier,
     get,
-    list,
-    parseObjectUrl,
-    permissions,
-    startAuthorizationCodeFlow,
     getAuthorizationCode,
     getToken,
-    downloadResponse,
+    list,
+    parseObjectUrl,
+    put,
+    startAuthorizationCodeFlow,
 } from "@pelicanplatform/web-client";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSessionStorage } from "./useSessionStorage";
 
 export interface UsePelicanClientOptions {
     /** The initial object URL to load */
-    startingUrl?: string | null | undefined;
+    startingUrl?: string | undefined;
     /** Whether to enable authentication features */
     enableAuth?: boolean;
 }
 
-function usePelicanClient(opts: UsePelicanClientOptions = {}) {
-    const { startingUrl = "", enableAuth = true } = opts;
-
+function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanClientOptions = {}) {
     const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
     const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
     const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
 
-    const [permissionsState, setPermissions] = useState<TokenPermission[] | null>(null);
+    const [permissions, setPermissions] = useState<TokenPermission[] | null>(null);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
     const [loading, setLoading] = useState(false);
     const [showDirectories, setShowDirectories] = useState(true);
     const [loginRequired, setLoginRequired] = useState(false);
+
+    const [authExchangeComplete, setAuthExchangeComplete] = useState(false);
+    const [initialFetchDone, setInitialFetchDone] = useState(false);
 
     // parse object url safely
     const { federationHostname, objectPrefix } = useMemo(() => {
@@ -50,6 +52,79 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             return { federationHostname: "", objectPrefix: "", objectPath: "" };
         }
     }, [objectUrl]);
+
+    // auth code exchange effect only when enabled
+    useEffect(() => {
+        if (authExchangeComplete) {
+            return;
+        } else if (!enableAuth) {
+            setAuthExchangeComplete(true);
+            return;
+        }
+
+        async function exchange() {
+            const { federationHostname: fh, namespacePrefix, code } = getAuthorizationCode();
+
+            try {
+                if (code && fh && namespacePrefix && codeVerifier) {
+                    console.log(0);
+                    const namespace = federations[fh]?.namespaces[namespacePrefix];
+                    if (namespace?.clientId === undefined || namespace?.clientSecret === undefined) {
+                        console.log(1);
+                        console.error(
+                            "Cannot exchange code: missing client credentials for namespace",
+                            namespacePrefix
+                        );
+                        return;
+                    }
+
+                    const token = await getToken(
+                        namespace?.oidcConfiguration,
+                        codeVerifier,
+                        namespace?.clientId ?? "",
+                        namespace?.clientSecret ?? "",
+                        code
+                    );
+
+                    console.log("Obtained token via authorization code exchange:", token);
+                    setFederations({
+                        ...federations,
+                        [fh]: {
+                            ...federations[fh],
+                            namespaces: {
+                                ...federations[fh]?.namespaces,
+                                [namespacePrefix]: {
+                                    ...federations[fh]?.namespaces?.[namespacePrefix],
+                                    token: token.accessToken,
+                                },
+                            },
+                        },
+                    });
+                }
+            } catch (e) {
+                console.error("Error during authorization code exchange:", e);
+            } finally {
+                console.log(2);
+                // exchange complete (whether we did it or not)
+                setAuthExchangeComplete(true);
+            }
+        }
+
+        exchange();
+    }, [enableAuth, codeVerifier, federations, setFederations]);
+
+    // if not enabling auth, never require login
+    useEffect(() => {
+        if (!enableAuth) setLoginRequired(false);
+    }, [enableAuth]);
+
+    // if no code verifier, generate one
+    useEffect(() => {
+        if (!codeVerifier) {
+            const cv = generateCodeVerifier();
+            setCodeVerifier(cv);
+        }
+    }, [codeVerifier]);
 
     // shared update function
     const updateObjectUrlState = useCallback(
@@ -131,10 +206,8 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                     objects = await list(`pelican://${federationHostnameLocal}${objectPath}`, federation, namespace);
                 }
 
-                const objectPathTrimmed = objectPath.endsWith("/") ? objectPath.slice(0, -1) : objectPath;
-                objects = objects.filter((o) => o.href !== objectPathTrimmed);
-
-                const pathParts = objectPath.split("/").filter(Boolean);
+                // add parent directory entry
+                const pathParts = objectPath.split("/").filter((p) => p.length > 0);
                 if (pathParts.length > 0) {
                     const parentParts = pathParts.slice(0, -1);
                     const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
@@ -149,6 +222,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                     });
                 }
 
+                // reverse so directories show first (and the parent entry shows at top)
                 setObjectList(objects.reverse());
             } catch (e) {
                 if (e instanceof UnauthenticatedError) {
@@ -159,7 +233,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
 
             // permissions
             try {
-                const perms = await permissions(url, namespace);
+                const perms = await fetchPermissions(url, namespace);
                 setPermissions(perms);
             } catch {}
         },
@@ -176,6 +250,14 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
         },
         [updateObjectUrlState]
     );
+
+    // initial fetch if starting url present - but only after auth exchange is complete
+    useEffect(() => {
+        if (!authExchangeComplete || initialFetchDone) return;
+
+        handleRefetchObject(objectUrl);
+        setInitialFetchDone(true);
+    }, [authExchangeComplete, initialFetchDone, startingUrl, objectUrl, federations, handleRefetchObject]);
 
     const handleExplore = useCallback(
         (href: string) => {
@@ -207,69 +289,30 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             const federation = federations[federationHostname];
             const namespaceKey = prefixToNamespace[objectPrefix];
             const namespace = federation.namespaces[namespaceKey.namespace];
-            startAuthorizationCodeFlow(codeVerifier, namespace, federation);
+            startAuthorizationCodeFlow(codeVerifier, namespace, federation, { objectUrl });
         } catch (error) {
             console.error("Login failed:", error);
         }
     }, [enableAuth, codeVerifier, federations, prefixToNamespace, federationHostname, objectPrefix]);
 
-    // auth code exchange effect only when enabled
-    useEffect(() => {
-        if (!enableAuth) return;
-
-        async function exchange() {
-            const { federationHostname: fh, namespacePrefix, code } = getAuthorizationCode();
-            if (code && fh && namespacePrefix && codeVerifier) {
-                const namespace = federations[fh]?.namespaces[namespacePrefix];
-                if (namespace?.clientId === undefined || namespace?.clientSecret === undefined) {
-                    console.error("Cannot exchange code: missing client credentials for namespace", namespacePrefix);
-                    return;
-                }
-
-                const token = await getToken(
-                    namespace?.oidcConfiguration,
-                    codeVerifier,
-                    namespace?.clientId ?? "",
-                    namespace?.clientSecret ?? "",
-                    code
+    const handleUpload = useCallback(
+        async (file: File) => {
+            console.log("Uploading file:", `pelican://${objectPrefix}/${file.name}`);
+            try {
+                await put(
+                    `pelican://${objectPrefix}/${file.name}`,
+                    file,
+                    federations[federationHostname],
+                    federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
                 );
-
-                setFederations({
-                    ...federations,
-                    [fh]: {
-                        ...federations[fh],
-                        namespaces: {
-                            ...federations[fh]?.namespaces,
-                            [namespacePrefix]: {
-                                ...federations[fh]?.namespaces?.[namespacePrefix],
-                                token: token.accessToken,
-                            },
-                        },
-                    },
-                });
+            } catch (e) {
+                console.error("Upload failed:", e);
+                throw new Error("Upload failed.");
             }
-        }
-
-        exchange();
-    }, [enableAuth, codeVerifier, federations, setFederations]);
-
-    // initial fetch if starting url present
-    useEffect(() => {
-        if (objectUrl) handleRefetchObject(objectUrl);
-    }, []); // intentionally empty deps to mirror original behavior
-
-    // if not enabling auth, never require login
-    useEffect(() => {
-        if (!enableAuth) setLoginRequired(false);
-    }, [enableAuth]);
-
-    // if no code verifier, generate one
-    useEffect(() => {
-        if (!codeVerifier) {
-            const cv = generateCodeVerifier();
-            setCodeVerifier(cv);
-        }
-    }, [codeVerifier]);
+            handleRefetchObject(objectUrl); // refresh current object list after upload
+        },
+        [federationHostname, objectPrefix, objectUrl, federations, prefixToNamespace, handleRefetchObject]
+    );
 
     return {
         objectUrl,
@@ -278,7 +321,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
         setFederations,
         prefixToNamespace,
         setPrefixToNamespace,
-        permissions: permissionsState,
+        permissions: permissions,
         setPermissions,
         objectList,
         loading,
@@ -289,6 +332,7 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
         handleLogin,
         handleExplore,
         handleDownload,
+        handleUpload,
     };
 }
 

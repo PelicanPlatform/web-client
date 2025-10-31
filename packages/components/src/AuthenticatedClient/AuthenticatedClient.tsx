@@ -11,10 +11,10 @@ import usePelicanClient from "../usePelicanClient";
 
 interface PelicanWebClientProps {
     /** The initial object URL to load */
-    startingUrl?: string | null | undefined;
+    startingUrl?: string | undefined;
 }
 
-function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
+function AuthenticatedClient({ startingUrl }: PelicanWebClientProps) {
     const uploadRef = useRef<ObjectUploadRef>(null);
 
     const {
@@ -30,13 +30,8 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
         handleRefetchObject,
         handleExplore,
         handleDownload,
-        federations,
+        handleUpload,
     } = usePelicanClient({ startingUrl, enableAuth: true });
-
-    const handleUpload = async (files: File[]) => {
-        console.log("Uploading files:", files);
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate upload
-    };
 
     return (
         <Box {...(uploadRef.current?.dragHandlers ?? {})}>
@@ -75,7 +70,7 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
                 canLogin={true}
             />
             <Box mt={4} component="pre">
-                {JSON.stringify(federations, null, 2)}
+                {/* {JSON.stringify(federations, null, 2)} */}
             </Box>
         </Box>
     );
