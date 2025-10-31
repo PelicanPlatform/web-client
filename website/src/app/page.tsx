@@ -3,28 +3,25 @@
 import { Box } from "@mui/material";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import Client from "../../../packages/components/src/Client";
 
 function parseStateParam(state: string | null): Record<string, string> {
     if (!state) return {};
 
-    return state.split(";").reduce(
-        (acc, pair) => {
-            const colonIndex = pair.indexOf(":");
-            if (colonIndex === -1) return acc;
+    return state.split(";").reduce((acc, pair) => {
+        const colonIndex = pair.indexOf(":");
+        if (colonIndex === -1) return acc;
 
-            const key = pair.substring(0, colonIndex);
-            const value = pair.substring(colonIndex + 1);
-            acc[key] = value;
-            return acc;
-        },
-        {} as Record<string, string>,
-    );
+        const key = pair.substring(0, colonIndex);
+        const value = pair.substring(colonIndex + 1);
+        acc[key] = value;
+        return acc;
+    }, {} as Record<string, string>);
 }
 
-function Page() {
+function PageClient() {
     const searchParams = useSearchParams();
     const state = searchParams.get("state");
 
@@ -47,6 +44,18 @@ function Page() {
                 </label>
             </Box>
             <Client startingUrl={objectUrl} enableAuth={!publicClient} />
+        </Box>
+    );
+}
+
+function Page() {
+    return (
+        <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
+            {/* Use suspense because of useSearchParams not working within SSR/SSG */}
+            {/* Although I wish I could just default it to blank instead of overwriting the entire component */}
+            <Suspense fallback={<div>Loading...</div>}>
+                <PageClient />
+            </Suspense>
         </Box>
     );
 }

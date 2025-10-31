@@ -1,32 +1,8 @@
 "use client";
 
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ErrorIcon from "@mui/icons-material/Error";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import {
-    Box,
-    Button,
-    Chip,
-    IconButton,
-    LinearProgress,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Paper,
-    Typography,
-} from "@mui/material";
-import { formatBytes } from "@pelicanplatform/web-client";
+import { Box, Paper, Typography } from "@mui/material";
 import { DragEvent, Ref, useCallback, useImperativeHandle, useRef, useState } from "react";
-
-interface UploadFile {
-    file: File;
-    status: "pending" | "uploading" | "success" | "error";
-    progress: number;
-    error?: string;
-}
 
 export interface ObjectUploadRef {
     dragHandlers: {
@@ -40,8 +16,8 @@ export interface ObjectUploadRef {
 interface ObjectUploadProps {
     /** Whether upload functionality is enabled */
     disabled?: boolean;
-    /** Callback when files should be uploaded */
-    onUpload?: (files: File[]) => Promise<void>;
+    /** Callback when files are dropped/selected */
+    onUpload?: (files: File[]) => void;
     /** Current object path for context */
     currentPath?: string;
     /** Ref to expose drag handlers */
@@ -50,8 +26,6 @@ interface ObjectUploadProps {
 
 const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectUploadProps) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [files, setFiles] = useState<UploadFile[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const dragCounterRef = useRef(0);
 
     const handleDragEnter = useCallback((e: DragEvent) => {
@@ -87,16 +61,11 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
             if (disabled) return;
 
             const droppedFiles = Array.from(e.dataTransfer.files);
-            if (droppedFiles.length > 0) {
-                const newFiles: UploadFile[] = droppedFiles.map((file) => ({
-                    file,
-                    status: "pending",
-                    progress: 0,
-                }));
-                setFiles((prev) => [...prev, ...newFiles]);
+            if (droppedFiles.length > 0 && onUpload) {
+                onUpload(droppedFiles);
             }
         },
-        [disabled]
+        [disabled, onUpload]
     );
 
     // expose drag handlers via ref
@@ -112,97 +81,6 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
         }),
         [handleDragEnter, handleDragOver, handleDragLeave, handleDrop]
     );
-
-    const handleFileSelect = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (disabled) return;
-            const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
-            if (selectedFiles.length > 0) {
-                const newFiles: UploadFile[] = selectedFiles.map((file) => ({
-                    file,
-                    status: "pending",
-                    progress: 0,
-                }));
-                setFiles((prev) => [...prev, ...newFiles]);
-            }
-            // reset input value to allow selecting the same file again
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-        },
-        [disabled]
-    );
-
-    const handleRemoveFile = useCallback((index: number) => {
-        setFiles((prev) => prev.filter((_, i) => i !== index));
-    }, []);
-
-    const handleUploadClick = useCallback(() => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    }, []);
-
-    const handleStartUpload = useCallback(async () => {
-        if (!onUpload) {
-            console.warn("No upload handler provided");
-            return;
-        }
-
-        const pendingFiles = files.filter((f) => f.status === "pending");
-        if (pendingFiles.length === 0) return;
-
-        // update all pending files to uploading
-        setFiles((prev) =>
-            prev.map((f) => (f.status === "pending" ? { ...f, status: "uploading" as const, progress: 0 } : f))
-        );
-
-        // simulate upload progress (in real implementation, you'd track actual progress)
-        const uploadPromises = pendingFiles.map(async (uploadFile) => {
-            try {
-                // Simulate progress updates
-                const progressInterval = setInterval(() => {
-                    setFiles((prev) =>
-                        prev.map((f) =>
-                            f.file === uploadFile.file && f.status === "uploading"
-                                ? { ...f, progress: Math.min(f.progress + 10, 90) }
-                                : f
-                        )
-                    );
-                }, 200);
-
-                // Actual upload would happen here
-                await onUpload([uploadFile.file]);
-
-                clearInterval(progressInterval);
-
-                // Mark as success
-                setFiles((prev) =>
-                    prev.map((f) =>
-                        f.file === uploadFile.file ? { ...f, status: "success" as const, progress: 100 } : f
-                    )
-                );
-            } catch (error) {
-                // mark as error
-                setFiles((prev) =>
-                    prev.map((f) =>
-                        f.file === uploadFile.file
-                            ? {
-                                  ...f,
-                                  status: "error" as const,
-                                  error: error instanceof Error ? error.message : "Upload failed",
-                              }
-                            : f
-                    )
-                );
-            }
-        });
-
-        await Promise.all(uploadPromises);
-    }, [files, onUpload]);
-
-    const hasPendingFiles = files.some((f) => f.status === "pending");
-    const hasUploadingFiles = files.some((f) => f.status === "uploading");
 
     return (
         <>
@@ -238,89 +116,6 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
                             </Typography>
                         )}
                     </Box>
-                </Paper>
-            )}
-
-            {/* Upload controls */}
-            <Box sx={{ mb: 2 }}>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    style={{ display: "none" }}
-                    onChange={handleFileSelect}
-                    disabled={disabled}
-                />
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<CloudUploadIcon />}
-                        onClick={handleUploadClick}
-                        disabled={disabled}
-                    >
-                        Select Files
-                    </Button>
-                    {hasPendingFiles && (
-                        <Button
-                            variant="contained"
-                            color="success"
-                            onClick={handleStartUpload}
-                            disabled={disabled || hasUploadingFiles}
-                        >
-                            Upload {files.filter((f) => f.status === "pending").length} File(s)
-                        </Button>
-                    )}
-                    {disabled && <Chip label="Read-only" color="warning" size="small" />}
-                </Box>
-            </Box>
-
-            {/* File list */}
-            {files.length > 0 && (
-                <Paper variant="outlined" sx={{ maxHeight: 400, overflow: "auto" }}>
-                    <List>
-                        {files.map((uploadFile, index) => (
-                            <ListItem
-                                key={index}
-                                secondaryAction={
-                                    uploadFile.status === "pending" || uploadFile.status === "error" ? (
-                                        <IconButton edge="end" onClick={() => handleRemoveFile(index)}>
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    ) : null
-                                }
-                            >
-                                <ListItemIcon>
-                                    {uploadFile.status === "success" ? (
-                                        <CheckCircleIcon color="success" />
-                                    ) : uploadFile.status === "error" ? (
-                                        <ErrorIcon color="error" />
-                                    ) : (
-                                        <InsertDriveFileIcon />
-                                    )}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={uploadFile.file.name}
-                                    secondary={
-                                        <Box>
-                                            <Typography variant="caption" component="span">
-                                                {formatBytes(uploadFile.file.size)}
-                                            </Typography>
-                                            {uploadFile.status === "error" && uploadFile.error && (
-                                                <Typography variant="caption" color="error" component="div">
-                                                    {uploadFile.error}
-                                                </Typography>
-                                            )}
-                                            {uploadFile.status === "uploading" && (
-                                                <Box sx={{ width: "100%", mt: 1 }}>
-                                                    <LinearProgress variant="determinate" value={uploadFile.progress} />
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    }
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
                 </Paper>
             )}
         </>
