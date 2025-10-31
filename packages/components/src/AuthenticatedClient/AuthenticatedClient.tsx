@@ -55,7 +55,9 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
                 onLoginRequest={handleLogin}
                 canLogin={true}
             />
-            <pre>{JSON.stringify(federations, null, 2)}</pre>
+            <Box mt={4} component="pre">
+                {JSON.stringify(federations, null, 2)}
+            </Box>
         </Box>
     );
 }

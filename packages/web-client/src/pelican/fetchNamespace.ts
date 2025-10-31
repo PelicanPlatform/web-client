@@ -9,8 +9,8 @@ const fetchNamespace = async (objectPath: string, federation: Federation): Promi
     return {
         prefix: namespaceMetadata.namespace.namespace,
         token: undefined,
-        clientId: authorizationClient.clientId,
-        clientSecret: authorizationClient.clientSecret,
+        clientId: authorizationClient?.clientId,
+        clientSecret: authorizationClient?.clientSecret,
         oidcConfiguration: issuerOidcConfiguration,
     };
 };

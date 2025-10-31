@@ -8,7 +8,11 @@ import { AuthorizationClient, DynamicClientPayload } from "../types";
 export async function registerClient(
     registrationEndpoint: string,
     dynamicClientPayload: DynamicClientPayload
-): Promise<AuthorizationClient> {
+): Promise<AuthorizationClient | null> {
+    if (!registrationEndpoint) {
+        throw new Error("No registration endpoint provided for dynamic client registration.");
+    }
+
     const response = await fetch(registrationEndpoint, {
         method: "POST",
         headers: {
@@ -18,7 +22,7 @@ export async function registerClient(
     });
 
     if (response.status === 201) {
-        const { client_id, client_secret, ..._ } = await response.json();
+        const { client_id, client_secret } = await response.json();
         return {
             clientId: client_id,
             clientSecret: client_secret,

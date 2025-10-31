@@ -9,8 +9,8 @@ export interface FederationStore {
 export interface Namespace {
     prefix: string;
     token?: Token;
-    clientSecret: string;
-    clientId: string;
+    clientSecret?: string;
+    clientId?: string;
     oidcConfiguration: OidcConfiguration;
 }
 
@@ -37,9 +37,9 @@ export interface FederationConfiguration {
 
 export interface OidcConfiguration {
     issuer: string;
-    authorization_endpoint: string;
-    token_endpoint: string;
-    registration_endpoint: string;
+    authorization_endpoint?: string;
+    token_endpoint?: string;
+    registration_endpoint?: string;
     jwks_uri: string;
 }
 

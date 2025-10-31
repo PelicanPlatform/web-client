@@ -7,7 +7,12 @@ import { AuthorizationClient, OidcConfiguration } from "../types";
  * Register a client via the dynamic client registration endpoint on the Origin's issuer
  * @param issuerConfiguration Issuer's OIDC configuration
  */
-const fetchDynamicClient = async (issuerConfiguration: OidcConfiguration): Promise<AuthorizationClient> => {
+const fetchDynamicClient = async (issuerConfiguration: OidcConfiguration): Promise<AuthorizationClient | null> => {
+    if (!issuerConfiguration.registration_endpoint) {
+        console.warn("No registration endpoint found in issuer configuration:", issuerConfiguration.issuer);
+        return null;
+    }
+
     const dynamicClientPayload = {
         redirect_uris: [window.location.href],
         token_endpoint_auth_method: "client_secret_basic",

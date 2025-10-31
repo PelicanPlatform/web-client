@@ -13,6 +13,10 @@ const startAuthorizationCodeFlow = async (
     federation: Federation,
     state: Record<string, string> = {}
 ) => {
+    if (!namespace.clientId || !namespace.oidcConfiguration.authorization_endpoint) {
+        throw new Error("Namespace is missing required OIDC configuration for authorization code flow.");
+    }
+
     // Build the Oauth URL
     const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);
     const authorizationUrl = new URL(namespace.oidcConfiguration.authorization_endpoint);

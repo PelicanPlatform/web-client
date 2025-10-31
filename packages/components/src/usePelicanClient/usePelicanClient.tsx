@@ -69,49 +69,53 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
                 return;
             }
 
+            let nextFederations = federations; // react state isn't updated immediately so track locally
             // ensure federation
-            if (!(federationHostnameLocal in federations)) {
+            if (!(federationHostnameLocal in nextFederations)) {
                 try {
                     const fed = await fetchFederation(federationHostnameLocal);
-                    const next = { ...federations, [federationHostnameLocal]: fed };
-                    setFederations(next);
+                    nextFederations = { ...nextFederations, [federationHostnameLocal]: fed };
+                    setFederations(nextFederations);
                 } catch {}
             }
 
-            const federation = federations[federationHostnameLocal];
+            const federation = nextFederations[federationHostnameLocal];
             if (!federation) {
                 throw new Error("Federation not found (which should be impossible due to prior fetch).");
             }
 
+            let nextPrefixToNamespace = prefixToNamespace;
             // ensure prefix -> namespace
-            if (!(objectPrefixLocal in prefixToNamespace)) {
+            if (!(objectPrefixLocal in nextPrefixToNamespace)) {
                 try {
                     const ns = await fetchNamespace(objectPath, federation);
-                    const nextP2n = {
-                        ...prefixToNamespace,
+                    nextPrefixToNamespace = {
+                        ...nextPrefixToNamespace,
                         [objectPrefixLocal]: { federation: federationHostnameLocal, namespace: ns.prefix },
                     };
-                    setPrefixToNamespace(nextP2n);
+                    setPrefixToNamespace(nextPrefixToNamespace);
 
-                    if (!(ns.prefix in federation.namespaces)) {
-                        setFederations({
-                            ...federations,
+                    if (!(ns.prefix in nextFederations[federationHostnameLocal].namespaces)) {
+                        nextFederations = {
+                            ...nextFederations,
                             [federationHostnameLocal]: {
-                                ...federation,
+                                ...nextFederations[federationHostnameLocal],
                                 namespaces: {
-                                    ...federation.namespaces,
+                                    ...nextFederations[federationHostnameLocal].namespaces,
                                     [ns.prefix]: ns,
                                 },
                             },
-                        });
+                        };
+                        setFederations(nextFederations);
                     }
-                } catch {}
+                } catch (e) {
+                    console.log("Failed to fetch namespace for prefix:", objectPrefixLocal, e);
+                }
             }
 
-            const namespace = federation.namespaces?.[prefixToNamespace[objectPrefixLocal]?.namespace];
+            const namespace =
+                nextFederations[federationHostname].namespaces?.[nextPrefixToNamespace[objectPrefixLocal]?.namespace];
             if (!namespace) {
-                console.error("Namespace missing for prefix:", objectPrefixLocal);
-                console.error("Current prefixToNamespace mapping:", prefixToNamespace);
                 throw new Error("Namespace not found (which should be impossible due to prior fetch).");
             }
 
@@ -215,11 +219,16 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             const { federationHostname: fh, namespacePrefix, code } = getAuthorizationCode();
             if (code && fh && namespacePrefix && codeVerifier) {
                 const namespace = federations[fh]?.namespaces[namespacePrefix];
+                if (namespace?.clientId === undefined || namespace?.clientSecret === undefined) {
+                    console.error("Cannot exchange code: missing client credentials for namespace", namespacePrefix);
+                    return;
+                }
+
                 const token = await getToken(
                     namespace?.oidcConfiguration,
                     codeVerifier,
-                    namespace?.clientId,
-                    namespace?.clientSecret,
+                    namespace?.clientId ?? "",
+                    namespace?.clientSecret ?? "",
                     code
                 );
 

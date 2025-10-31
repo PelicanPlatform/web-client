@@ -7,7 +7,9 @@ async function getToken(
     clientSecret: string,
     authCode: string
 ) {
-    const postUrl = oidcConfiguration.token_endpoint;
+    if (!oidcConfiguration.token_endpoint) {
+        throw new Error("OIDC configuration is missing token endpoint.");
+    }
 
     const params = new URLSearchParams();
     params.append("grant_type", "authorization_code");
@@ -17,7 +19,7 @@ async function getToken(
     params.append("client_id", clientId);
     params.append("client_secret", clientSecret);
 
-    const response = await fetch(postUrl, {
+    const response = await fetch(oidcConfiguration.token_endpoint, {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
