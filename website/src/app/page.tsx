@@ -8,7 +8,7 @@ import { Suspense, useState } from "react";
 import Client from "../../../packages/components/src/Client";
 
 function parseStateParam(state: string | null): Record<string, string> {
-    if (!state) return {};
+    if (state === null) return {};
 
     return state.split(";").reduce((acc, pair) => {
         const colonIndex = pair.indexOf(":");
@@ -21,7 +21,7 @@ function parseStateParam(state: string | null): Record<string, string> {
     }, {} as Record<string, string>);
 }
 
-function PageClient() {
+function Page() {
     const searchParams = useSearchParams();
     const state = searchParams.get("state");
 
@@ -32,30 +32,20 @@ function PageClient() {
 
     return (
         <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
-            <Box display="flex" justifyContent="flex-end" mb={2} alignItems="center">
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input
-                        type="checkbox"
-                        checked={publicClient}
-                        onChange={() => setPublicClient((r) => !r)}
-                        aria-label="Toggle read-write"
-                    />
-                    <span>Read-only Mode</span>
-                </label>
+            <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
+                <Box display="flex" justifyContent="flex-end" mb={2} alignItems="center">
+                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <input
+                            type="checkbox"
+                            checked={publicClient}
+                            onChange={() => setPublicClient((r) => !r)}
+                            aria-label="Toggle read-write"
+                        />
+                        <span>Read-only Mode</span>
+                    </label>
+                </Box>
+                <Client startingUrl={objectUrl} enableAuth={!publicClient} />
             </Box>
-            <Client startingUrl={objectUrl} enableAuth={!publicClient} />
-        </Box>
-    );
-}
-
-function Page() {
-    return (
-        <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
-            {/* Use suspense because of useSearchParams not working within SSR/SSG */}
-            {/* Although I wish I could just default it to blank instead of overwriting the entire component */}
-            <Suspense fallback={<div>Loading...</div>}>
-                <PageClient />
-            </Suspense>
         </Box>
     );
 }
