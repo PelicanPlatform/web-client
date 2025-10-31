@@ -14,8 +14,8 @@ import {
     TableSortLabel,
     Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
 import { ObjectList, formatBytes } from "@pelicanplatform/web-client";
+import { useMemo, useState } from "react";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
 type SortDirection = "asc" | "desc";

@@ -46,13 +46,6 @@ function ObjectInput({ objectUrl, setObjectUrl, onChange, loading }: ObjectInput
                                     <KeyboardDoubleArrowRight />
                                 </InputAdornment>
                             ),
-                            // endAdornment: loginRequired && onLoginClick && (
-                            //     <InputAdornment position="end">
-                            //         <IconButton onClick={onLoginClick} edge="end">
-                            //             <Lock />
-                            //         </IconButton>
-                            //     </InputAdornment>
-                            // ),
                         },
                     }}
                 />

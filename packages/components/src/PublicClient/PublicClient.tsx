@@ -2,9 +2,9 @@
 
 import { Box } from "@mui/material";
 
+import ClientMetadata from "../ClientMetadata";
 import ObjectInput from "../ObjectInput";
 import ObjectView from "../ObjectView";
-import ClientMetadata from "../ClientMetadata";
 import usePelicanClient from "../usePelicanClient";
 
 interface PublicClientProps {

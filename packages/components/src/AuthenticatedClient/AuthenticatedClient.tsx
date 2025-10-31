@@ -1,18 +1,22 @@
 "use client";
 
 import { Box } from "@mui/material";
+import { useRef } from "react";
 
-import ObjectInput from "../ObjectInput";
-import ObjectView from "../ObjectView";
 import ClientMetadata from "../ClientMetadata";
+import ObjectInput from "../ObjectInput";
+import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
+import ObjectView from "../ObjectView";
 import usePelicanClient from "../usePelicanClient";
 
 interface PelicanWebClientProps {
     /** The initial object URL to load */
-    startingUrl?: string;
+    startingUrl?: string | null | undefined;
 }
 
 function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
+    const uploadRef = useRef<ObjectUploadRef>(null);
+
     const {
         objectUrl,
         setObjectUrl,
@@ -29,8 +33,13 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
         federations,
     } = usePelicanClient({ startingUrl, enableAuth: true });
 
+    const handleUpload = async (files: File[]) => {
+        console.log("Uploading files:", files);
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate upload
+    };
+
     return (
-        <Box>
+        <Box {...(uploadRef.current?.dragHandlers ?? {})}>
             <Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
                 <Box pt={2}>
                     <ObjectInput
@@ -45,6 +54,16 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps = {}) {
                         setShowDirectories={setShowDirectories}
                     />
                 </Box>
+                {!loginRequired && (
+                    <Box pt={2}>
+                        <ObjectUpload
+                            refs={uploadRef}
+                            disabled={false}
+                            onUpload={handleUpload}
+                            currentPath={objectUrl}
+                        />
+                    </Box>
+                )}
             </Box>
             <ObjectView
                 objectList={objectList}

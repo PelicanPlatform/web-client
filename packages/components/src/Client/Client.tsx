@@ -1,6 +1,6 @@
-import { UsePelicanClientOptions } from "../usePelicanClient";
 import AuthenticatedClient from "../AuthenticatedClient";
 import PublicClient from "../PublicClient";
+import { UsePelicanClientOptions } from "../usePelicanClient";
 
 const Client = ({ startingUrl, enableAuth }: UsePelicanClientOptions) => {
     if (enableAuth) {

@@ -23,7 +23,7 @@ import {
 
 export interface UsePelicanClientOptions {
     /** The initial object URL to load */
-    startingUrl?: string;
+    startingUrl?: string | null | undefined;
     /** Whether to enable authentication features */
     enableAuth?: boolean;
 }
@@ -31,7 +31,7 @@ export interface UsePelicanClientOptions {
 function usePelicanClient(opts: UsePelicanClientOptions = {}) {
     const { startingUrl = "", enableAuth = true } = opts;
 
-    const [objectUrl, setObjectUrl] = useState(startingUrl);
+    const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
     const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
     const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
@@ -114,7 +114,9 @@ function usePelicanClient(opts: UsePelicanClientOptions = {}) {
             }
 
             const namespace =
-                nextFederations[federationHostname].namespaces?.[nextPrefixToNamespace[objectPrefixLocal]?.namespace];
+                nextFederations[federationHostnameLocal].namespaces?.[
+                    nextPrefixToNamespace[objectPrefixLocal]?.namespace
+                ];
             if (!namespace) {
                 throw new Error("Namespace not found (which should be impossible due to prior fetch).");
             }

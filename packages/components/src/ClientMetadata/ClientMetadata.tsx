@@ -13,8 +13,8 @@ function ClientMetadata({ permissions, showDirectories, setShowDirectories }: Cl
             alignItems={"center"}
             justifyContent={"space-between"}
             gap={2}
-            my={1}
             flexDirection="row-reverse"
+            my={1}
         >
             {permissions && (
                 <Box display={"flex"} alignItems={"center"} gap={1}>
