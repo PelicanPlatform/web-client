@@ -2,11 +2,16 @@ import AuthenticatedClient from "../AuthenticatedClient";
 import PublicClient from "../PublicClient";
 import { UsePelicanClientOptions } from "../usePelicanClient";
 
-const Client = ({ startingUrl, enableAuth }: UsePelicanClientOptions) => {
+interface ClientProps extends UsePelicanClientOptions {
+    /** Whether to enable authentication features */
+    enableAuth: boolean;
+}
+
+const Client = ({ enableAuth, ...rest }: ClientProps) => {
     if (enableAuth) {
-        return <AuthenticatedClient startingUrl={startingUrl} />;
+        return <AuthenticatedClient {...rest} />;
     } else {
-        return <PublicClient startingUrl={startingUrl} />;
+        return <PublicClient {...rest} />;
     }
 };
 

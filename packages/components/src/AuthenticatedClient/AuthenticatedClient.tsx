@@ -7,14 +7,9 @@ import ClientMetadata from "../ClientMetadata";
 import ObjectInput from "../ObjectInput";
 import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
-import usePelicanClient from "../usePelicanClient";
+import usePelicanClient, { UsePelicanClientOptions } from "../usePelicanClient";
 
-interface PelicanWebClientProps {
-    /** The initial object URL to load */
-    startingUrl?: string | undefined;
-}
-
-function AuthenticatedClient({ startingUrl }: PelicanWebClientProps) {
+function AuthenticatedClient(props: UsePelicanClientOptions) {
     const uploadRef = useRef<ObjectUploadRef>(null);
 
     const {
@@ -31,7 +26,7 @@ function AuthenticatedClient({ startingUrl }: PelicanWebClientProps) {
         handleExplore,
         handleDownload,
         handleUpload,
-    } = usePelicanClient({ startingUrl, enableAuth: true });
+    } = usePelicanClient(props);
 
     return (
         <Box {...(uploadRef.current?.dragHandlers ?? {})}>

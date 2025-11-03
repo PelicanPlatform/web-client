@@ -5,14 +5,9 @@ import { Box } from "@mui/material";
 import ClientMetadata from "../ClientMetadata";
 import ObjectInput from "../ObjectInput";
 import ObjectView from "../ObjectView";
-import usePelicanClient from "../usePelicanClient";
+import usePelicanClient, { UsePelicanClientOptions } from "../usePelicanClient";
 
-interface PublicClientProps {
-    /** The initial object URL to load */
-    startingUrl?: string | null | undefined;
-}
-
-function PublicClient({ startingUrl }: PublicClientProps = {}) {
+function PublicClient(props: UsePelicanClientOptions) {
     const {
         objectUrl,
         setObjectUrl,
@@ -24,7 +19,7 @@ function PublicClient({ startingUrl }: PublicClientProps = {}) {
         handleRefetchObject,
         handleExplore,
         handleDownload,
-    } = usePelicanClient({ startingUrl, enableAuth: false });
+    } = usePelicanClient(props);
 
     return (
         <Box>

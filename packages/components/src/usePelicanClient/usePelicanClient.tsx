@@ -24,13 +24,14 @@ import { useSessionStorage } from "./useSessionStorage";
 
 export interface UsePelicanClientOptions {
     /** The initial object URL to load */
-    startingUrl?: string | undefined;
+    objectUrl: string;
+    /** Callback when the URL changes */
+    setObjectUrl: (url: string) => void;
     /** Whether to enable authentication features */
     enableAuth?: boolean;
 }
 
-function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanClientOptions = {}) {
-    const [objectUrl, setObjectUrl] = useState(startingUrl ?? "");
+function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePelicanClientOptions) {
     const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
     const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
@@ -67,10 +68,8 @@ function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanCli
 
             try {
                 if (code && fh && namespacePrefix && codeVerifier) {
-                    console.log(0);
                     const namespace = federations[fh]?.namespaces[namespacePrefix];
                     if (namespace?.clientId === undefined || namespace?.clientSecret === undefined) {
-                        console.log(1);
                         console.error(
                             "Cannot exchange code: missing client credentials for namespace",
                             namespacePrefix
@@ -104,7 +103,6 @@ function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanCli
             } catch (e) {
                 console.error("Error during authorization code exchange:", e);
             } finally {
-                console.log(2);
                 // exchange complete (whether we did it or not)
                 setAuthExchangeComplete(true);
             }
@@ -257,7 +255,7 @@ function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanCli
 
         handleRefetchObject(objectUrl);
         setInitialFetchDone(true);
-    }, [authExchangeComplete, initialFetchDone, startingUrl, objectUrl, federations, handleRefetchObject]);
+    }, [authExchangeComplete, initialFetchDone, objectUrl, objectUrl, federations, handleRefetchObject]);
 
     const handleExplore = useCallback(
         (href: string) => {
@@ -289,7 +287,7 @@ function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanCli
             const federation = federations[federationHostname];
             const namespaceKey = prefixToNamespace[objectPrefix];
             const namespace = federation.namespaces[namespaceKey.namespace];
-            startAuthorizationCodeFlow(codeVerifier, namespace, federation, { objectUrl });
+            startAuthorizationCodeFlow(codeVerifier, namespace, federation, { objectUrl: objectUrl });
         } catch (error) {
             console.error("Login failed:", error);
         }
@@ -297,25 +295,21 @@ function usePelicanClient({ startingUrl = "", enableAuth = true }: UsePelicanCli
 
     const handleUpload = useCallback(
         async (file: File) => {
-            console.log("Uploading file:", `pelican://${objectPrefix}/${file.name}`);
-            try {
-                await put(
-                    `pelican://${objectPrefix}/${file.name}`,
-                    file,
-                    federations[federationHostname],
-                    federations[federationHostname].namespaces?.[prefixToNamespace[objectPrefix]?.namespace]
-                );
-            } catch (e) {
-                console.error("Upload failed:", e);
-                throw new Error("Upload failed.");
-            }
+            const federation = federations[federationHostname];
+            const namespace = federation.namespaces?.[prefixToNamespace[objectPrefix]?.namespace];
+
+            // Construct upload URL by appending filename to current directory
+            const uploadUrl = objectUrl.endsWith("/") ? `${objectUrl}${file.name}` : `${objectUrl}/${file.name}`;
+            console.log("Uploading file to:", uploadUrl);
+            await put(uploadUrl, file, federation, namespace);
+
             handleRefetchObject(objectUrl); // refresh current object list after upload
         },
         [federationHostname, objectPrefix, objectUrl, federations, prefixToNamespace, handleRefetchObject]
     );
 
     return {
-        objectUrl,
+        objectUrl: objectUrl,
         setObjectUrl,
         federations,
         setFederations,

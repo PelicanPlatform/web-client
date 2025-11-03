@@ -3,11 +3,12 @@
 import { Box } from "@mui/material";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useState } from "react";
+import { useSessionStorage } from "usehooks-ts";
 
 import Client from "../../../packages/components/src/Client";
 
-function parseStateParam(state: string | null): Record<string, string> {
+function parseStateParam(state: string | null): Partial<Record<string, string>> {
     if (state === null) return {};
 
     return state.split(";").reduce((acc, pair) => {
@@ -18,17 +19,16 @@ function parseStateParam(state: string | null): Record<string, string> {
         const value = pair.substring(colonIndex + 1);
         acc[key] = value;
         return acc;
-    }, {} as Record<string, string>);
+    }, {} as Partial<Record<string, string>>);
 }
 
 function Page() {
+    const [publicClient, setPublicClient] = useState(false);
+    const [objectUrl, setObjectUrl] = useSessionStorage("pelican-object-url", "pelican://osg-htc.org/ncar");
+
     const searchParams = useSearchParams();
     const state = searchParams.get("state");
-
     const providedObjectUrl = parseStateParam(state)["objectUrl"];
-    const objectUrl = providedObjectUrl ?? "pelican://osg-htc.org/ncar/";
-
-    const [publicClient, setPublicClient] = useState(false);
 
     return (
         <Box minHeight={"90vh"} margin={4} width={"1200px"} mx={"auto"}>
@@ -44,7 +44,11 @@ function Page() {
                         <span>Read-only Mode</span>
                     </label>
                 </Box>
-                <Client startingUrl={objectUrl} enableAuth={!publicClient} />
+                <Client
+                    objectUrl={providedObjectUrl ?? objectUrl}
+                    setObjectUrl={setObjectUrl}
+                    enableAuth={!publicClient}
+                />
             </Box>
         </Box>
     );
