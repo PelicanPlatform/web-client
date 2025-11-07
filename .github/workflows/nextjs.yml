@@ -42,14 +42,11 @@ jobs:
         with:
           node-version: "22"
           cache: "pnpm"
-      - name: Move to website
-        run: cd website
       - name: Install dependencies
         run: pnpm install
-      - name: Move to website
-        run: cd website
       - name: Build with Next.js
         run: |
+          cd website
           pnpm run build
           find ./out | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
           printenv
