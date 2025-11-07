@@ -42,8 +42,12 @@ jobs:
         with:
           node-version: "22"
           cache: "pnpm"
+      - name: Move to website
+        run: cd website
       - name: Install dependencies
         run: pnpm install
+      - name: Move to website
+        run: cd website
       - name: Build with Next.js
         run: |
           pnpm run build
