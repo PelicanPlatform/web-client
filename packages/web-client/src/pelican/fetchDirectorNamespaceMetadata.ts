@@ -20,7 +20,7 @@ async function fetchDirectorNamespaceMetadata(
         return transformNoRedirectResponseToPathMetadata(response);
     }
 
-    throw new Error("Director endpoint returned ${response.status}: ${httpEndpoint}");
+    throw new Error(`Director endpoint returned ${response.status}`);
 }
 
 /**

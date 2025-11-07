@@ -36,11 +36,11 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
     const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
 
-    const [permissions, setPermissions] = useState<TokenPermission[] | null>(null);
     const [objectList, setObjectList] = useState<ObjectList[]>([]);
     const [loading, setLoading] = useState(false);
     const [showDirectories, setShowDirectories] = useState(true);
     const [loginRequired, setLoginRequired] = useState(false);
+    const [shortcuts, setShortcuts] = useState<string[]>([]);
 
     const [authExchangeComplete, setAuthExchangeComplete] = useState(false);
     const [initialFetchDone, setInitialFetchDone] = useState(false);
@@ -137,7 +137,6 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
                 objectPath = parsed.objectPath;
             } catch {
                 setLoginRequired(false);
-                setPermissions([]);
                 setObjectList([]);
                 return;
             }
@@ -220,6 +219,10 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
                     });
                 }
 
+                const objectPathWithoutSlash = objectPath.replace(/\/+$/, ""); // remove trailing slashes for comparison
+                // remove current directory entry
+                objects = objects.filter((obj) => obj.href !== objectPathWithoutSlash && obj.href !== "");
+
                 // reverse so directories show first (and the parent entry shows at top)
                 setObjectList(objects.reverse());
             } catch (e) {
@@ -229,11 +232,12 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
                 }
             }
 
-            // permissions
-            try {
-                const perms = await fetchPermissions(url, namespace);
-                setPermissions(perms);
-            } catch {}
+            // get the shortcuts, strip the "storage.*:" prefix, and make unique
+            const perms = (await fetchPermissions(namespace))
+                .map((perm) => namespace.prefix + perm.replace(/^storage\.(read|create|modify):/, ""))
+                .filter((value, index, self) => self.indexOf(value) === index); // unique
+            setShortcuts(perms);
+            console.log("Fetched shortcuts:", perms);
         },
         [federations, prefixToNamespace, setFederations, setPrefixToNamespace]
     );
@@ -309,14 +313,10 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
     );
 
     return {
-        objectUrl: objectUrl,
+        objectUrl,
         setObjectUrl,
-        federations,
-        setFederations,
-        prefixToNamespace,
-        setPrefixToNamespace,
-        permissions: permissions,
-        setPermissions,
+        shortcuts,
+        setShortcuts,
         objectList,
         loading,
         showDirectories,

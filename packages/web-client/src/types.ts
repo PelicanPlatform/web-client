@@ -100,4 +100,4 @@ export interface DynamicClientPayload {
     scope: string;
 }
 
-export type TokenPermission = "storage.read" | "storage.create" | "storage.modify";
+export type TokenPermission = `storage.read:${string}` | `storage.create:${string}` | `storage.modify:${string}`;

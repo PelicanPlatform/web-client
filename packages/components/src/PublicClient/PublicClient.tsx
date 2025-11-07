@@ -31,11 +31,7 @@ function PublicClient(props: UsePelicanClientOptions) {
                         onChange={handleRefetchObject}
                         loading={loading}
                     />
-                    <ClientMetadata
-                        permissions={null}
-                        showDirectories={showDirectories}
-                        setShowDirectories={setShowDirectories}
-                    />
+                    <ClientMetadata showDirectories={showDirectories} setShowDirectories={setShowDirectories} />
                 </Box>
             </Box>
             <ObjectView

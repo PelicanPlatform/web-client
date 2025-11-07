@@ -4,6 +4,7 @@ import { Box } from "@mui/material";
 import { useRef } from "react";
 
 import ClientMetadata from "../ClientMetadata";
+import CollectionShortcuts from "../CollectionShortcuts";
 import ObjectInput from "../ObjectInput";
 import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
@@ -16,9 +17,9 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
         objectUrl,
         setObjectUrl,
         objectList,
+        shortcuts,
         loading,
         showDirectories,
-        permissions,
         setShowDirectories,
         loginRequired,
         handleLogin,
@@ -29,43 +30,52 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
     } = usePelicanClient(props);
 
     return (
-        <Box {...(uploadRef.current?.dragHandlers ?? {})}>
-            <Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
-                <Box pt={2}>
-                    <ObjectInput
-                        objectUrl={objectUrl}
-                        setObjectUrl={setObjectUrl}
-                        onChange={handleRefetchObject}
-                        loading={loading}
-                    />
-                    <ClientMetadata
-                        permissions={permissions}
-                        showDirectories={showDirectories}
-                        setShowDirectories={setShowDirectories}
+        <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
+            <Box
+                width={"100%"}
+                sx={{
+                    display: {
+                        xs: "block",
+                        md: "flex",
+                    },
+                }}
+                gap={2}
+            >
+                <Box pt={2} display={"flex"} flexDirection={"column"} flexGrow={1}>
+                    <Box>
+                        <ObjectInput
+                            objectUrl={objectUrl}
+                            setObjectUrl={setObjectUrl}
+                            onChange={handleRefetchObject}
+                            loading={loading}
+                        />
+                        <ClientMetadata showDirectories={showDirectories} setShowDirectories={setShowDirectories} />
+                    </Box>
+                    {!loginRequired && (
+                        <Box>
+                            <ObjectUpload
+                                refs={uploadRef}
+                                disabled={false}
+                                onUpload={handleUpload}
+                                currentPath={objectUrl}
+                            />
+                        </Box>
+                    )}
+                    <ObjectView
+                        objectList={objectList}
+                        showCollections={showDirectories}
+                        onExplore={handleExplore}
+                        onDownload={handleDownload}
+                        loginRequired={loginRequired}
+                        onLoginRequest={handleLogin}
+                        canLogin={true}
                     />
                 </Box>
-                {!loginRequired && (
-                    <Box pt={2}>
-                        <ObjectUpload
-                            refs={uploadRef}
-                            disabled={false}
-                            onUpload={handleUpload}
-                            currentPath={objectUrl}
-                        />
+                {shortcuts.length > 0 && (
+                    <Box pt={2} flexGrow={0}>
+                        <CollectionShortcuts shortcuts={shortcuts} onClick={handleExplore} />
                     </Box>
                 )}
-            </Box>
-            <ObjectView
-                objectList={objectList}
-                showCollections={showDirectories}
-                onExplore={handleExplore}
-                onDownload={handleDownload}
-                loginRequired={loginRequired}
-                onLoginRequest={handleLogin}
-                canLogin={true}
-            />
-            <Box mt={4} component="pre">
-                {/* {JSON.stringify(federations, null, 2)} */}
             </Box>
         </Box>
     );

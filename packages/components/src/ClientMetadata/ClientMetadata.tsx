@@ -1,12 +1,11 @@
 import { Box, Chip, FormControlLabel, Switch, Typography } from "@mui/material";
 
 interface ClientMetadataProps {
-    permissions: string[] | null;
     showDirectories: boolean;
     setShowDirectories: (show: boolean) => void;
 }
 
-function ClientMetadata({ permissions, showDirectories, setShowDirectories }: ClientMetadataProps) {
+function ClientMetadata({ showDirectories, setShowDirectories }: ClientMetadataProps) {
     return (
         <Box
             display={"flex"}
@@ -16,14 +15,6 @@ function ClientMetadata({ permissions, showDirectories, setShowDirectories }: Cl
             flexDirection="row-reverse"
             my={1}
         >
-            {permissions && (
-                <Box display={"flex"} alignItems={"center"} gap={1}>
-                    <Typography variant="body2">Permissions:</Typography>
-                    {permissions.map((perm) => (
-                        <Chip key={perm} label={perm} size="small" />
-                    ))}
-                </Box>
-            )}
             <FormControlLabel
                 control={
                     <Switch
