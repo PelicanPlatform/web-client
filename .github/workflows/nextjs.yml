@@ -44,6 +44,8 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
+      - name: Build all packages
+        run: pnpm -r run build
       - name: Build with Next.js
         run: |
           cd website
