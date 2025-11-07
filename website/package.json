@@ -18,7 +18,8 @@
         "next": "^14.2.31",
         "react": "^18",
         "react-dom": "^18",
-        "usehooks-ts": "^3.1.1"
+        "usehooks-ts": "^3.1.1",
+        "@pelicanplatform/components": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^20",
