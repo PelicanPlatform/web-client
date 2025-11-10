@@ -31,6 +31,15 @@ export interface UsePelicanClientOptions {
     enableAuth?: boolean;
 }
 
+/**
+ * A React hook to manage Pelican client state and actions.
+ *
+ * The main pieces of state are `objectUrl`, `federationHostname`, and `objectPrefix`.
+ * These each represent:
+ * - `objectUrl`: The full Pelican URL, as inputed by the user
+ * - `federationHostname`: The hostname of the federation being accessed
+ * - `objectPrefix`: The prefix (namespace) of the object being accessed
+ */
 function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePelicanClientOptions) {
     const [federations, setFederations] = useSessionStorage<FederationStore>("pelican-wc-federations", {});
     const [prefixToNamespace, setPrefixToNamespace] = useSessionStorage<ObjectPrefixStore>("pelican-wc-p2n", {});
@@ -237,7 +246,6 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
                 .map((perm) => namespace.prefix + perm.replace(/^storage\.(read|create|modify):/, ""))
                 .filter((value, index, self) => self.indexOf(value) === index); // unique
             setShortcuts(perms);
-            console.log("Fetched shortcuts:", perms);
         },
         [federations, prefixToNamespace, setFederations, setPrefixToNamespace]
     );
@@ -315,6 +323,8 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
     return {
         objectUrl,
         setObjectUrl,
+        federationHostname,
+        objectPrefix,
         shortcuts,
         setShortcuts,
         objectList,

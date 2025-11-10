@@ -5,6 +5,9 @@ interface ClientMetadataProps {
     setShowDirectories: (show: boolean) => void;
 }
 
+/**
+ * A small metadata row that contains options like "Show Directories", and the current federation/namespace.
+ */
 function ClientMetadata({ showDirectories, setShowDirectories }: ClientMetadataProps) {
     return (
         <Box

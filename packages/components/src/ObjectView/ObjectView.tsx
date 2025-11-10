@@ -25,11 +25,14 @@ interface ObjectListProps {
     showCollections?: boolean;
     onExplore: (href: string) => void;
     onDownload: (href: string) => void;
-    canLogin: boolean;
     loginRequired: boolean;
+    canLogin: boolean;
     onLoginRequest?: () => void;
 }
 
+/**
+ * A component that lists all the provided objects as a table.
+ */
 function ObjectView({
     objectList,
     showCollections = true,

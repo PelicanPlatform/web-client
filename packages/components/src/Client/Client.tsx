@@ -2,16 +2,14 @@ import AuthenticatedClient from "../AuthenticatedClient";
 import PublicClient from "../PublicClient";
 import { UsePelicanClientOptions } from "../usePelicanClient";
 
-interface ClientProps extends UsePelicanClientOptions {
-    /** Whether to enable authentication features */
-    enableAuth: boolean;
-}
-
-const Client = ({ enableAuth, ...rest }: ClientProps) => {
-    if (enableAuth) {
-        return <AuthenticatedClient {...rest} />;
+/**
+ * A Pelican web-client, which can be either authenticated or public based on props
+ */
+const Client = (props: UsePelicanClientOptions) => {
+    if (props.enableAuth) {
+        return <AuthenticatedClient {...props} />;
     } else {
-        return <PublicClient {...rest} />;
+        return <PublicClient {...props} />;
     }
 };
 

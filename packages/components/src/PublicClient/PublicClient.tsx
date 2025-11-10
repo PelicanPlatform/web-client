@@ -7,6 +7,9 @@ import ObjectInput from "../ObjectInput";
 import ObjectView from "../ObjectView";
 import usePelicanClient, { UsePelicanClientOptions } from "../usePelicanClient";
 
+/**
+ * A public Pelican client, with authentication features disabled.
+ */
 function PublicClient(props: UsePelicanClientOptions) {
     const {
         objectUrl,
@@ -39,8 +42,8 @@ function PublicClient(props: UsePelicanClientOptions) {
                 showCollections={showDirectories}
                 onExplore={handleExplore}
                 onDownload={handleDownload}
-                loginRequired={loginRequired}
                 canLogin={false}
+                loginRequired={loginRequired}
             />
         </Box>
     );

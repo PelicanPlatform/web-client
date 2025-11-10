@@ -10,6 +10,9 @@ import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
 import usePelicanClient, { UsePelicanClientOptions } from "../usePelicanClient";
 
+/**
+ * An authorized web-client, with upload functionality and enabled authentications
+ */
 function AuthenticatedClient(props: UsePelicanClientOptions) {
     const uploadRef = useRef<ObjectUploadRef>(null);
 
@@ -67,8 +70,8 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                         onExplore={handleExplore}
                         onDownload={handleDownload}
                         loginRequired={loginRequired}
-                        onLoginRequest={handleLogin}
                         canLogin={true}
+                        onLoginRequest={handleLogin}
                     />
                 </Box>
                 {shortcuts.length > 0 && (

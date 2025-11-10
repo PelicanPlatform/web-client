@@ -34,6 +34,10 @@ interface ObjectUploadProps {
     refs?: Ref<ObjectUploadRef>;
 }
 
+/**
+ * A drag-and-drop upload component that provides an overlay when dragging files over the window.
+ * TODO: button to open file selector
+ */
 const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectUploadProps) => {
     const [showOverlay, setShowOverlay] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
