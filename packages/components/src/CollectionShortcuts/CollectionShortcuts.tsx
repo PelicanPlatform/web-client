@@ -1,14 +1,19 @@
 "use client";
 
+import { Star } from "@mui/icons-material";
 import { Box, Paper, Typography } from "@mui/material";
+import type { PelicanShortcut } from "../usePelicanClient";
 
 interface CollectionShortcutsProps {
     /** List of shortcut collections */
-    shortcuts: string[];
+    shortcuts: PelicanShortcut[];
     /** Callback when a shortcut is clicked */
     onClick: (favorite: string) => void;
 }
 
+/**
+ * A sidebar element to view a list of provided shortcuts, used for the user's authenticated routes.
+ */
 function CollectionShortcuts({ shortcuts, onClick }: CollectionShortcutsProps) {
     return (
         <Paper variant="outlined" sx={{ width: "fit-content" }}>
@@ -25,7 +30,7 @@ function CollectionShortcuts({ shortcuts, onClick }: CollectionShortcutsProps) {
                         <Box
                             component="li"
                             key={index}
-                            onClick={() => onClick(favorite)}
+                            onClick={() => onClick(favorite.href)}
                             sx={{
                                 px: 2,
                                 py: 1,
@@ -38,8 +43,8 @@ function CollectionShortcuts({ shortcuts, onClick }: CollectionShortcutsProps) {
                                 },
                             }}
                         >
-                            <span>⭐</span>
-                            <span>{favorite}</span>
+                            <Star fontSize="small" color="action" />
+                            <span>{favorite.objectPath}</span>
                         </Box>
                     ))}
                 </Box>

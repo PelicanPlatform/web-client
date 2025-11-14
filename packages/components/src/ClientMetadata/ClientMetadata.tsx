@@ -1,6 +1,8 @@
 import { Box, Chip, FormControlLabel, Switch, Typography } from "@mui/material";
 
 interface ClientMetadataProps {
+    federation: string | null;
+    namespace: string | null;
     showDirectories: boolean;
     setShowDirectories: (show: boolean) => void;
 }
@@ -8,16 +10,14 @@ interface ClientMetadataProps {
 /**
  * A small metadata row that contains options like "Show Directories", and the current federation/namespace.
  */
-function ClientMetadata({ showDirectories, setShowDirectories }: ClientMetadataProps) {
+function ClientMetadata({ federation, namespace, showDirectories, setShowDirectories }: ClientMetadataProps) {
     return (
-        <Box
-            display={"flex"}
-            alignItems={"center"}
-            justifyContent={"space-between"}
-            gap={2}
-            flexDirection="row-reverse"
-            my={1}
-        >
+        <Box display={"flex"} alignItems={"center"} justifyContent={"space-between"} gap={2} my={1}>
+            <Box>
+                <Typography variant="body2" color="text.secondary">
+                    <strong>Federation:</strong> {federation || "N/A"} <strong>Namespace:</strong> {namespace || "N/A"}
+                </Typography>
+            </Box>
             <FormControlLabel
                 control={
                     <Switch

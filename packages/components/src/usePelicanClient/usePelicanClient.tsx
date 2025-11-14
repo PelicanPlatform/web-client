@@ -4,7 +4,6 @@ import {
     FederationStore,
     ObjectList,
     ObjectPrefixStore,
-    TokenPermission,
     UnauthenticatedError,
     downloadResponse,
     fetchFederation,
@@ -31,6 +30,11 @@ export interface UsePelicanClientOptions {
     enableAuth?: boolean;
 }
 
+export interface PelicanShortcut {
+    href: string;
+    objectPath: string;
+}
+
 /**
  * A React hook to manage Pelican client state and actions.
  *
@@ -49,7 +53,7 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
     const [loading, setLoading] = useState(false);
     const [showDirectories, setShowDirectories] = useState(true);
     const [loginRequired, setLoginRequired] = useState(false);
-    const [shortcuts, setShortcuts] = useState<string[]>([]);
+    const [shortcuts, setShortcuts] = useState<PelicanShortcut[]>([]);
 
     const [authExchangeComplete, setAuthExchangeComplete] = useState(false);
     const [initialFetchDone, setInitialFetchDone] = useState(false);
@@ -242,10 +246,14 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
             }
 
             // get the shortcuts, strip the "storage.*:" prefix, and make unique
-            const perms = (await fetchPermissions(namespace))
-                .map((perm) => namespace.prefix + perm.replace(/^storage\.(read|create|modify):/, ""))
-                .filter((value, index, self) => self.indexOf(value) === index); // unique
-            setShortcuts(perms);
+            const shortcuts = (await fetchPermissions(namespace))
+                .map((perm) => perm.replace(/^storage\.(read|create|modify):/, ""))
+                .filter((value, index, self) => self.indexOf(value) === index) // unique
+                .map((shortcut) => ({
+                    href: namespace.prefix + shortcut,
+                    objectPath: shortcut,
+                }));
+            setShortcuts(shortcuts);
         },
         [federations, prefixToNamespace, setFederations, setPrefixToNamespace]
     );
@@ -323,8 +331,6 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
     return {
         objectUrl,
         setObjectUrl,
-        federationHostname,
-        objectPrefix,
         shortcuts,
         setShortcuts,
         objectList,
@@ -337,6 +343,8 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
         handleExplore,
         handleDownload,
         handleUpload,
+        federationName: federations[federationHostname]?.hostname,
+        namespaceName: prefixToNamespace[objectPrefix]?.namespace,
     };
 }
 
