@@ -21,6 +21,7 @@ export interface ObjectUploadRef {
         onDragLeave: (e: DragEvent) => void;
         onDrop: (e: DragEvent) => void;
     };
+    triggerFileSelect: () => void;
 }
 
 interface ObjectUploadProps {
@@ -43,6 +44,7 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
     const [isDragging, setIsDragging] = useState(false);
     const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
     const dragCounterRef = useRef(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleDragEnter = useCallback((e: DragEvent) => {
         e.preventDefault();
@@ -67,6 +69,48 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
         e.stopPropagation();
     }, []);
 
+    const processFiles = useCallback(
+        async (files: File[]) => {
+            if (disabled || !onUpload || files.length === 0) return;
+
+            // Initialize upload tracking
+            const newUploadingFiles: UploadingFile[] = files.map((file) => ({
+                file,
+                status: "pending",
+            }));
+            setUploadingFiles(newUploadingFiles);
+            setShowOverlay(true);
+
+            files.forEach(async (file, index) => {
+                // Update status to uploading
+                setUploadingFiles((prev) => {
+                    const updated = [...prev];
+                    updated[index].status = "uploading";
+                    return updated;
+                });
+
+                try {
+                    await onUpload(file);
+                    // Update status to success
+                    setUploadingFiles((prev) => {
+                        const updated = [...prev];
+                        updated[index].status = "success";
+                        return updated;
+                    });
+                } catch (e) {
+                    // Update status to error
+                    setUploadingFiles((prev) => {
+                        const updated = [...prev];
+                        updated[index].status = "error";
+                        updated[index].error = e instanceof Error ? e.message : "Upload failed";
+                        return updated;
+                    });
+                }
+            });
+        },
+        [disabled, onUpload]
+    );
+
     const handleDrop = useCallback(
         async (e: DragEvent) => {
             e.preventDefault();
@@ -74,47 +118,28 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
             setIsDragging(false);
             dragCounterRef.current = 0;
 
-            if (disabled || !onUpload) return;
-
             const droppedFiles = Array.from(e.dataTransfer.files);
-            if (droppedFiles.length > 0) {
-                // Initialize upload tracking
-                const newUploadingFiles: UploadingFile[] = droppedFiles.map((file) => ({
-                    file,
-                    status: "pending",
-                }));
-                setUploadingFiles(newUploadingFiles);
-                setShowOverlay(true);
-
-                droppedFiles.forEach(async (file, index) => {
-                    // Update status to uploading
-                    setUploadingFiles((prev) => {
-                        const updated = [...prev];
-                        updated[index].status = "uploading";
-                        return updated;
-                    });
-
-                    try {
-                        await onUpload(file);
-                        // Update status to success
-                        setUploadingFiles((prev) => {
-                            const updated = [...prev];
-                            updated[index].status = "success";
-                            return updated;
-                        });
-                    } catch (e) {
-                        // Update status to error
-                        setUploadingFiles((prev) => {
-                            const updated = [...prev];
-                            updated[index].status = "error";
-                            updated[index].error = e instanceof Error ? e.message : "Upload failed";
-                            return updated;
-                        });
-                    }
-                });
-            }
+            await processFiles(droppedFiles);
         },
-        [disabled, onUpload]
+        [processFiles]
+    );
+
+    const triggerFileSelect = useCallback(() => {
+        if (!disabled && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    }, [disabled]);
+
+    const handleFileInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                processFiles(Array.from(files));
+            }
+            // Reset input value so the same file can be selected again
+            e.target.value = "";
+        },
+        [processFiles]
     );
 
     // expose drag handlers via ref
@@ -127,8 +152,9 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
                 onDragLeave: handleDragLeave,
                 onDrop: handleDrop,
             },
+            triggerFileSelect,
         }),
-        [handleDragEnter, handleDragOver, handleDragLeave, handleDrop]
+        [handleDragEnter, handleDragOver, handleDragLeave, handleDrop, triggerFileSelect]
     );
 
     // Auto-close overlay when all uploads are complete
@@ -157,6 +183,14 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
 
     return (
         <>
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleFileInputChange}
+            />
             {/* Drag overlay - renders at top level */}
             {isDragging && !disabled && (
                 <Paper

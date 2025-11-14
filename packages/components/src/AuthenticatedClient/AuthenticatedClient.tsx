@@ -61,6 +61,7 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                             namespace={namespaceName}
                             showDirectories={showDirectories}
                             setShowDirectories={setShowDirectories}
+                            onUpload={!loginRequired ? () => uploadRef.current?.triggerFileSelect() : undefined}
                         />
                     </Box>
                     {!loginRequired && (
