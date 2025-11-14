@@ -22,6 +22,8 @@ function PublicClient(props: UsePelicanClientOptions) {
         handleRefetchObject,
         handleExplore,
         handleDownload,
+        federationName,
+        namespaceName,
     } = usePelicanClient(props);
 
     return (
@@ -34,7 +36,12 @@ function PublicClient(props: UsePelicanClientOptions) {
                         onChange={handleRefetchObject}
                         loading={loading}
                     />
-                    <ClientMetadata showDirectories={showDirectories} setShowDirectories={setShowDirectories} />
+                    <ClientMetadata
+                        federation={federationName}
+                        namespace={namespaceName}
+                        showDirectories={showDirectories}
+                        setShowDirectories={setShowDirectories}
+                    />
                 </Box>
             </Box>
             <ObjectView
