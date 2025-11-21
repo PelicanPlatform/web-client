@@ -275,7 +275,7 @@ function usePelicanClient({ objectUrl, setObjectUrl, enableAuth = true }: UsePel
 
         handleRefetchObject(objectUrl);
         setInitialFetchDone(true);
-    }, [authExchangeComplete, initialFetchDone, objectUrl, objectUrl, federations, handleRefetchObject]);
+    }, [authExchangeComplete, initialFetchDone, objectUrl, federations, handleRefetchObject]);
 
     const handleExplore = useCallback(
         (href: string) => {

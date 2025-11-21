@@ -35,6 +35,8 @@ function PublicClient(props: UsePelicanClientOptions) {
                         setObjectUrl={setObjectUrl}
                         onChange={handleRefetchObject}
                         loading={loading}
+                        federation={federationName}
+                        namespace={namespaceName}
                     />
                     <ClientMetadata
                         federation={federationName}
@@ -51,6 +53,7 @@ function PublicClient(props: UsePelicanClientOptions) {
                 onDownload={handleDownload}
                 canLogin={false}
                 loginRequired={loginRequired}
+                namespace={namespaceName}
             />
         </Box>
     );

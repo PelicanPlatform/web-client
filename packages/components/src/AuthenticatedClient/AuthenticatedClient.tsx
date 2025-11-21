@@ -34,8 +34,6 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
         namespaceName,
     } = usePelicanClient(props);
 
-    console.log(shortcuts);
-
     return (
         <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
             <Box
@@ -55,6 +53,8 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                             setObjectUrl={setObjectUrl}
                             onChange={handleRefetchObject}
                             loading={loading}
+                            federation={federationName}
+                            namespace={namespaceName}
                         />
                         <ClientMetadata
                             federation={federationName}
@@ -82,6 +82,7 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                         loginRequired={loginRequired}
                         canLogin={true}
                         onLoginRequest={handleLogin}
+                        namespace={namespaceName}
                     />
                 </Box>
                 {shortcuts.length > 0 && (

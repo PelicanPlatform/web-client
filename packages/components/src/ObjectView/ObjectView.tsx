@@ -28,6 +28,8 @@ interface ObjectListProps {
     loginRequired: boolean;
     canLogin: boolean;
     onLoginRequest?: () => void;
+    /** Namespace prefix to strip from display (e.g., /namespace) */
+    namespace?: string | null;
 }
 
 /**
@@ -41,6 +43,7 @@ function ObjectView({
     loginRequired,
     canLogin,
     onLoginRequest,
+    namespace,
 }: ObjectListProps) {
     const [sortColumn, setSortColumn] = useState<SortableColumn>("href");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -171,7 +174,7 @@ function ObjectView({
                                     style={{ cursor: "pointer" }}
                                 >
                                     <TableCell sx={{ px: 2, py: 1 }}>
-                                        <ObjectName {...obj} />
+                                        <ObjectName {...obj} namespace={namespace} />
                                     </TableCell>
                                     <TableCell sx={{ px: 2, py: 1 }}>
                                         {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
@@ -234,12 +237,20 @@ function ObjectView({
     );
 }
 
-function ObjectName(object: ObjectList) {
+function ObjectName(props: ObjectList & { namespace?: string | null }) {
+    const { href, iscollection, getlastmodified, namespace } = props;
+
+    // Strip namespace from the display name
+    let displayName = href;
+    if (namespace && href.startsWith(namespace)) {
+        displayName = href.slice(namespace.length) || "/";
+    }
+
     return (
         <Box display="flex" alignItems="center" gap={1}>
-            {object.iscollection ? (
+            {iscollection ? (
                 // Check if this is the parent directory (first item with empty getlastmodified)
-                object.getlastmodified === "" ? (
+                getlastmodified === "" ? (
                     <ArrowUpward color="primary" fontSize="small" />
                 ) : (
                     <Folder color="primary" fontSize="small" />
@@ -248,7 +259,7 @@ function ObjectName(object: ObjectList) {
                 <InsertDriveFile color="action" fontSize="small" />
             )}
             {/* Show ".." for parent directory (synthetic entry with empty getlastmodified) */}
-            {object.iscollection && object.getlastmodified === "" ? ".." : object.href}
+            {iscollection && getlastmodified === "" ? ".." : displayName}
         </Box>
     );
 }
