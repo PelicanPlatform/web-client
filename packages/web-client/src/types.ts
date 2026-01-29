@@ -1,6 +1,4 @@
-export interface ObjectPrefixStore {
-    [prefix: string]: { federation: string; namespace: string };
-}
+export type ObjectPrefixStore = Record<string, { federation: string; namespace: string } | undefined>;
 
 export interface FederationStore {
     [hostname: string]: Federation;
@@ -11,7 +9,7 @@ export interface Namespace {
     token?: Token;
     clientSecret?: string;
     clientId?: string;
-    oidcConfiguration: OidcConfiguration;
+    oidcConfiguration?: OidcConfiguration;
 }
 
 export interface AuthorizationClient {
@@ -101,3 +99,11 @@ export interface DynamicClientPayload {
 }
 
 export type TokenPermission = `storage.read:${string}` | `storage.create:${string}` | `storage.modify:${string}`;
+
+export type CollectionPermission = 'create' | 'modify' | 'read';
+
+export interface Collection {
+    href: string;
+    objectPath: string;
+    permissions: CollectionPermission[];
+}

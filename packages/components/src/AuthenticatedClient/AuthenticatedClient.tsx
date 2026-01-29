@@ -20,18 +20,15 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
         objectUrl,
         setObjectUrl,
         objectList,
-        shortcuts,
+        collections,
         loading,
-        showDirectories,
-        setShowDirectories,
         loginRequired,
         handleLogin,
-        handleRefetchObject,
         handleExplore,
         handleDownload,
         handleUpload,
-        federationName,
-        namespaceName,
+        federation,
+        namespace
     } = usePelicanClient(props);
 
     return (
@@ -50,17 +47,14 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                     <Box>
                         <ObjectInput
                             objectUrl={objectUrl}
-                            setObjectUrl={setObjectUrl}
-                            onChange={handleRefetchObject}
+                            onChange={setObjectUrl}
                             loading={loading}
-                            federation={federationName}
-                            namespace={namespaceName}
+                            federation={federation?.hostname}
+                            namespace={namespace?.prefix}
                         />
                         <ClientMetadata
-                            federation={federationName}
-                            namespace={namespaceName}
-                            showDirectories={showDirectories}
-                            setShowDirectories={setShowDirectories}
+                            federation={federation?.hostname}
+                            namespace={namespace?.prefix}
                             onUpload={!loginRequired ? () => uploadRef.current?.triggerFileSelect() : undefined}
                         />
                     </Box>
@@ -76,18 +70,17 @@ function AuthenticatedClient(props: UsePelicanClientOptions) {
                     )}
                     <ObjectView
                         objectList={objectList}
-                        showCollections={showDirectories}
                         onExplore={handleExplore}
                         onDownload={handleDownload}
                         loginRequired={loginRequired}
                         canLogin={true}
                         onLoginRequest={handleLogin}
-                        namespace={namespaceName}
+                        namespace={namespace?.prefix}
                     />
                 </Box>
-                {shortcuts.length > 0 && (
+                {collections.length > 0 && (
                     <Box pt={2} flexGrow={0}>
-                        <CollectionShortcuts shortcuts={shortcuts} onClick={handleExplore} />
+                        <CollectionShortcuts collections={collections} onClick={handleExplore} />
                     </Box>
                 )}
             </Box>

@@ -28,7 +28,7 @@ const startAuthorizationCodeFlow = async (
     authorizationUrl.searchParams.append("client_id", namespace.clientId);
     authorizationUrl.searchParams.append("response_type", "code");
     authorizationUrl.searchParams.append("scope", `storage.read:/ storage.create:/ storage.modify:/`);
-    authorizationUrl.searchParams.append("redirect_uri", window.location.href);
+    authorizationUrl.searchParams.append("redirect_uri", `${window.location.origin}${window.location.pathname}`);
     authorizationUrl.searchParams.append("code_challenge", codeChallenge);
     authorizationUrl.searchParams.append("code_challenge_method", "S256");
     authorizationUrl.searchParams.append("state", stateString);

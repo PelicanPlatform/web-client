@@ -1,15 +1,18 @@
 "use client";
 
-import { KeyboardDoubleArrowRight, Visibility, VisibilityOff } from "@mui/icons-material";
-import { Box, IconButton, InputAdornment, LinearProgress, TextField } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+
+import { Box, LinearProgress, TextField } from "@mui/material";
+import {useEffect, useState} from "react";
 import { useDebounceCallback } from "usehooks-ts";
+
+
+import StartAdornment from "./StartAdornment";
+
+
 
 interface ObjectInputProps {
     objectUrl: string;
 
-    /** objectUrl is the actual text value used by the UI */
-    setObjectUrl: (url: string) => void;
     /**
      * onChange is a debounced callback for when the user stops typing,
      * signifying to change the object.
@@ -26,31 +29,57 @@ interface ObjectInputProps {
  * The ObjectInput component allows users to input an object URL, handles authentication if required,
  * and displays a loading indicator during asynchronous operations.
  */
-function ObjectInput({ objectUrl, setObjectUrl, onChange, loading, federation, namespace }: ObjectInputProps) {
-    const debounced = useDebounceCallback(onChange, 300);
-    const [showPrefix, setShowPrefix] = useState(false);
+function ObjectInput({ objectUrl, onChange: _onChange, loading, federation, namespace }: ObjectInputProps) {
 
-    // keep track of the last prefix to avoid flicker during loading
-    const lastPrefixRef = useRef<string | null>(null);
+    const onChange = useDebounceCallback(_onChange, 300);
+    const [expanded, _setExpanded] = useState(true);
 
-    // calculate the prefix to hide
-    const prefix = federation && namespace ? `pelican://${federation}${namespace}` : null;
+    const setExpanded = (value: boolean) => {
+        if(loading) return;
+        _setExpanded(value);
+    }
 
-    // remember the last prefix
+    // Controlled isPrefixComplete: only update when loading is false
+    const computeIsPrefixComplete = () => !!federation && !!namespace;
+    const [isPrefixComplete, setIsPrefixComplete] = useState(computeIsPrefixComplete());
     useEffect(() => {
-        if (prefix) {
-            lastPrefixRef.current = prefix;
+        if (!loading) {
+            setIsPrefixComplete(computeIsPrefixComplete());
         }
-    }, [prefix]);
+        // If loading is true, keep previous isPrefixComplete
+    }, [federation, namespace, loading]);
 
-    // Use the current prefix if available, otherwise use the last known prefix
-    const effectivePrefix = prefix || lastPrefixRef.current;
+    // Toggle expanded state if prefix becomes complete/incomplete
+    useEffect(() => {
+        if (isPrefixComplete) {
+            setExpanded(false);
+        } else {
+            setExpanded(true);
+        }
+    }, [isPrefixComplete]);
 
-    // Determine what to display in the input
-    const displayValue =
-        !showPrefix && effectivePrefix && objectUrl.startsWith(effectivePrefix)
-            ? objectUrl.slice(effectivePrefix.length) || "/"
-            : objectUrl;
+    // Maintain a local objectUrl state to avoid input lag
+    const [localObjectUrl, setLocalObjectUrl] = useState(objectUrl);
+    useEffect(() => {
+        if (!loading) setLocalObjectUrl(objectUrl);
+    }, [objectUrl, loading]);
+
+    // Controlled displayValue: only update when loading is false
+    const computeDisplayValue = () => {
+        if (!isPrefixComplete || expanded) {
+            return localObjectUrl;
+        } else {
+            return localObjectUrl.replace(`pelican://${federation ?? ""}${namespace ?? ""}`, "");
+        }
+    }
+    const [displayValue, setDisplayValue] = useState(computeDisplayValue());
+
+    useEffect(() => {
+        if (!loading) {
+            setDisplayValue(computeDisplayValue());
+        }
+        // If loading is true, keep previous displayValue
+    }, [isPrefixComplete, federation, namespace, localObjectUrl, expanded, loading]);
 
     return (
         <Box display={"flex"} flexDirection={"column"}>
@@ -58,41 +87,25 @@ function ObjectInput({ objectUrl, setObjectUrl, onChange, loading, federation, n
                 <TextField
                     fullWidth
                     onChange={(e) => {
-                        // If prefix is hidden, reconstruct the full URL
-                        const newValue =
-                            !showPrefix && effectivePrefix ? effectivePrefix + e.target.value : e.target.value;
-                        setObjectUrl(newValue);
-                        debounced(newValue);
+                        const newValue = expanded ? e.target.value : `pelican://${federation ?? ""}${namespace ?? ""}${e.target.value}`;
+                        setLocalObjectUrl(newValue);
+                        onChange(newValue);
                     }}
                     value={displayValue}
                     id="pelican-url"
-                    placeholder={"Enter Pelican URL ( pelican://<federation>/<namespace>/* )"}
+                    placeholder={expanded ? "Enter Pelican URL ( pelican://<federation>/<namespace>/* )" : "Enter object path..."}
                     variant="outlined"
                     size="medium"
                     slotProps={{
                         input: {
                             startAdornment: (
-                                <InputAdornment position="start">
-                                    <KeyboardDoubleArrowRight />
-                                </InputAdornment>
-                            ),
-                            endAdornment: prefix && (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => setShowPrefix(!showPrefix)}
-                                        edge="end"
-                                        title={showPrefix ? "Hide prefix" : "Show full URL"}
-                                    >
-                                        {showPrefix ? <VisibilityOff /> : <Visibility />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
+                                <StartAdornment federation={federation ?? ""} namespace={namespace ?? ""} expanded={expanded} setExpanded={setExpanded} />
+                            )
                         },
                     }}
                 />
             </Box>
-            {loading && <LinearProgress />}
+            {loading ? <LinearProgress /> : <Box height={4} />}
         </Box>
     );
 }

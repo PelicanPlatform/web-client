@@ -103,10 +103,18 @@ function ObjectView({
     }, [objectList, showCollections, sortColumn, sortDirection]);
 
     return (
-        <Box pt={2}>
+        <Box mt={1}>
             {loginRequired || !objectList || objectList.length === 0 ? (
                 // Login prompt / Empty state
-                <Box pt={4} display="flex" alignItems="center" justifyContent="center" minHeight={300}>
+                <Box
+                    pt={4}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    border={"1px dashed var(--mui-palette-divider, #e0e0e0)"}
+                    borderRadius={1}
+                    minHeight={300}
+                >
                     <Typography variant="h6" color="textSecondary" align="center">
                         {loginRequired ? (
                             // Login prompt

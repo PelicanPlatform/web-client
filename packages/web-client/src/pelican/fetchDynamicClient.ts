@@ -14,7 +14,7 @@ const fetchDynamicClient = async (issuerConfiguration: OidcConfiguration): Promi
     }
 
     const dynamicClientPayload = {
-        redirect_uris: [window.location.href],
+        redirect_uris: [`${window.location.origin}${window.location.pathname}`],
         token_endpoint_auth_method: "client_secret_basic",
         grant_types: ["refresh_token", "authorization_code"],
         response_types: ["code"],
