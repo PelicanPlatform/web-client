@@ -1,7 +1,9 @@
 import {Collection, CollectionPermission, Namespace} from "../types";
 
 const getTokenCollections = (namespace: Namespace) => {
-  const collectionRecord = namespace.token?.scope.split(" ").reduce((cols: Record<string, Collection>, scopeStr: string) => {
+
+  const scopes = namespace.token?.scope.split(" ") || []
+  const collectionRecord = scopes.reduce((cols: Record<string, Collection>, scopeStr: string) => {
     const storageMatch = scopeStr.match(/^storage\.(create|modify|read):(.+)$/);
     if (storageMatch) {
       const permission = storageMatch[1] as CollectionPermission;
