@@ -8,6 +8,7 @@ export { default as fetchNamespace } from "./fetchNamespace";
 export { default as get } from "./get";
 export { default as put } from "./put";
 export { default as list } from "./list";
+export { default as getTokenCollections } from "./getTokenCollections";
 export { default as permissions } from "./permissions";
 
 export { default as UnauthorizedError } from "./UnauthorizedError";
