@@ -3,7 +3,7 @@
 import {Alert, Badge, Box, IconButton, Paper, Skeleton, Snackbar } from "@mui/material";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 
-import { PelicanClientProvider, usePelicanClient } from "../PelicanClientProvider";
+import { usePelicanClient } from "../PelicanClientProvider";
 import ClientMetadata from "../ClientMetadata";
 import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
@@ -11,14 +11,10 @@ import CollectionView from "../CollectionView";
 import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
 import { UploadFile, List, ContentCopy } from "@mui/icons-material";
 
-interface AuthenticatedClientProps {
-  objectUrl: string;
-}
-
 /**
  * Inner component that uses the context
  */
-function AuthenticatedClientContent() {
+function AuthenticatedClient() {
 
   const {
     error,
@@ -76,27 +72,6 @@ function AuthenticatedClientContent() {
     } catch {}
   }, [namespace, objectUrl]);
 
-
-  console.log(
-    {
-      error,
-      setError,
-      objectUrl,
-      setObjectUrl,
-      collections,
-      loading,
-      authorizationRequired,
-      authorized,
-      handleLogin,
-      handleDownload,
-      handleUpload,
-      federation,
-      namespace,
-      getObjectList,
-      objectList
-    }
-  )
-
   return (
     <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
       <Box
@@ -124,7 +99,7 @@ function AuthenticatedClientContent() {
             <ClientMetadata
               federation={federation?.hostname}
               namespace={namespace?.prefix}
-              objectUrl={objectUrl}
+              collectionPath={collectionPath}
               onUpload={!authorized ? () => uploadRef.current?.triggerFileSelect() : undefined}
             />
             <Box display={'flex'} mb={-1}>
@@ -187,13 +162,4 @@ function AuthenticatedClientContent() {
   );
 }
 
-/**
- * Wrapper that provides the context
- */
-export default function AuthenticatedClient({ objectUrl }: AuthenticatedClientProps) {
-  return (
-    <PelicanClientProvider initialObjectUrl={objectUrl} enableAuth={true}>
-      <AuthenticatedClientContent />
-    </PelicanClientProvider>
-  );
-}
+export default AuthenticatedClient;

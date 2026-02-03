@@ -1,17 +1,16 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Skeleton, Typography } from "@mui/material";
 import { Upload } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 
 import {
-    Collection,
     CollectionPermission
 } from "@pelicanplatform/web-client";
 import PermissionIcon from "../PermissionIcon";
-import {parseObjectUrl} from "@pelicanplatform/web-client";
 
 interface ClientMetadataProps {
     federation?: string | null;
     namespace?: string | null;
-    objectUrl?: string | null;
+    collectionPath?: string | null;
     permissions?: CollectionPermission[];
     onUpload?: () => void;
 }
@@ -19,12 +18,8 @@ interface ClientMetadataProps {
 /**
  * A small metadata row that contains options like "Show Directories", and the current federation/namespace.
  */
-function ClientMetadata({ federation, namespace, objectUrl, onUpload, permissions = [] }: ClientMetadataProps) {
+function ClientMetadata({ federation, namespace, collectionPath, onUpload, permissions = [] }: ClientMetadataProps) {
 
-    const objectPathWithNamespace = getObjectPath(objectUrl || null);
-    const collectionPath = namespace && objectPathWithNamespace.startsWith(namespace)
-        ? objectPathWithNamespace.replace(namespace, "")
-        : objectPathWithNamespace;
 
     return (
         <Box display={"flex"} alignItems={"end"} justifyContent={"space-between"} gap={2}>
@@ -53,16 +48,6 @@ function ClientMetadata({ federation, namespace, objectUrl, onUpload, permission
             </Box>
         </Box>
     );
-}
-
-const getObjectPath = (objectUrl: string | null) => {
-    if (!objectUrl) return "N/A";
-    try {
-        const { objectPath } = parseObjectUrl(objectUrl);
-        return objectPath || "N/A";
-    } catch {
-        return "N/A";
-    }
 }
 
 export default ClientMetadata;

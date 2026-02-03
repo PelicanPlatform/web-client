@@ -6,6 +6,7 @@ import { Federation, Namespace } from "../types";
  * @param codeVerifier
  * @param namespace
  * @param federation
+ * @param state Additional state to include in the OIDC request
  */
 const startAuthorizationCodeFlow = async (
     codeVerifier: string,
@@ -13,7 +14,7 @@ const startAuthorizationCodeFlow = async (
     federation: Federation,
     state: Record<string, string> = {}
 ) => {
-    if (!namespace.clientId || !namespace.oidcConfiguration.authorization_endpoint) {
+    if (!namespace.clientId || !namespace?.oidcConfiguration?.authorization_endpoint) {
         throw new Error("Namespace is missing required OIDC configuration for authorization code flow.");
     }
 
