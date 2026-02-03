@@ -10,7 +10,10 @@ import UnauthenticatedError from "./UnauthenticatedError";
  */
 const get = async (objectUrl: string, federation: Federation, namespace: Namespace): Promise<Response> => {
     const { objectPath } = parseObjectUrl(objectUrl);
-    const token = await getObjectToken(namespace);
+    const token = getObjectToken(namespace);
+
+    if (!token) console.error("Getting a file without a token with namespace token:", token);
+    if (!token?.value) console.error("Getting a file without a token value with token:", token);
 
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
     const response = await fetch(objectHttpUrl, {

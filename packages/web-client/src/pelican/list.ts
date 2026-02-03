@@ -5,7 +5,9 @@ import UnauthenticatedError from "./UnauthenticatedError";
 
 const list = async (collectionUrl: string, federation: Federation, namespace?: Namespace): Promise<ObjectList[]> => {
     const { objectPath } = parseObjectUrl(collectionUrl);
-    const token = namespace ? await getObjectToken(namespace) : null;
+    const token = namespace ? getObjectToken(namespace) : null;
+
+    console.log("Listing objects at", objectPath, "with token", token, "and namespace", namespace);
 
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
 

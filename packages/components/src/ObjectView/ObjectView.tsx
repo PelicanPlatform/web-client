@@ -4,7 +4,7 @@ import { ArrowUpward, Download, Folder, InsertDriveFile, MenuOpen } from "@mui/i
 import {
     Box,
     Button,
-    Paper,
+  IconButton,
     Table,
     TableBody,
     TableCell,
@@ -14,15 +14,15 @@ import {
     TableSortLabel,
     Typography,
 } from "@mui/material";
-import { ObjectList, formatBytes } from "@pelicanplatform/web-client";
+import {ObjectList, formatBytes, Collection} from "@pelicanplatform/web-client";
 import { useMemo, useState } from "react";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
 type SortDirection = "asc" | "desc";
 
 interface ObjectListProps {
+    collectionPath?: string;
     objectList: ObjectList[];
-    showCollections?: boolean;
     onExplore: (href: string) => void;
     onDownload: (href: string) => void;
     loginRequired: boolean;
@@ -36,8 +36,8 @@ interface ObjectListProps {
  * A component that lists all the provided objects as a table.
  */
 function ObjectView({
+    collectionPath,
     objectList,
-    showCollections = true,
     onExplore,
     onDownload,
     loginRequired,
@@ -45,6 +45,7 @@ function ObjectView({
     onLoginRequest,
     namespace,
 }: ObjectListProps) {
+
     const [sortColumn, setSortColumn] = useState<SortableColumn>("href");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -67,7 +68,6 @@ function ObjectView({
 
     const sortedObjectList = useMemo(() => {
         return [...objectList]
-            .filter((obj) => showCollections || !obj.iscollection)
             .sort((a, b) => {
                 if (a.iscollection && !b.iscollection) return -1;
                 if (!a.iscollection && b.iscollection) return 1;
@@ -100,158 +100,161 @@ function ObjectView({
                 }
                 return 0;
             });
-    }, [objectList, showCollections, sortColumn, sortDirection]);
+    }, [objectList, sortColumn, sortDirection]);
+
+    if(loginRequired || !objectList || objectList.length === 0) {
+      return (
+        <Box
+          pt={4}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          border={"1px dashed var(--mui-palette-divider, #e0e0e0)"}
+          borderRadius={1}
+          minHeight={300}
+        >
+          <Typography variant="h6" color="textSecondary" align="center">
+            {loginRequired ? (
+              // Login prompt
+              <>
+                Authentication is required.
+                <br />
+                {loginRequired && canLogin && (
+                  <Button variant="contained" color="primary" onClick={onLoginRequest} sx={{ mt: 2 }}>
+                    Login
+                  </Button>
+                )}
+              </>
+            ) : (
+              // Empty state
+              <>
+                Enter Pelican Collection URL to View Contents:
+                <br />
+                <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
+              </>
+            )}
+          </Typography>
+        </Box>
+      )
+    }
 
     return (
-        <Box mt={1}>
-            {loginRequired || !objectList || objectList.length === 0 ? (
-                // Login prompt / Empty state
-                <Box
-                    pt={4}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    border={"1px dashed var(--mui-palette-divider, #e0e0e0)"}
-                    borderRadius={1}
-                    minHeight={300}
-                >
-                    <Typography variant="h6" color="textSecondary" align="center">
-                        {loginRequired ? (
-                            // Login prompt
-                            <>
-                                Authentication is required to view this collection.
-                                <br />
-                                {loginRequired && canLogin && (
-                                    <Button variant="contained" color="primary" onClick={onLoginRequest} sx={{ mt: 2 }}>
-                                        Login
-                                    </Button>
-                                )}
-                            </>
-                        ) : (
-                            // Empty state
-                            <>
-                                Enter Pelican Collection URL to View Contents:
-                                <br />
-                                <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
-                            </>
-                        )}
-                    </Typography>
-                </Box>
-            ) : (
-                // Full object list table
-                <TableContainer component={Paper} variant="outlined">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>
-                                    <TableSortLabel
-                                        active={sortColumn === "href"}
-                                        direction={sortColumn === "href" ? sortDirection : "asc"}
-                                        onClick={() => handleSort("href")}
-                                    >
-                                        Name
-                                    </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                    <TableSortLabel
-                                        active={sortColumn === "getcontentlength"}
-                                        direction={sortColumn === "getcontentlength" ? sortDirection : "asc"}
-                                        onClick={() => handleSort("getcontentlength")}
-                                    >
-                                        Size
-                                    </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                    <TableSortLabel
-                                        active={sortColumn === "getlastmodified"}
-                                        direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
-                                        onClick={() => handleSort("getlastmodified")}
-                                    >
-                                        Updated
-                                    </TableSortLabel>
-                                </TableCell>
-                                <TableCell>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedObjectList.map((obj, index) => (
-                                <TableRow
-                                    key={index}
-                                    hover
-                                    onClick={() => handleRowClick(obj)}
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <TableCell sx={{ px: 2, py: 1 }}>
-                                        <ObjectName {...obj} namespace={namespace} />
-                                    </TableCell>
-                                    <TableCell sx={{ px: 2, py: 1 }}>
-                                        {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
-                                    </TableCell>
-                                    <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
-                                    <TableCell sx={{ px: 2, py: 1 }}>
-                                        {obj.iscollection ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onExplore(obj.href);
-                                                }}
-                                                aria-label={`Explore ${obj.href}`}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    color: "var(--mui-palette-text-primary, #000)",
-                                                    padding: 0,
-                                                    cursor: "pointer",
-                                                    display: "inline-flex",
-                                                    alignItems: "center",
-                                                    gap: 6,
-                                                    fontSize: "0.95rem",
-                                                }}
-                                            >
-                                                <MenuOpen fontSize="small" />
-                                                <span style={{ opacity: 0.85 }}>Explore</span>
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDownload(obj.href);
-                                                }}
-                                                aria-label={`Download ${obj.href}`}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    color: "var(--mui-palette-text-primary, #000)",
-                                                    padding: 0,
-                                                    cursor: "pointer",
-                                                    display: "inline-flex",
-                                                    alignItems: "center",
-                                                    gap: 6,
-                                                    fontSize: "0.95rem",
-                                                }}
-                                            >
-                                                <Download fontSize="small" />
-                                                <span style={{ opacity: 0.85 }}>Download</span>
-                                            </button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
+      <Box>
+          <TableContainer component={Box}>
+              <Table size={"small"}>
+                  <TableHead >
+                      <TableRow>
+                          <TableCell>
+                              <TableSortLabel
+                                  active={sortColumn === "href"}
+                                  direction={sortColumn === "href" ? sortDirection : "asc"}
+                                  onClick={() => handleSort("href")}
+                              >
+                                  Name
+                              </TableSortLabel>
+                          </TableCell>
+                          <TableCell>
+                              <TableSortLabel
+                                  active={sortColumn === "getcontentlength"}
+                                  direction={sortColumn === "getcontentlength" ? sortDirection : "asc"}
+                                  onClick={() => handleSort("getcontentlength")}
+                              >
+                                  Size
+                              </TableSortLabel>
+                          </TableCell>
+                          <TableCell>
+                              <TableSortLabel
+                                  active={sortColumn === "getlastmodified"}
+                                  direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
+                                  onClick={() => handleSort("getlastmodified")}
+                              >
+                                  Updated
+                              </TableSortLabel>
+                          </TableCell>
+                          <TableCell></TableCell>
+                      </TableRow>
+                  </TableHead>
+                  <TableBody>
+                      {sortedObjectList.map((obj, index) => (
+                          <TableRow
+                              key={index}
+                              hover
+                              onClick={() => handleRowClick(obj)}
+                              style={{ cursor: "pointer" }}
+                          >
+                              <TableCell sx={{ px: 2, py: 1 }}>
+                                  <ObjectName {...obj} namespace={namespace} collectionPath={collectionPath} />
+                              </TableCell>
+                              <TableCell sx={{ px: 2, py: 1 }}>
+                                  {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
+                              </TableCell>
+                              <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
+                              <TableCell sx={{ px: 2, py: 1 }} align={'right'}>
+                                  {obj.iscollection ? (
+                                      <IconButton
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              onExplore(obj.href);
+                                          }}
+                                          aria-label={`Explore ${obj.href}`}
+                                          style={{
+                                              background: "transparent",
+                                              border: "none",
+                                              color: "var(--mui-palette-text-primary, #000)",
+                                              padding: 0,
+                                              cursor: "pointer",
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              gap: 6,
+                                              fontSize: "0.95rem",
+                                          }}
+                                      >
+                                          <MenuOpen fontSize="small" />
+                                      </IconButton>
+                                  ) : (
+                                      <IconButton
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              onDownload(obj.href);
+                                          }}
+                                          aria-label={`Download ${obj.href}`}
+                                          style={{
+                                              background: "transparent",
+                                              border: "none",
+                                              color: "var(--mui-palette-text-primary, #000)",
+                                              padding: 0,
+                                              cursor: "pointer",
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              gap: 6,
+                                              fontSize: "0.95rem",
+                                          }}
+                                      >
+                                          <Download fontSize="small" />
+                                      </IconButton>
+                                  )}
+                              </TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+          </TableContainer>
         </Box>
     );
 }
 
-function ObjectName(props: ObjectList & { namespace?: string | null }) {
-    const { href, iscollection, getlastmodified, namespace } = props;
+function ObjectName(props: ObjectList & { namespace?: string | null, collectionPath?: string | null }) {
+    const { href, iscollection, getlastmodified, namespace, collectionPath } = props;
 
     // Strip namespace from the display name
     let displayName = href;
     if (namespace && href.startsWith(namespace)) {
         displayName = href.slice(namespace.length) || "/";
+    }
+
+    // Strip collectionPath from the display name
+    if (collectionPath && displayName.startsWith(collectionPath)) {
+      displayName = displayName.replace(collectionPath, "") || "/";
     }
 
     return (

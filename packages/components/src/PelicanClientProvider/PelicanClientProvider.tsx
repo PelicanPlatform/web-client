@@ -14,6 +14,7 @@ import {
   parseObjectUrl,
   put,
   startAuthorizationCodeFlow,
+  verifyToken,
   Federation,
   getTokenCollections,
   Collection,
@@ -43,12 +44,11 @@ export function PelicanClientProvider({
                                         children
                                       }: PelicanClientProviderProps) {
 
-  const [objectUrl, setObjectUrl] = useSessionStorage<string>(
-    "pelican-wc-object-url",
+  const [objectUrl, setObjectUrl] = useState(
     initialObjectUrl
   );
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [federations, setFederations] = useSessionStorage<FederationStore>(
@@ -61,13 +61,22 @@ export function PelicanClientProvider({
     {}
   );
 
-  const [authorizationRequired, setLoginRequired] = useState(!enableAuth);
+  const [authorizationRequired, setAuthorizationRequired] = useState(!enableAuth);
 
   // Store in-flight metadata fetch promises to prevent duplicate concurrent requests
   const metadataPromises = useRef<Map<string, Promise<{
     federation: Federation;
     namespace: Namespace
   }>>>(new Map());
+
+  // Cache for object list responses to avoid redundant requests
+  const objectListCache = useRef<Map<string, {
+    data: ObjectList[];
+    timestamp: number;
+  }>>(new Map());
+
+  // Cache TTL in milliseconds (5 minutes)
+  const OBJECT_LIST_CACHE_TTL = 5 * 60 * 1000;
 
   // Handle OAuth authorization code exchange
   const [codeVerifier, ensureCodeVerifier] = useCodeVerifier();
@@ -114,9 +123,11 @@ export function PelicanClientProvider({
   }, [prefixToNamespace, objectPath, federation]);
 
   const collections = useMemo<Collection[]>(() => {
-    if (!namespace?.token) return [];
-    return getTokenCollections(namespace.token);
+    if (!verifyToken(namespace?.token)) return [];
+    return getTokenCollections(namespace);
   }, [namespace]);
+
+  const authorized = collections.length > 0 || !authorizationRequired || !enableAuth;
 
   /**
    * Helper function to ensure federation and namespace metadata is available.
@@ -155,15 +166,18 @@ export function PelicanClientProvider({
         let federation = federations[federationHostname];
         if (!federation) {
           federation = await fetchFederation(federationHostname);
+          console.log("Updated federation:", federation.hostname);
           setFederations((prev) => ({
             ...prev,
             [federationHostname]: federation as Federation
           }));
         }
 
+        // Check if we have already mapped that object prefix to a namespace
         const namespaceKey = prefixToNamespace[objectPath]?.namespace;
         let namespace = namespaceKey ? federation.namespaces[namespaceKey] : null;
 
+        // If it is not mapped, fetch the namespace metadata and map it
         if (!namespace) {
           namespace = await fetchNamespace(objectPath, federation);
 
@@ -175,13 +189,20 @@ export function PelicanClientProvider({
             }
           }));
 
-          federation.namespaces[namespace.prefix] = namespace;
-          setFederations((prev) => ({
-            ...prev,
-            [federationHostname]: federation as Federation
-          }));
+          // If the namespace doesn't exist in the federation yet, add it
+          if(!(namespace.prefix in federation.namespaces)) {
+            setFederations((prev) => ({
+              ...prev,
+              [federationHostname]: {
+                ...(federation as Federation),
+                namespaces: {
+                  ...federation.namespaces,
+                  [namespace!.prefix]: namespace as Namespace
+                }
+              }
+            }));
+          }
         }
-
         return { federation, namespace };
       } catch (e) {
         setError("Couldn't fetch metadata: " + e);
@@ -217,14 +238,32 @@ export function PelicanClientProvider({
 
   /**
    * Get the list of objects at the specified URL.
+   * Results are cached with a TTL to avoid redundant requests.
    */
-  const getObjectList = useCallback(async (targetObjectUrl?: string): Promise<ObjectList[]> => {
+  const getObjectList = useCallback(async (targetObjectUrl?: string, forceRefresh = false): Promise<ObjectList[]> => {
     try {
       const urlToFetch = targetObjectUrl || objectUrl;
-      const { objectPath } = parseObjectUrl(urlToFetch);
+
+      // Check cache first (unless force refresh is requested)
+      if (!forceRefresh) {
+        const cached = objectListCache.current.get(urlToFetch);
+        if (cached && Date.now() - cached.timestamp < OBJECT_LIST_CACHE_TTL) {
+          console.log(`Using cached object list for ${urlToFetch}`);
+          return cached.data;
+        }
+      }
+
+      const { federationHostname, objectPath } = parseObjectUrl(urlToFetch);
       const { federation, namespace } = await ensureMetadata(urlToFetch);
-      
+
+      if (!federation || !namespace) {
+        throw new Error("Federation or Namespace metadata is missing");
+      }
+
       let objects = await list(urlToFetch, federation, namespace);
+
+      // No longer need authorization
+      setAuthorizationRequired(false);
 
       // add parent directory entry
       const pathParts = objectPath.split("/").filter((p) => p.length > 0);
@@ -248,17 +287,37 @@ export function PelicanClientProvider({
       );
 
       objects.reverse();
+
+      // Cache the result
+      objectListCache.current.set(urlToFetch, {
+        data: objects,
+        timestamp: Date.now()
+      });
+
       return objects;
 
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
-        setLoginRequired(true);
+        setAuthorizationRequired(true);
         return [];
       }
       setError(`Failed to fetch object list for ${targetObjectUrl || objectUrl}: ${e}`);
       return [];
     }
-  }, [objectUrl, ensureMetadata]);
+  }, [objectUrl, ensureMetadata, OBJECT_LIST_CACHE_TTL]);
+
+  /**
+   * Invalidate the object list cache for a specific URL or all URLs.
+   */
+  const invalidateObjectListCache = useCallback((targetObjectUrl?: string) => {
+    if (targetObjectUrl) {
+      objectListCache.current.delete(targetObjectUrl);
+      console.log(`Invalidated cache for ${targetObjectUrl}`);
+    } else {
+      objectListCache.current.clear();
+      console.log("Cleared entire object list cache");
+    }
+  }, []);
 
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {
@@ -266,10 +325,39 @@ export function PelicanClientProvider({
       const response = await get(downloadObjectUrl, federation, namespace);
       downloadResponse(response);
     } catch (e) {
+      if (e instanceof UnauthenticatedError) {
+        setAuthorizationRequired(true);
+        console.error(e);
+      }
       setError(`Download failed: ${e}`);
       throw e;
     }
   }, [ensureMetadata]);
+
+  const handleUpload = useCallback(async (
+    file: File,
+    uploadObjectUrl?: string
+  ) => {
+    try {
+      const targetUrl = uploadObjectUrl || objectUrl;
+      const { federation, namespace } = await ensureMetadata(targetUrl);
+
+      const finalUploadUrl = targetUrl.endsWith("/")
+        ? `${targetUrl}${file.name}`
+        : `${targetUrl}/${file.name}`;
+
+      await put(finalUploadUrl, file, federation, namespace);
+
+      // Invalidate cache for the directory after successful upload
+      invalidateObjectListCache(targetUrl);
+    } catch (e) {
+      if (e instanceof UnauthenticatedError) {
+        setAuthorizationRequired(true);
+      }
+      setError(`Upload failed: ${e}`);
+      throw e;
+    }
+  }, [objectUrl, ensureMetadata, invalidateObjectListCache]);
 
   const handleLogin = useCallback(async () => {
     try {
@@ -290,29 +378,12 @@ export function PelicanClientProvider({
     }
   }, [objectUrl, ensureMetadata, ensureCodeVerifier, enableAuth]);
 
-  const handleUpload = useCallback(async (
-    file: File,
-    uploadObjectUrl?: string
-  ) => {
-    try {
-      const targetUrl = uploadObjectUrl || objectUrl;
-      const { federation, namespace } = await ensureMetadata(targetUrl);
-
-      const finalUploadUrl = targetUrl.endsWith("/")
-        ? `${targetUrl}${file.name}`
-        : `${targetUrl}/${file.name}`;
-
-      await put(finalUploadUrl, file, federation, namespace);
-    } catch (e) {
-      setError(`Upload failed: ${e}`);
-      throw e;
-    }
-  }, [objectUrl, ensureMetadata]);
-
   const contextValue: PelicanClientContextValue = {
     loading,
     error,
+    setError,
     authorizationRequired,
+    authorized,
     objectUrl,
     federationHostname,
     objectPath,
@@ -321,6 +392,7 @@ export function PelicanClientProvider({
     collections,
     ensureMetadata,
     getObjectList,
+    invalidateObjectListCache,
     handleDownload,
     handleUpload,
     handleLogin,

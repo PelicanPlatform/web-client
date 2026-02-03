@@ -10,6 +10,7 @@ export { default as put } from "./put";
 export { default as list } from "./list";
 export { default as getTokenCollections } from "./getTokenCollections";
 export { default as permissions } from "./permissions";
+export { default as verifyToken } from "./verifyToken";
 
 export { default as UnauthorizedError } from "./UnauthorizedError";
 export { default as UnauthenticatedError } from "./UnauthenticatedError";

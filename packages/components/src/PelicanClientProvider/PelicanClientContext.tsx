@@ -6,6 +6,10 @@ export interface PelicanClientContextValue {
   loading: boolean;
   error: string | null;
   authorizationRequired: boolean;
+  authorized: boolean;
+
+  // Metadata management
+  setError: (error: string | null) => void;
 
   // Current URL parsing
   objectUrl: string;
@@ -24,7 +28,8 @@ export interface PelicanClientContextValue {
   }>;
 
   // Action handlers
-  getObjectList: (targetObjectUrl?: string) => Promise<ObjectList[]>;
+  getObjectList: (targetObjectUrl?: string, forceRefresh?: boolean) => Promise<ObjectList[]>;
+  invalidateObjectListCache: (targetObjectUrl?: string) => void;
   handleDownload: (downloadObjectUrl: string) => Promise<void>;
   handleUpload: (file: File, uploadObjectUrl?: string) => Promise<void>;
   handleLogin: () => Promise<void>;

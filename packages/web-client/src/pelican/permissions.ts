@@ -13,7 +13,7 @@ import { parseObjectUrl } from "../pelican";
  * @param namespace
  */
 const permissions = async (namespace: Namespace): Promise<TokenPermission[]> => {
-    const token = await getObjectToken(namespace);
+    const token = getObjectToken(namespace);
 
     // Check what token permissions we have
     if (!token) return [];
