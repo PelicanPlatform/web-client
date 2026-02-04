@@ -1,6 +1,5 @@
-import { Box, Button, Skeleton, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Upload } from "@mui/icons-material";
-import { useEffect, useState } from "react";
 
 import {
     CollectionPermission
@@ -19,8 +18,6 @@ interface ClientMetadataProps {
  * A small metadata row that contains options like "Show Directories", and the current federation/namespace.
  */
 function ClientMetadata({ federation, namespace, collectionPath, onUpload, permissions = [] }: ClientMetadataProps) {
-
-
     return (
         <Box display={"flex"} alignItems={"end"} justifyContent={"space-between"} gap={2}>
             <Box display={"flex"} gap={1}>
@@ -31,7 +28,7 @@ function ClientMetadata({ federation, namespace, collectionPath, onUpload, permi
                     <strong>Namespace:</strong> {namespace || "N/A"}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    <strong>Collection:</strong> {collectionPath}
+                    <strong>Collection:</strong> {collectionPath || "N/A"}
                 </Typography>
             </Box>
             <Box>

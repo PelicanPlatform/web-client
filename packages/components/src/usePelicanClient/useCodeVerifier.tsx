@@ -12,7 +12,10 @@ import { useSessionStorage } from "./useSessionStorage";
  * and a function to ensure a code verifier exists (generating one if needed)
  */
 export function useCodeVerifier(): [string | null, () => string] {
-    const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>("pelican-wc-cv", null);
+    const [codeVerifier, setCodeVerifier] = useSessionStorage<string | null>(
+      "pelican-wc-cv",
+      null
+    );
 
     // Auto-generate on mount if missing
     useEffect(() => {

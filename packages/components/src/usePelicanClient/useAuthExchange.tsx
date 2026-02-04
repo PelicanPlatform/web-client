@@ -52,17 +52,11 @@ export function useAuthExchange({
     onTokenReceived,
     getNamespace
 }: UseAuthExchangeOptions): UseAuthExchangeReturn {
-    const [exchangeComplete, setExchangeComplete] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Skip if already complete or disabled
-        if (exchangeComplete) {
-            return;
-        }
-
         if (!enabled) {
-            setExchangeComplete(true);
             return;
         }
 
@@ -73,9 +67,11 @@ export function useAuthExchange({
                 // Check if we have an authorization code to exchange
                 if (!code || !federationHostname || !namespacePrefix || !codeVerifier) {
                     // No code to exchange - this is normal for non-redirect page loads
-                    setExchangeComplete(true);
+                    setLoading(false);
                     return;
                 }
+
+                setLoading(true);
 
                 // Get namespace metadata (includes OAuth client credentials)
                 const namespace = getNamespace(federationHostname, namespacePrefix);
@@ -84,7 +80,7 @@ export function useAuthExchange({
                     const errorMsg = `Cannot exchange code: namespace metadata not found for ${namespacePrefix}`;
                     console.error(errorMsg);
                     setError(errorMsg);
-                    setExchangeComplete(true);
+                    setLoading(false);
                     return;
                 }
 
@@ -92,7 +88,7 @@ export function useAuthExchange({
                     const errorMsg = `Cannot exchange code: missing client credentials for namespace ${namespacePrefix}`;
                     console.error(errorMsg);
                     setError(errorMsg);
-                    setExchangeComplete(true);
+                    setLoading(false);
                     return;
                 }
 
@@ -100,7 +96,7 @@ export function useAuthExchange({
                     const errorMsg = `Cannot exchange code: missing OIDC configuration for namespace ${namespacePrefix}`;
                     console.error(errorMsg);
                     setError(errorMsg);
-                    setExchangeComplete(true);
+                    setLoading(false);
                     return;
                 }
 
@@ -130,15 +126,15 @@ export function useAuthExchange({
                 setError(errorMsg);
             } finally {
                 // Mark exchange as complete (whether successful or not)
-                setExchangeComplete(true);
+                setLoading(false);
             }
         }
 
         exchange();
-    }, [enabled, codeVerifier, exchangeComplete, getNamespace, onTokenReceived]);
+    }, [enabled, codeVerifier, getNamespace, onTokenReceived]);
 
     return {
-        exchangeComplete,
+        loading,
         error,
     };
 }

@@ -37,23 +37,30 @@ function AuthenticatedClient() {
 
   const [objectList, setObjectList] = useState<ObjectList[]>([]);
 
+  const [muteError, setMuteError] = useState<boolean>(false);
+
   const [showCollections, setShowCollections] = useState<boolean>(false);
   const [highlightCollections, setHighlightCollections] = useState<boolean>(false);
 
   // If there is just one collection found lets auto-navigate into it
   useEffect(() => {
+    console.log("Collections changed", {collections});
     if(!namespace || !federation) return;
     if (collections.length > 0) {
       setHighlightCollections(true);
       setShowCollections(true);
+      setMuteError(true);
     }
   }, [collections]);
 
-  // Load object list when objectUrl changes
-  // Note: getObjectList uses a cache with 5-minute TTL to avoid redundant requests
+  const updateObjectList = async (o: string) => {
+    setObjectList(await getObjectList(o, false));
+  }
+
+  // On mount attempt to load the object list
   useEffect(() => {
-    getObjectList(objectUrl).then(setObjectList);
-  }, [objectUrl, getObjectList]);
+    updateObjectList(objectUrl);
+  }, []);
 
   // Wrap handleUpload to refresh object list after successful upload
   const handleUploadWithRefresh = useCallback(async (file: File) => {
@@ -63,14 +70,30 @@ function AuthenticatedClient() {
   }, [handleUpload, getObjectList, objectUrl]);
 
   const collectionPath = useMemo(() => {
+    // If no namespace this can't be determined
+    if (!namespace) return undefined;
     try {
       const {objectPath} = parseObjectUrl(objectUrl);
-      const collectionPath = namespace && objectPath.startsWith(namespace.prefix)
-        ? objectPath.replace(namespace.prefix, "")
-        : objectPath
-      return collectionPath;
+      return objectPath.replace(namespace.prefix, "")
     } catch {}
   }, [namespace, objectUrl]);
+
+  console.log({
+    error,
+    setError,
+    objectUrl,
+    setObjectUrl,
+    collections,
+    loading,
+    authorizationRequired,
+    authorized,
+    handleLogin,
+    handleDownload,
+    handleUpload,
+    federation,
+    namespace,
+    getObjectList
+  })
 
   return (
     <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
@@ -129,6 +152,7 @@ function AuthenticatedClient() {
                   if (!federation || !namespace) return;
                   const newUrl = `pelican://${federation.hostname}${namespace.prefix}${collectionPath}`;
                   setObjectUrl(newUrl);
+                  updateObjectList(newUrl)
                   setShowCollections(false);
                 }}
               />
@@ -147,12 +171,20 @@ function AuthenticatedClient() {
                   const {federationHostname} = parseObjectUrl(objectUrl);
                   const newUrl = `pelican://${federationHostname}${objectHref}`;
                   setObjectUrl(newUrl);
+                  updateObjectList(newUrl)
                 }}
               />
             )}
           </Paper>
         </Box>
-        <Snackbar open={error !== null} autoHideDuration={6000} onClose={() => setError(null)}>
+        <Snackbar
+          open={error !== null && !muteError}
+          autoHideDuration={6000}
+          onClose={() => {
+            setError(null);
+            setMuteError(false);
+          }}
+        >
           <Alert severity="error">
             {error}
           </Alert>

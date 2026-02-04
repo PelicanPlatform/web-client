@@ -62,6 +62,7 @@ export function PelicanClientProvider({
   );
 
   const [authorizationRequired, setAuthorizationRequired] = useState(!enableAuth);
+  const [currentNamespace, setCurrentNamespace] = useState<Namespace | null>(null);
 
   // Store in-flight metadata fetch promises to prevent duplicate concurrent requests
   const metadataPromises = useRef<Map<string, Promise<{
@@ -80,23 +81,25 @@ export function PelicanClientProvider({
 
   // Handle OAuth authorization code exchange
   const [codeVerifier, ensureCodeVerifier] = useCodeVerifier();
-  const { exchangeComplete: authExchangeComplete } = useAuthExchange({
+  const { authLoading } = useAuthExchange({
     enabled: enableAuth,
     codeVerifier: codeVerifier,
     getNamespace: (federationHostname, namespacePrefix) => {
       return federations[federationHostname]?.namespaces[namespacePrefix];
     },
     onTokenReceived: (result) => {
+      const newNamespace = {
+        ...federations[result.federationHostname]?.namespaces[result.namespacePrefix],
+        token: result.token
+      };
+      setActiveNamespace(newNamespace)
       setFederations((f) => ({
         ...f,
         [result.federationHostname]: {
           ...f[result.federationHostname],
           namespaces: {
             ...f[result.federationHostname]?.namespaces,
-            [result.namespacePrefix]: {
-              ...f[result.federationHostname]?.namespaces?.[result.namespacePrefix],
-              token: result.token,
-            },
+            [result.namespacePrefix]: newNamespace,
           },
         },
       }));
@@ -115,19 +118,70 @@ export function PelicanClientProvider({
     ? federations[federationHostname] || null
     : null;
 
-  const namespace = useMemo(() => {
+  /**
+   * There is a brief blip when the derived namespace is null before metadata is loaded.
+   * To avoid losing the namespace in that case we keep track of the last active namespace.
+   */
+  const [activeNamespace, setActiveNamespace] = useState<Namespace | null>(null);
+  const derivedNamespace = useMemo(() => {
     if (!objectPath || !federation) return null;
     const namespaceKey = prefixToNamespace?.[objectPath]?.namespace;
     if (!namespaceKey) return null;
     return federation.namespaces?.[namespaceKey] || null;
   }, [prefixToNamespace, objectPath, federation]);
 
+  const namespace = derivedNamespace || activeNamespace;
+
+  console.log("Hook side namespace:", namespace);
+
+  const prevCollectionsRef = useRef<Collection[]>([]);
   const collections = useMemo<Collection[]>(() => {
-    if (!verifyToken(namespace?.token)) return [];
-    return getTokenCollections(namespace);
+    console.log("Collections is consuming namespace:", namespace);
+    if (!verifyToken(namespace?.token)) {
+      if (prevCollectionsRef.current.length > 0) {
+        prevCollectionsRef.current = [];
+      }
+    } else {
+      const newCollections = getTokenCollections(namespace);
+      if (JSON.stringify(prevCollectionsRef.current) !== JSON.stringify(newCollections)) {
+        prevCollectionsRef.current = newCollections;
+      }
+    }
+    return prevCollectionsRef.current;
   }, [namespace]);
 
   const authorized = collections.length > 0 || !authorizationRequired || !enableAuth;
+
+  /**
+   * Helper function to remove expired tokens from state.
+   */
+  const cleanExpiredTokens = useCallback(() => {
+    setFederations((prevFederations) => {
+      const updatedFederations: FederationStore = {};
+
+      for (const [fedKey, federation] of Object.entries(prevFederations)) {
+        const updatedNamespaces: { [key: string]: Namespace } = {};
+
+        for (const [nsKey, namespace] of Object.entries(federation.namespaces)) {
+          const updatedNamespace = { ...namespace };
+
+          if (namespace.token && !verifyToken(namespace.token)) {
+            console.log(`Removing expired token for namespace: ${nsKey} in federation: ${fedKey}`);
+            delete updatedNamespace.token;
+          }
+
+          updatedNamespaces[nsKey] = namespace;
+        }
+
+        updatedFederations[fedKey] = {
+          ...federation,
+          namespaces: updatedNamespaces
+        };
+      }
+
+      return updatedFederations;
+    });
+  }, []);
 
   /**
    * Helper function to ensure federation and namespace metadata is available.
@@ -166,7 +220,7 @@ export function PelicanClientProvider({
         let federation = federations[federationHostname];
         if (!federation) {
           federation = await fetchFederation(federationHostname);
-          console.log("Updated federation:", federation.hostname);
+          console.log("Adding federation:", federation.hostname);
           setFederations((prev) => ({
             ...prev,
             [federationHostname]: federation as Federation
@@ -181,6 +235,14 @@ export function PelicanClientProvider({
         if (!namespace) {
           namespace = await fetchNamespace(objectPath, federation);
 
+          setActiveNamespace((p) => {
+            if (p && p.prefix === namespace!.prefix) {
+              console.log("Namespace unchanged, reusing previous reference");
+              return p;
+            }
+            console.log("Namespace changed, updating value", p, namespace);
+            return namespace as Namespace;
+          });
           setPrefixToNamespace((prev) => ({
             ...prev,
             [objectPath]: {
@@ -191,6 +253,7 @@ export function PelicanClientProvider({
 
           // If the namespace doesn't exist in the federation yet, add it
           if(!(namespace.prefix in federation.namespaces)) {
+            console.log("Adding namespace:", namespace.prefix, "to federation:", federation.hostname);
             setFederations((prev) => ({
               ...prev,
               [federationHostname]: {
@@ -214,12 +277,22 @@ export function PelicanClientProvider({
 
     metadataPromises.current.set(cacheKey, fetchPromise);
     return fetchPromise;
-  }, [federations, prefixToNamespace, setFederations, setPrefixToNamespace]);
+  }, [federations, prefixToNamespace]);
+
+  // Store the latest ensureMetadata function in a ref
+  const ensureMetadataRef = useRef(ensureMetadata);
+
+  useEffect(() => {
+    ensureMetadataRef.current = ensureMetadata;
+  }, [ensureMetadata]);
 
   // Pull Federation and Namespace Metadata as needed for the current objectUrl
   useEffect(() => {
     (async () => {
+
       setLoading(true);
+
+      const { federationHostname, objectPath } = parseObjectUrl(objectUrl);
 
       if (!objectUrl || !federationHostname || !objectPath) {
         setLoading(false);
@@ -227,14 +300,14 @@ export function PelicanClientProvider({
       }
 
       try {
-        await ensureMetadata(objectUrl);
+        await ensureMetadataRef.current(objectUrl);
       } catch (e) {
         setError(`Failed to fetch metadata for ${objectUrl}: ${e}`);
       }
 
       setLoading(false);
     })();
-  }, [objectUrl, federationHostname, objectPath, ensureMetadata]);
+  }, [objectUrl]);
 
   /**
    * Get the list of objects at the specified URL.
@@ -254,7 +327,7 @@ export function PelicanClientProvider({
       }
 
       const { federationHostname, objectPath } = parseObjectUrl(urlToFetch);
-      const { federation, namespace } = await ensureMetadata(urlToFetch);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
 
       if (!federation || !namespace) {
         throw new Error("Federation or Namespace metadata is missing");
@@ -299,12 +372,13 @@ export function PelicanClientProvider({
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
+        cleanExpiredTokens()
         return [];
       }
       setError(`Failed to fetch object list for ${targetObjectUrl || objectUrl}: ${e}`);
       return [];
     }
-  }, [objectUrl, ensureMetadata, OBJECT_LIST_CACHE_TTL]);
+  }, [objectUrl, OBJECT_LIST_CACHE_TTL]);
 
   /**
    * Invalidate the object list cache for a specific URL or all URLs.
@@ -312,27 +386,25 @@ export function PelicanClientProvider({
   const invalidateObjectListCache = useCallback((targetObjectUrl?: string) => {
     if (targetObjectUrl) {
       objectListCache.current.delete(targetObjectUrl);
-      console.log(`Invalidated cache for ${targetObjectUrl}`);
     } else {
       objectListCache.current.clear();
-      console.log("Cleared entire object list cache");
     }
   }, []);
 
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {
-      const { federation, namespace } = await ensureMetadata(downloadObjectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
       const response = await get(downloadObjectUrl, federation, namespace);
       downloadResponse(response);
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
-        console.error(e);
+        cleanExpiredTokens()
       }
       setError(`Download failed: ${e}`);
       throw e;
     }
-  }, [ensureMetadata]);
+  }, []);
 
   const handleUpload = useCallback(async (
     file: File,
@@ -340,7 +412,7 @@ export function PelicanClientProvider({
   ) => {
     try {
       const targetUrl = uploadObjectUrl || objectUrl;
-      const { federation, namespace } = await ensureMetadata(targetUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
 
       const finalUploadUrl = targetUrl.endsWith("/")
         ? `${targetUrl}${file.name}`
@@ -353,15 +425,16 @@ export function PelicanClientProvider({
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
+        cleanExpiredTokens()
       }
       setError(`Upload failed: ${e}`);
       throw e;
     }
-  }, [objectUrl, ensureMetadata, invalidateObjectListCache]);
+  }, [objectUrl, invalidateObjectListCache]);
 
   const handleLogin = useCallback(async () => {
     try {
-      const { federation, namespace } = await ensureMetadata(objectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
 
       if (!federation || !namespace) return;
       if (!enableAuth) return;
@@ -376,10 +449,10 @@ export function PelicanClientProvider({
       setError(`Login failed: ${e}`);
       throw e;
     }
-  }, [objectUrl, ensureMetadata, ensureCodeVerifier, enableAuth]);
+  }, [objectUrl, ensureCodeVerifier, enableAuth]);
 
   const contextValue: PelicanClientContextValue = {
-    loading,
+    loading: loading || authLoading,
     error,
     setError,
     authorizationRequired,

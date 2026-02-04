@@ -11,7 +11,7 @@ import {PelicanClientProvider} from "../PelicanClientProvider";
 const Client = (props: UsePelicanClientOptions) => {
   return (
     <PelicanClientProvider initialObjectUrl={props.objectUrl} enableAuth={props.enableAuth}>
-      {props.enableAuth ? <AuthenticatedClient {...props} /> : <PublicClient {...props} />}
+      {props.enableAuth ? <AuthenticatedClient /> : <PublicClient {...props} />}
     </PelicanClientProvider>
   )
 };
