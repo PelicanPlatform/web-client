@@ -67,7 +67,7 @@ export function PelicanClientProvider({
   // Store in-flight metadata fetch promises to prevent duplicate concurrent requests
   const metadataPromises = useRef<Map<string, Promise<{
     federation: Federation;
-    namespace: Namespace
+    namespace: Namespace | null
   }>>>(new Map());
 
   // Cache for object list responses to avoid redundant requests
@@ -81,7 +81,7 @@ export function PelicanClientProvider({
 
   // Handle OAuth authorization code exchange
   const [codeVerifier, ensureCodeVerifier] = useCodeVerifier();
-  const { authLoading } = useAuthExchange({
+  const { loading: authLoading } = useAuthExchange({
     enabled: enableAuth,
     codeVerifier: codeVerifier,
     getNamespace: (federationHostname, namespacePrefix) => {
@@ -132,15 +132,10 @@ export function PelicanClientProvider({
 
   const namespace = derivedNamespace || activeNamespace;
 
-  console.log("Hook side namespace:", namespace);
-
   const prevCollectionsRef = useRef<Collection[]>([]);
   const collections = useMemo<Collection[]>(() => {
-    console.log("Collections is consuming namespace:", namespace);
-    if (!verifyToken(namespace?.token)) {
-      if (prevCollectionsRef.current.length > 0) {
+    if ((!verifyToken(namespace?.token) && prevCollectionsRef.current.length > 0) || !namespace) {
         prevCollectionsRef.current = [];
-      }
     } else {
       const newCollections = getTokenCollections(namespace);
       if (JSON.stringify(prevCollectionsRef.current) !== JSON.stringify(newCollections)) {
@@ -252,7 +247,7 @@ export function PelicanClientProvider({
           }));
 
           // If the namespace doesn't exist in the federation yet, add it
-          if(!(namespace.prefix in federation.namespaces)) {
+          if(namespace && !(namespace.prefix in federation.namespaces)) {
             console.log("Adding namespace:", namespace.prefix, "to federation:", federation.hostname);
             setFederations((prev) => ({
               ...prev,
@@ -394,6 +389,7 @@ export function PelicanClientProvider({
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {
       const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      if (!federation || !namespace) return;
       const response = await get(downloadObjectUrl, federation, namespace);
       downloadResponse(response);
     } catch (e) {
@@ -413,6 +409,7 @@ export function PelicanClientProvider({
     try {
       const targetUrl = uploadObjectUrl || objectUrl;
       const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      if (!federation || !namespace) return;
 
       const finalUploadUrl = targetUrl.endsWith("/")
         ? `${targetUrl}${file.name}`

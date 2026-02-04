@@ -2,61 +2,50 @@
 
 import { Box } from "@mui/material";
 
-import ClientMetadata from "../ClientMetadata";
-import ObjectInput from "../ObjectInput";
-import ObjectView from "../ObjectView";
-import usePelicanClient, { UsePelicanClientOptions } from "../usePelicanClient";
+import {usePelicanClient} from "../PelicanClientProvider";
+import {useEffect, useMemo, useState} from "react";
+import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
+
 
 /**
  * A public Pelican client, with authentication features disabled.
  */
-function PublicClient(props: UsePelicanClientOptions) {
-    const {
-        objectUrl,
-        setObjectUrl,
-        objectList,
-        loading,
-        showDirectories,
-        setShowDirectories,
-        loginRequired,
-        handleRefetchObject,
-        handleExplore,
-        handleDownload,
-        federationName,
-        namespaceName,
-    } = usePelicanClient(props);
+function PublicClient() {
 
-    return (
-        <Box>
-            <Box mt={6} mx={"auto"} width={"100%"} display={"flex"} flexDirection={"column"}>
-                <Box pt={2}>
-                    <ObjectInput
-                        objectUrl={objectUrl}
-                        setObjectUrl={setObjectUrl}
-                        onChange={handleRefetchObject}
-                        loading={loading}
-                        federation={federationName}
-                        namespace={namespaceName}
-                    />
-                    <ClientMetadata
-                        federation={federationName}
-                        namespace={namespaceName}
-                        showDirectories={showDirectories}
-                        setShowDirectories={setShowDirectories}
-                    />
-                </Box>
-            </Box>
-            <ObjectView
-                objectList={objectList}
-                showCollections={showDirectories}
-                onExplore={handleExplore}
-                onDownload={handleDownload}
-                canLogin={false}
-                loginRequired={loginRequired}
-                namespace={namespaceName}
-            />
-        </Box>
-    );
+  const {
+    objectUrl,
+    handleDownload,
+    handleUpload,
+    federation,
+    namespace,
+    getObjectList
+  } = usePelicanClient();
+
+  const [objectList, setObjectList] = useState<ObjectList[]>([]);
+
+  const updateObjectList = async (o: string) => {
+    setObjectList(await getObjectList(o, false));
+  }
+
+  // On mount attempt to load the object list
+  useEffect(() => {
+    updateObjectList(objectUrl);
+  }, []);
+
+  const collectionPath = useMemo(() => {
+    // If no namespace this can't be determined
+    if (!namespace) return undefined;
+    try {
+      const {objectPath} = parseObjectUrl(objectUrl);
+      return objectPath.replace(namespace.prefix, "")
+    } catch {}
+  }, [namespace, objectUrl]);
+
+  return (
+    <Box>
+      TODO
+    </Box>
+  );
 }
 
 export default PublicClient;

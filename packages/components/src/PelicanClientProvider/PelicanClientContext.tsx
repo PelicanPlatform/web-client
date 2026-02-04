@@ -24,7 +24,7 @@ export interface PelicanClientContextValue {
   // Core metadata function
   ensureMetadata: (targetObjectUrl: string) => Promise<{
     federation: Federation;
-    namespace: Namespace
+    namespace: Namespace | null
   }>;
 
   // Action handlers

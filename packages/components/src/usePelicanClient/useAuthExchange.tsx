@@ -24,8 +24,8 @@ export interface UseAuthExchangeOptions {
 }
 
 export interface UseAuthExchangeReturn {
-    /** Whether the auth code exchange has been attempted (success or failure) */
-    exchangeComplete: boolean;
+    /** Whether the auth code exchange is ongoing */
+    loading: boolean;
     /** Error message if exchange failed */
     error: string | null;
 }
