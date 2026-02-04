@@ -1,6 +1,6 @@
 {
     "name": "@pelicanplatform/web-client",
-    "version": "1.0.18",
+    "version": "1.0.19",
     "homepage": "https://pelicanplatform.org",
     "repository": {
         "type": "git",
@@ -16,10 +16,7 @@
     },
     "exports": {
         ".": {
-            "import": {
-                "development": "./src/index.ts",
-                "default": "./dist/index.js"
-            },
+            "import": "./dist/index.js",
             "require": "./dist/index.cjs"
         }
     },
