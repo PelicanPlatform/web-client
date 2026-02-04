@@ -31,13 +31,15 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.3",
-    "@mui/material": "^7.3.3",
-    "@pelicanplatform/web-client": "workspace:*",
-    "react": "^18",
-    "react-dom": "^18"
+    "@mui/icons-material": "^7.0.0",
+    "@pelicanplatform/web-client": "workspace:*"
+  },
+  "peerDependencies": {
+    "@emotion/react": "^11.0.0",
+    "@emotion/styled": "^11.0.0",
+    "@mui/material": "^7.0.0",
+    "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
