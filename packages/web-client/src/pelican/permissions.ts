@@ -1,6 +1,5 @@
 import { getObjectToken } from "./index";
 import { Namespace, TokenPermission } from "../types";
-import { parseObjectUrl } from "../pelican";
 
 /**
  * Reports the permissions associated with the objectUrl prefix
