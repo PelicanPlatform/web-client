@@ -145,7 +145,7 @@ function AuthenticatedClient() {
             </Box>
           </Box>
           <Paper elevation={1}>
-            {showCollections ? (
+            {showCollections && authorized ? (
               <CollectionView
                 collections={collections}
                 onExplore={(collectionPath: string) => {

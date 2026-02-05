@@ -15,9 +15,9 @@
         "@mui/icons-material": "^7.3.3",
         "@mui/material": "^7.3.3",
         "lodash-es": "^4.17.21",
-        "next": "^14.2.31",
-        "react": "^18",
-        "react-dom": "^18",
+        "next": "^16",
+        "react": "^19",
+        "react-dom": "^19",
         "usehooks-ts": "^3.1.1",
         "@pelicanplatform/components": "workspace:*",
         "@pelicanplatform/web-client": "workspace:*"

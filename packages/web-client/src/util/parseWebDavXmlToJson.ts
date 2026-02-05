@@ -8,7 +8,7 @@ function parseWebDavXmlToJson(xml: string): ObjectList[] {
     let doc: Document;
     try {
         // DOMParser is available in browser and some Node.js environments
-        doc = new (window.DOMParser || require("xmldom").DOMParser)().parseFromString(xml, "application/xml");
+        doc = new window.DOMParser().parseFromString(xml, "application/xml");
     } catch (e) {
         // Fallback: return empty array if parsing fails
         return [];
