@@ -11,12 +11,15 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
-        "build": "tsc",
+        "build": "tsc --project ./tsconfig.json && tsx scripts/prepare-dist-package.js",
         "prepublish": "npm run build"
     },
     "exports": {
         ".": {
-            "import": "./dist/index.js",
+            "import": {
+              "development": "./src/index.ts",
+              "default": "./dist/index.js"
+            },
             "require": "./dist/index.cjs"
         }
     },
