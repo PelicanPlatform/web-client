@@ -12,6 +12,11 @@ const packageJson = JSON.parse(
 
 const distPackageJson = {
   ...packageJson,
+  main: "index.js",
+  types: "index.d.ts",
+  files: [
+      "*"
+  ],
   exports: {
     ".": {
       import: "./index.js",
@@ -30,5 +35,6 @@ fs.copyFileSync(
     path.join(__dirname, '../README.md'),
     path.join(__dirname, '../dist/README.md')
 );
+
 
 console.log("Dist package.json and README prepared successfully.");
