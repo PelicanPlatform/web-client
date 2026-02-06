@@ -11,7 +11,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest --coverage --json --outputFile=.github/tests/test-summary.json",
-    "build": "tsc --project ./tsconfig.json && node scripts/prepare-dist-package.js",
+    "build": "tsc --project ./tsconfig.json",
     "prepublish": "pnpm run build"
   },
   "exports": {
