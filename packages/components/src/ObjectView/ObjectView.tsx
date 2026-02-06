@@ -14,7 +14,7 @@ import {
     TableSortLabel,
     Typography,
 } from "@mui/material";
-import {ObjectList, formatBytes, Collection} from "@pelicanplatform/web-client";
+import {ObjectList, formatBytes} from "@pelicanplatform/web-client";
 import { useMemo, useState } from "react";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
@@ -154,21 +154,21 @@ function ObjectView({
                               </TableSortLabel>
                           </TableCell>
                           <TableCell>
+                            <TableSortLabel
+                              active={sortColumn === "getlastmodified"}
+                              direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
+                              onClick={() => handleSort("getlastmodified")}
+                            >
+                              Updated
+                            </TableSortLabel>
+                          </TableCell>
+                          <TableCell>
                               <TableSortLabel
                                   active={sortColumn === "getcontentlength"}
                                   direction={sortColumn === "getcontentlength" ? sortDirection : "asc"}
                                   onClick={() => handleSort("getcontentlength")}
                               >
                                   Size
-                              </TableSortLabel>
-                          </TableCell>
-                          <TableCell>
-                              <TableSortLabel
-                                  active={sortColumn === "getlastmodified"}
-                                  direction={sortColumn === "getlastmodified" ? sortDirection : "asc"}
-                                  onClick={() => handleSort("getlastmodified")}
-                              >
-                                  Updated
                               </TableSortLabel>
                           </TableCell>
                           <TableCell></TableCell>
@@ -182,13 +182,15 @@ function ObjectView({
                               onClick={() => handleRowClick(obj)}
                               style={{ cursor: "pointer" }}
                           >
-                              <TableCell sx={{ px: 2, py: 1 }}>
+                              <TableCell sx={{ px: 2, py: 1}}>
                                   <ObjectName {...obj} namespace={namespace} collectionPath={collectionPath} />
                               </TableCell>
-                              <TableCell sx={{ px: 2, py: 1 }}>
+                              <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
+                                {obj.getlastmodified ? new Date(obj.getlastmodified).toLocaleString() : ''}
+                              </TableCell>
+                              <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
                                   {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
                               </TableCell>
-                              <TableCell sx={{ px: 2, py: 1 }}>{obj.getlastmodified}</TableCell>
                               <TableCell sx={{ px: 2, py: 1 }} align={'right'}>
                                   {obj.iscollection ? (
                                       <IconButton
@@ -270,7 +272,12 @@ function ObjectName(props: ObjectList & { namespace?: string | null, collectionP
                 <InsertDriveFile color="action" fontSize="small" />
             )}
             {/* Show ".." for parent directory (synthetic entry with empty getlastmodified) */}
+          <Box
+            sx={{ whiteSpace: "nowrap", textWrap: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "15ch" }}
+            title={iscollection && getlastmodified === "" ? ".." : displayName}
+          >
             {iscollection && getlastmodified === "" ? ".." : displayName}
+          </Box>
         </Box>
     );
 }
