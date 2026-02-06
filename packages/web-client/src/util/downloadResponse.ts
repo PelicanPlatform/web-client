@@ -9,9 +9,9 @@ function downloadUrl(objectName: string = "object", url: string) {
     let a = document.createElement("a");
     a.setAttribute("href", url);
     a.setAttribute("download", objectName);
-    a.setAttribute("target", "_blank");
     a.style.display = "none";
     a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 export default downloadResponse;
