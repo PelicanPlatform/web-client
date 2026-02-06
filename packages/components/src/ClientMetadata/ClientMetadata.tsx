@@ -20,7 +20,7 @@ interface ClientMetadataProps {
 function ClientMetadata({ federation, namespace, collectionPath, onUpload, permissions = [] }: ClientMetadataProps) {
     return (
         <Box display={"flex"} alignItems={"end"} justifyContent={"space-between"} gap={2}>
-            <Box display={"flex"} gap={1}>
+            <Box display={{xs: "none", md: "flex"}} gap={1}>
                 <Typography variant="body2" color="text.secondary">
                     <strong>Federation:</strong> {federation || "N/A"}
                 </Typography>
