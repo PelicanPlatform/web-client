@@ -333,11 +333,16 @@ export function PelicanClientProvider({
       // No longer need authorization
       setAuthorizationRequired(false);
 
+      // Get authenticated collections for the current namespace and filter objects based on permissions
+      const currentCollections = getTokenCollections(namespace);
+
       // add parent directory entry
       const pathParts = objectPath.split("/").filter((p) => p.length > 0);
-      if (pathParts.length > 0) {
-        const parentParts = pathParts.slice(0, -1);
-        const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
+      const parentParts = pathParts.slice(0, -1);
+      const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
+
+      // Check if the parent directory is within any of the user's collections before adding it to the list
+      if (pathParts.length > 0 && currentCollections.some(c => parentPath.startsWith(namespace.prefix + c.objectPath))) {
         objects.push({
           href: parentPath || "/",
           getcontentlength: 0,
