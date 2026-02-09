@@ -128,7 +128,12 @@ function ObjectView({
             ) : (
               // Empty state
               <>
-                You are in an empty collection. You can drop files here to upload, or navigate back to a parent collection using the breadcrumbs above. Object paths follow the format:
+                <Typography>
+                  You are in an empty collection.
+                </Typography>
+                <Typography>
+                  You can upload files here or navigate to your collections using the menu in the top right.
+                </Typography>
                 <br />
                 <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
               </>

@@ -62,7 +62,6 @@ export function PelicanClientProvider({
   );
 
   const [authorizationRequired, setAuthorizationRequired] = useState(!enableAuth);
-  const [currentNamespace, setCurrentNamespace] = useState<Namespace | null>(null);
 
   // Store in-flight metadata fetch promises to prevent duplicate concurrent requests
   const metadataPromises = useRef<Map<string, Promise<{
@@ -130,6 +129,14 @@ export function PelicanClientProvider({
     return federation.namespaces?.[namespaceKey] || null;
   }, [prefixToNamespace, objectPath, federation]);
 
+  // On mount, attempt to set activeNamespace from stored federations if possible
+  useEffect(() => {
+    if (derivedNamespace) {
+      setActiveNamespace(derivedNamespace);
+    }
+  }, [])
+
+
   const namespace = derivedNamespace || activeNamespace;
 
   const prevCollectionsRef = useRef<Collection[]>([]);
@@ -162,10 +169,11 @@ export function PelicanClientProvider({
 
           if (namespace.token && !verifyToken(namespace.token)) {
             console.log(`Removing expired token for namespace: ${nsKey} in federation: ${fedKey}`);
+            setError("Cleaned expired authentication token. Please log in again.");
             delete updatedNamespace.token;
           }
 
-          updatedNamespaces[nsKey] = namespace;
+          updatedNamespaces[nsKey] = updatedNamespace;
         }
 
         updatedFederations[fedKey] = {
@@ -385,7 +393,12 @@ export function PelicanClientProvider({
    */
   const invalidateObjectListCache = useCallback((targetObjectUrl?: string) => {
     if (targetObjectUrl) {
-      objectListCache.current.delete(targetObjectUrl);
+      // Delete target cache and parent caches in case of directory changes
+      const toDelete = targetObjectUrl.replace("pelican://", "").split("/").map((_, idx, arr) => "pelican://" + arr.slice(0, idx + 1).join("/"));
+      toDelete.forEach(url => {
+        console.log("Deleting cache for:", url);
+        objectListCache.current.delete(url)
+      });
     } else {
       objectListCache.current.clear();
     }

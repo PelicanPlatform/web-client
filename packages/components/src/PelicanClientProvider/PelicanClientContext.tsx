@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, Dispatch, SetStateAction } from "react";
 import { Federation, Namespace, Collection, ObjectList } from "@pelicanplatform/web-client";
 
 export interface PelicanClientContextValue {
@@ -35,7 +35,7 @@ export interface PelicanClientContextValue {
   handleLogin: () => Promise<void>;
 
   // URL management
-  setObjectUrl: (url: string) => void;
+  setObjectUrl: Dispatch<SetStateAction<string>>;
 }
 
 export const PelicanClientContext = createContext<PelicanClientContextValue | null>(null);

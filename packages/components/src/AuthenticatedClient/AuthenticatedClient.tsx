@@ -9,7 +9,8 @@ import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
 import CollectionView from "../CollectionView";
 import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
-import { UploadFile, List, ContentCopy } from "@mui/icons-material";
+import { UploadFile, List, CreateNewFolderOutlined } from "@mui/icons-material";
+import AddCollectionButton from "../AddCollectionButton";
 
 /**
  * Inner component that uses the context
@@ -78,23 +79,6 @@ function AuthenticatedClient() {
     } catch {}
   }, [namespace, objectUrl]);
 
-  console.log({
-    error,
-    setError,
-    objectUrl,
-    setObjectUrl,
-    collections,
-    loading,
-    authorizationRequired,
-    authorized,
-    handleLogin,
-    handleDownload,
-    handleUpload,
-    federation,
-    namespace,
-    getObjectList
-  })
-
   return (
     <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
       <Box
@@ -126,9 +110,17 @@ function AuthenticatedClient() {
               onUpload={!authorized ? () => uploadRef.current?.triggerFileSelect() : undefined}
             />
             <Box display={'flex'} mb={-1}>
-              <IconButton onClick={() => navigator.clipboard.writeText(objectUrl)}>
-                <ContentCopy />
-              </IconButton>
+              <AddCollectionButton
+                icon={<CreateNewFolderOutlined />}
+                onSubmit={(i) => {
+                  // Ensure the input starts with a "/" and does not end with a "/"
+                  if(!i.startsWith("/")) i = "/" + i;
+                  if(i.endsWith("/")) i = i.slice(0, -1);
+
+                  setObjectUrl((prev) => prev + i)
+                  updateObjectList(objectUrl + i);
+                }}
+              />
               <IconButton onClick={() => uploadRef.current?.triggerFileSelect()} disabled={!authorized}>
                 <UploadFile />
               </IconButton>

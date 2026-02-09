@@ -286,6 +286,7 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
                                     </ListItemIcon>
                                     <ListItemText
                                         primary={uploadFile.file.name}
+                                        slotProps={{ secondary: { component: "div" } }}
                                         secondary={
                                             <Box sx={{ width: "100%" }}>
                                                 <Box
