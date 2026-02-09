@@ -1,25 +1,178 @@
-name: Publish Package
+name: Publish Packages
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'packages/*/package.json'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish (web-client, components, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - web-client
+          - components
 
 permissions:
   id-token: write  # Required for OIDC
   contents: read
 
 jobs:
-  publish:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web-client-changed: ${{ steps.changes.outputs.web-client }}
+      components-changed: ${{ steps.changes.outputs.components }}
+      web-client-version: ${{ steps.versions.outputs.web-client }}
+      components-version: ${{ steps.versions.outputs.components }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to compare
+
+      - name: Check for version changes
+        id: changes
+        run: |
+          # Check if web-client version changed
+          if git diff HEAD~1 HEAD -- packages/web-client/package.json | grep -q '"version"'; then
+            echo "web-client=true" >> $GITHUB_OUTPUT
+          else
+            echo "web-client=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check if components version changed
+          if git diff HEAD~1 HEAD -- packages/components/package.json | grep -q '"version"'; then
+            echo "components=true" >> $GITHUB_OUTPUT
+          else
+            echo "components=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get package versions
+        id: versions
+        run: |
+          WEB_CLIENT_VERSION=$(node -p "require('./packages/web-client/package.json').version")
+          COMPONENTS_VERSION=$(node -p "require('./packages/components/package.json').version")
+          echo "web-client=${WEB_CLIENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "components=${COMPONENTS_VERSION}" >> $GITHUB_OUTPUT
+
+  publish-web-client:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.web-client-changed == 'true' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'web-client' || github.event.inputs.package == 'all'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
-      - run: npm publish
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web-client
+        working-directory: packages/web-client
+        run: pnpm run build
+
+#      - name: Test web-client
+#        working-directory: packages/web-client
+#        run: pnpm run test
+
+      - name: Check if version exists on npm
+        id: check-version
+        working-directory: packages/web-client
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          if npm view ${PACKAGE_NAME}@${PACKAGE_VERSION} version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Version ${PACKAGE_VERSION} already exists on npm"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Version ${PACKAGE_VERSION} is new"
+          fi
+
+      - name: Publish web-client
+        if: steps.check-version.outputs.exists == 'false'
+        working-directory: packages/web-client
+        run: pnpm publish --no-git-checks --access public
+
+      - name: Create release tag
+        if: steps.check-version.outputs.exists == 'false'
+        run: |
+          VERSION=${{ needs.detect-changes.outputs.web-client-version }}
+          git tag "web-client-v${VERSION}"
+          echo "Created tag: web-client-v${VERSION}"
+
+  publish-components:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.components-changed == 'true' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'components' || github.event.inputs.package == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build components (and dependencies)
+        run: |
+          pnpm --filter @pelicanplatform/web-client run build
+          pnpm --filter @pelicanplatform/components run build
+
+      - name: Test components
+        working-directory: packages/components
+        run: pnpm run test
+
+      - name: Check if version exists on npm
+        id: check-version
+        working-directory: packages/components
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          if npm view ${PACKAGE_NAME}@${PACKAGE_VERSION} version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Version ${PACKAGE_VERSION} already exists on npm"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Version ${PACKAGE_VERSION} is new"
+          fi
+
+      - name: Publish components
+        if: steps.check-version.outputs.exists == 'false'
+        working-directory: packages/components
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create release tag
+        if: steps.check-version.outputs.exists == 'false'
+        run: |
+          VERSION=${{ needs.detect-changes.outputs.components-version }}
+          git tag "components-v${VERSION}"
+          echo "Created tag: components-v${VERSION}"
