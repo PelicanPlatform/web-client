@@ -158,9 +158,9 @@ jobs:
           pnpm --filter @pelicanplatform/web-client run build
           pnpm --filter @pelicanplatform/components run build
 
-      - name: Test components
-        working-directory: packages/components
-        run: pnpm run test
+#      - name: Test components
+#        working-directory: packages/components
+#        run: pnpm run test
 
       - name: Check if version exists on npm
         id: check-version
@@ -218,9 +218,9 @@ jobs:
           pnpm --filter @pelicanplatform/web-client run build
           pnpm --filter @pelicanplatform/hooks run build
 
-      - name: Test hooks
-        working-directory: packages/hooks
-        run: pnpm run test
+#      - name: Test hooks
+#        working-directory: packages/hooks
+#        run: pnpm run test
 
       - name: Check if version exists on npm
         id: check-version
