@@ -109,8 +109,6 @@ export function useAuthExchange({
                     code
                 );
 
-                console.log("Obtained token via authorization code exchange:", tokenData);
-
                 // Notify parent component of successful token acquisition
                 if (onTokenReceived) {
                     onTokenReceived({

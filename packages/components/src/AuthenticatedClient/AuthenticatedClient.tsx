@@ -45,7 +45,6 @@ function AuthenticatedClient() {
 
   // If there is just one collection found lets auto-navigate into it
   useEffect(() => {
-    console.log("Collections changed", {collections});
     if(!namespace || !federation) return;
     if (collections.length > 0) {
       setHighlightCollections(true);

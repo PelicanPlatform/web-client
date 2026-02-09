@@ -168,7 +168,6 @@ export function PelicanClientProvider({
           const updatedNamespace = { ...namespace };
 
           if (namespace.token && !verifyToken(namespace.token)) {
-            console.log(`Removing expired token for namespace: ${nsKey} in federation: ${fedKey}`);
             setError("Cleaned expired authentication token. Please log in again.");
             delete updatedNamespace.token;
           }
@@ -202,7 +201,6 @@ export function PelicanClientProvider({
     // Check if there's already an in-flight request for this URL
     const existingPromise = metadataPromises.current.get(cacheKey);
     if (existingPromise) {
-      console.log(`Reusing in-flight request for ${cacheKey}`);
       return existingPromise;
     }
 
@@ -223,7 +221,6 @@ export function PelicanClientProvider({
         let federation = federations[federationHostname];
         if (!federation) {
           federation = await fetchFederation(federationHostname);
-          console.log("Adding federation:", federation.hostname);
           setFederations((prev) => ({
             ...prev,
             [federationHostname]: federation as Federation
@@ -240,10 +237,8 @@ export function PelicanClientProvider({
 
           setActiveNamespace((p) => {
             if (p && p.prefix === namespace!.prefix) {
-              console.log("Namespace unchanged, reusing previous reference");
               return p;
             }
-            console.log("Namespace changed, updating value", p, namespace);
             return namespace as Namespace;
           });
           setPrefixToNamespace((prev) => ({
@@ -256,7 +251,6 @@ export function PelicanClientProvider({
 
           // If the namespace doesn't exist in the federation yet, add it
           if(namespace && !(namespace.prefix in federation.namespaces)) {
-            console.log("Adding namespace:", namespace.prefix, "to federation:", federation.hostname);
             setFederations((prev) => ({
               ...prev,
               [federationHostname]: {
@@ -324,7 +318,6 @@ export function PelicanClientProvider({
       if (!forceRefresh) {
         const cached = objectListCache.current.get(urlToFetch);
         if (cached && Date.now() - cached.timestamp < OBJECT_LIST_CACHE_TTL) {
-          console.log(`Using cached object list for ${urlToFetch}`);
           return cached.data;
         }
       }
@@ -396,7 +389,6 @@ export function PelicanClientProvider({
       // Delete target cache and parent caches in case of directory changes
       const toDelete = targetObjectUrl.replace("pelican://", "").split("/").map((_, idx, arr) => "pelican://" + arr.slice(0, idx + 1).join("/"));
       toDelete.forEach(url => {
-        console.log("Deleting cache for:", url);
         objectListCache.current.delete(url)
       });
     } else {
