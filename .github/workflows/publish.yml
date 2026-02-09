@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'Package to publish (web-client, components, or all)'
+        description: 'Package to publish (web-client, components, hooks, or all)'
         required: true
         default: 'all'
         type: choice
@@ -17,6 +17,7 @@ on:
           - all
           - web-client
           - components
+          - hooks
 
 permissions:
   id-token: write  # Required for OIDC
@@ -28,8 +29,10 @@ jobs:
     outputs:
       web-client-changed: ${{ steps.changes.outputs.web-client }}
       components-changed: ${{ steps.changes.outputs.components }}
+      hooks-changed: ${{ steps.changes.outputs.hooks }}
       web-client-version: ${{ steps.versions.outputs.web-client }}
       components-version: ${{ steps.versions.outputs.components }}
+      hooks-version: ${{ steps.versions.outputs.hooks }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,14 +54,23 @@ jobs:
           else
             echo "components=false" >> $GITHUB_OUTPUT
           fi
+          
+          # Check if hooks version changed
+          if git diff HEAD~1 HEAD -- packages/hooks/package.json | grep -q '"version"'; then
+            echo "hooks=true" >> $GITHUB_OUTPUT
+          else
+            echo "hooks=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Get package versions
         id: versions
         run: |
           WEB_CLIENT_VERSION=$(node -p "require('./packages/web-client/package.json').version")
           COMPONENTS_VERSION=$(node -p "require('./packages/components/package.json').version")
+          HOOKS_VERSION=$(node -p "require('./packages/hooks/package.json').version")
           echo "web-client=${WEB_CLIENT_VERSION}" >> $GITHUB_OUTPUT
           echo "components=${COMPONENTS_VERSION}" >> $GITHUB_OUTPUT
+          echo "hooks=${HOOKS_VERSION}" >> $GITHUB_OUTPUT
 
   publish-web-client:
     needs: detect-changes
@@ -109,6 +121,8 @@ jobs:
         if: steps.check-version.outputs.exists == 'false'
         working-directory: packages/web-client
         run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release tag
         if: steps.check-version.outputs.exists == 'false'
@@ -176,3 +190,64 @@ jobs:
           VERSION=${{ needs.detect-changes.outputs.components-version }}
           git tag "components-v${VERSION}"
           echo "Created tag: components-v${VERSION}"
+
+  publish-hooks:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.hooks-changed == 'true' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'hooks' || github.event.inputs.package == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build hooks (and dependencies)
+        run: |
+          pnpm --filter @pelicanplatform/web-client run build
+          pnpm --filter @pelicanplatform/hooks run build
+
+      - name: Test hooks
+        working-directory: packages/hooks
+        run: pnpm run test
+
+      - name: Check if version exists on npm
+        id: check-version
+        working-directory: packages/hooks
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          if npm view ${PACKAGE_NAME}@${PACKAGE_VERSION} version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Version ${PACKAGE_VERSION} already exists on npm"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Version ${PACKAGE_VERSION} is new"
+          fi
+
+      - name: Publish hooks
+        if: steps.check-version.outputs.exists == 'false'
+        working-directory: packages/hooks
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create release tag
+        if: steps.check-version.outputs.exists == 'false'
+        run: |
+          VERSION=${{ needs.detect-changes.outputs.hooks-version }}
+          git tag "hooks-v${VERSION}"
+          echo "Created tag: hooks-v${VERSION}"
+
