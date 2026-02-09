@@ -3,7 +3,6 @@
 import {Alert, Badge, Box, IconButton, Paper, Skeleton, Snackbar } from "@mui/material";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 
-import { usePelicanClient } from "../PelicanClientProvider";
 import ClientMetadata from "../ClientMetadata";
 import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
@@ -11,6 +10,7 @@ import CollectionView from "../CollectionView";
 import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
 import { UploadFile, List, CreateNewFolderOutlined } from "@mui/icons-material";
 import AddCollectionButton from "../AddCollectionButton";
+import {usePelicanClient} from "@pelicanplatform/hooks";
 
 /**
  * Inner component that uses the context

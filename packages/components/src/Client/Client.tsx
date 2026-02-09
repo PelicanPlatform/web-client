@@ -2,7 +2,7 @@
 
 import AuthenticatedClient from "../AuthenticatedClient";
 import PublicClient from "../PublicClient";
-import {PelicanClientProvider} from "../PelicanClientProvider";
+import {PelicanClientProvider} from "@pelicanplatform/hooks";
 
 export interface ClientProps {
   /** The initial object URL to load */

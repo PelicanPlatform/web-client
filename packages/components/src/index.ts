@@ -1,5 +1,4 @@
-export * from "./Client";
-export * from "./PelicanClientProvider"
-export { default as AuthenticatedClient } from "./AuthenticatedClient"
-export { default } from "./Client";
+// Re-export all components and hooks from the respective packages
+export * from "@pelicanplatform/hooks";
 
+export { default } from "./Client";

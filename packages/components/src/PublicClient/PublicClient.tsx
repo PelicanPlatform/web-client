@@ -1,10 +1,10 @@
 "use client";
 
 import { Box } from "@mui/material";
-
-import {usePelicanClient} from "../PelicanClientProvider";
 import {useEffect, useMemo, useState} from "react";
+
 import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
+import {usePelicanClient} from "@pelicanplatform/hooks";
 
 
 /**

@@ -21,9 +21,9 @@ import {
   Namespace
 } from "@pelicanplatform/web-client";
 import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClientContext";
-import { useSessionStorage } from "../usePelicanClient/useSessionStorage";
-import { useCodeVerifier } from "../usePelicanClient/useCodeVerifier";
-import { useAuthExchange } from "../usePelicanClient/useAuthExchange";
+import { useSessionStorage } from "../helpers/useSessionStorage";
+import { useCodeVerifier } from "../helpers/useCodeVerifier";
+import { useAuthExchange } from "../helpers/useAuthExchange";
 
 export interface PelicanClientProviderProps {
   /** Initial object URL */

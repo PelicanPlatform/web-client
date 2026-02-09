@@ -1,12 +1,12 @@
 {
-  "name": "@pelicanplatform/components",
-  "version": "1.0.13",
+  "name": "@pelicanplatform/hooks",
+  "version": "1.0.0",
   "homepage": "https://pelicanplatform.org",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PelicanPlatform/web-client.git"
   },
-  "description": "Pelican Client Components",
+  "description": "Pelican React Hooks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -39,14 +39,9 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mui/icons-material": "^7.0.0",
-    "@pelicanplatform/web-client": "workspace:*",
-    "@pelicanplatform/hooks": "workspace:*"
+    "@pelicanplatform/web-client": "workspace:*"
   },
   "peerDependencies": {
-    "@emotion/react": "^11.0.0",
-    "@emotion/styled": "^11.0.0",
-    "@mui/material": "^7.0.0",
     "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
   },
@@ -54,8 +49,6 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.0.2",
     "typescript": "^5"
   }
 }
