@@ -128,7 +128,7 @@ function ObjectView({
             ) : (
               // Empty state
               <>
-                Enter Pelican Collection URL to View Contents:
+                You are in an empty collection. You can drop files here to upload, or navigate back to a parent collection using the breadcrumbs above. Object paths follow the format:
                 <br />
                 <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
               </>
@@ -273,7 +273,7 @@ function ObjectName(props: ObjectList & { namespace?: string | null, collectionP
             )}
             {/* Show ".." for parent directory (synthetic entry with empty getlastmodified) */}
           <Box
-            sx={{ whiteSpace: "nowrap", textWrap: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "15ch" }}
+            sx={{ whiteSpace: "nowrap", textWrap: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: { sm: "15ch", md: "25ch", lg: "35ch" } }}
             title={iscollection && getlastmodified === "" ? ".." : displayName}
           >
             {iscollection && getlastmodified === "" ? ".." : displayName}
