@@ -121,8 +121,6 @@ jobs:
         if: steps.check-version.outputs.exists == 'false'
         working-directory: packages/web-client
         run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release tag
         if: steps.check-version.outputs.exists == 'false'
@@ -156,6 +154,7 @@ jobs:
       - name: Build components (and dependencies)
         run: |
           pnpm --filter @pelicanplatform/web-client run build
+          pnpm --filter @pelicanplatform/hooks run build
           pnpm --filter @pelicanplatform/components run build
 
 #      - name: Test components
@@ -181,8 +180,6 @@ jobs:
         if: steps.check-version.outputs.exists == 'false'
         working-directory: packages/components
         run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release tag
         if: steps.check-version.outputs.exists == 'false'
@@ -241,8 +238,6 @@ jobs:
         if: steps.check-version.outputs.exists == 'false'
         working-directory: packages/hooks
         run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release tag
         if: steps.check-version.outputs.exists == 'false'
