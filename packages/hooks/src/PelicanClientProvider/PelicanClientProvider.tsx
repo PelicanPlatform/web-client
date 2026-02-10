@@ -44,7 +44,8 @@ export function PelicanClientProvider({
                                         children
                                       }: PelicanClientProviderProps) {
 
-  const [objectUrl, setObjectUrl] = useState(
+  const [objectUrl, setObjectUrl] = useSessionStorage<string>(
+    "pelican-wc-object-url",
     initialObjectUrl
   );
 
