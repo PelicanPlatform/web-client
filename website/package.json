@@ -21,7 +21,7 @@
         "usehooks-ts": "^3.1.1",
         "@pelicanplatform/components": "workspace:*",
         "@pelicanplatform/web-client": "workspace:*",
-        "@pelicanplatform/web-client": "workspace:*"
+        "@pelicanplatform/hooks": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^20",

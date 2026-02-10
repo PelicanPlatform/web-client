@@ -78,8 +78,25 @@ function AuthenticatedClient() {
     } catch {}
   }, [namespace, objectUrl]);
 
+  console.log({
+    error,
+    setError,
+    objectUrl,
+    setObjectUrl,
+    collections,
+    loading,
+    authorizationRequired,
+    authorized,
+    handleLogin,
+    handleDownload,
+    handleUpload,
+    federation,
+    namespace,
+    getObjectList
+  })
+
   return (
-    <Box mt={6} {...(uploadRef.current?.dragHandlers ?? {})}>
+    <Box {...(uploadRef.current?.dragHandlers ?? {})}>
       <Box
         width={"100%"}
         sx={{
@@ -116,7 +133,7 @@ function AuthenticatedClient() {
                   if(!i.startsWith("/")) i = "/" + i;
                   if(i.endsWith("/")) i = i.slice(0, -1);
 
-                  setObjectUrl((prev) => prev + i)
+                  setObjectUrl((prev: string) => prev + i)
                   updateObjectList(objectUrl + i);
                 }}
               />
