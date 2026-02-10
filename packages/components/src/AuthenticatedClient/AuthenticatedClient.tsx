@@ -107,7 +107,7 @@ function AuthenticatedClient() {
         }}
         gap={2}
       >
-        <Box pt={2} display={"flex"} flexDirection={"column"} flexGrow={1}>
+        <Box display={"flex"} flexDirection={"column"} flexGrow={1}>
           {authorized && (
             <Box>
               <ObjectUpload
