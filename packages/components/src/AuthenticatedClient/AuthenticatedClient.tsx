@@ -143,7 +143,10 @@ function AuthenticatedClient() {
               <Badge invisible={!highlightCollections} badgeContent={collections.length} color={'primary'}>
                 <IconButton
                   onClick={() => {
-                    setShowCollections((x) => !x)
+                    // Check that the current object url starts in a collection
+                    if(collections.some(c => objectUrl.startsWith(`pelican://${federation?.hostname}${namespace?.prefix}${c.href}`))) {
+                      setShowCollections((x) => !x)
+                    }
                   }}
                   disabled={!authorized}
                 >

@@ -134,8 +134,6 @@ function ObjectView({
                 <Typography>
                   You can upload files here or navigate to your collections using the menu in the top right.
                 </Typography>
-                <br />
-                <strong>pelican://&lt;federation&gt;/&lt;namespace&gt;/&lt;collection&gt;/</strong>
               </>
             )}
           </Typography>
