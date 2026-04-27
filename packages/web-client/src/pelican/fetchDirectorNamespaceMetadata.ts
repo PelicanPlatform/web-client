@@ -28,14 +28,13 @@ async function fetchDirectorNamespaceMetadata(
  */
 const transformNoRedirectResponseToPathMetadata = (response: Response): DirectorNamespaceMetadata => {
     try {
-        // TODO: Check for a X-Collections-Header
-        const { issuer: authIssuer } = parseRecordHeader(response.headers.get("X-Pelican-Authorization"));
-        const { namespace, requireToken, collectionUrl } = parseRecordHeader(
-            response.headers.get("X-Pelican-Namespace")
-        );
-        const { issuer, maxScopeDepth, strategy, basePath } = parseRecordHeader(
-            response.headers.get("X-Pelican-Token-Generation")
-        );
+
+        const authHeader = response.headers.get("X-Pelican-Authorization");
+        const { issuer: authIssuer } = authHeader ? parseRecordHeader(response.headers.get("X-Pelican-Authorization")) : {};
+        const namespaceHeader = response.headers.get("X-Pelican-Namespace");
+        const { namespace, requireToken, collectionUrl } = namespaceHeader ? parseRecordHeader(namespaceHeader) : {};
+        const tokenGenerationHeader = response.headers.get("X-Pelican-Token-Generation");
+        const { issuer, maxScopeDepth, strategy, basePath } = tokenGenerationHeader ? parseRecordHeader(tokenGenerationHeader) : {};
 
         return {
             issuer: authIssuer,

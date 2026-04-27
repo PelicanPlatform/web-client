@@ -7,8 +7,6 @@ const list = async (collectionUrl: string, federation: Federation, namespace?: N
     const { objectPath } = parseObjectUrl(collectionUrl);
     const token = namespace ? getObjectToken(namespace) : null;
 
-    console.log("Listing objects at", objectPath, "with token", token, "and namespace", namespace);
-
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
 
     const response = await fetch(objectHttpUrl, {

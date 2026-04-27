@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUpward, Download, Folder, InsertDriveFile, MenuOpen } from "@mui/icons-material";
+import { ArrowUpward, Download as DownloadIcon, Folder, InsertDriveFile, MenuOpen } from "@mui/icons-material";
 import {
     Box,
     Button,
+  CircularProgress,
   IconButton,
     Table,
     TableBody,
@@ -15,6 +16,7 @@ import {
     Typography,
 } from "@mui/material";
 import {ObjectList, formatBytes} from "@pelicanplatform/web-client";
+import {Download} from "@pelicanplatform/hooks";
 import { useMemo, useState } from "react";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
@@ -28,6 +30,7 @@ interface ObjectListProps {
     loginRequired: boolean;
     canLogin: boolean;
     onLoginRequest?: () => void;
+    downloadsInProgress: Record<string, Download>;
     /** Namespace prefix to strip from display (e.g., /namespace) */
     namespace?: string | null;
 }
@@ -44,6 +47,7 @@ function ObjectView({
     canLogin,
     onLoginRequest,
     namespace,
+    downloadsInProgress
 }: ObjectListProps) {
 
     const [sortColumn, setSortColumn] = useState<SortableColumn>("href");
@@ -58,13 +62,6 @@ function ObjectView({
         }
     };
 
-    const handleRowClick = (obj: ObjectList) => {
-        if (obj.iscollection) {
-            onExplore(obj.href);
-        } else {
-            onDownload(obj.href);
-        }
-    };
 
     const sortedObjectList = useMemo(() => {
         return [...objectList]
@@ -141,6 +138,8 @@ function ObjectView({
       )
     }
 
+    console.log(downloadsInProgress);
+
     return (
       <Box>
           <TableContainer component={Box}>
@@ -174,78 +173,100 @@ function ObjectView({
                                   Size
                               </TableSortLabel>
                           </TableCell>
-                          <TableCell></TableCell>
+                          <TableCell sx={{ width: 80, minWidth: 80 }}></TableCell>
                       </TableRow>
                   </TableHead>
                   <TableBody>
                       {sortedObjectList.map((obj, index) => (
-                          <TableRow
+                          <ObjectViewRow
                               key={index}
-                              hover
-                              onClick={() => handleRowClick(obj)}
-                              style={{ cursor: "pointer" }}
-                          >
-                              <TableCell sx={{ px: 2, py: 1}}>
-                                  <ObjectName {...obj} namespace={namespace} collectionPath={collectionPath} />
-                              </TableCell>
-                              <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
-                                {obj.getlastmodified ? new Date(obj.getlastmodified).toLocaleString() : ''}
-                              </TableCell>
-                              <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
-                                  {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
-                              </TableCell>
-                              <TableCell sx={{ px: 2, py: 1 }} align={'right'}>
-                                  {obj.iscollection ? (
-                                      <IconButton
-                                          onClick={(e) => {
-                                              e.stopPropagation();
-                                              onExplore(obj.href);
-                                          }}
-                                          aria-label={`Explore ${obj.href}`}
-                                          style={{
-                                              background: "transparent",
-                                              border: "none",
-                                              color: "var(--mui-palette-text-primary, #000)",
-                                              padding: 0,
-                                              cursor: "pointer",
-                                              display: "inline-flex",
-                                              alignItems: "center",
-                                              gap: 6,
-                                              fontSize: "0.95rem",
-                                          }}
-                                      >
-                                          <MenuOpen fontSize="small" />
-                                      </IconButton>
-                                  ) : (
-                                      <IconButton
-                                          onClick={(e) => {
-                                              e.stopPropagation();
-                                              onDownload(obj.href);
-                                          }}
-                                          aria-label={`Download ${obj.href}`}
-                                          style={{
-                                              background: "transparent",
-                                              border: "none",
-                                              color: "var(--mui-palette-text-primary, #000)",
-                                              padding: 0,
-                                              cursor: "pointer",
-                                              display: "inline-flex",
-                                              alignItems: "center",
-                                              gap: 6,
-                                              fontSize: "0.95rem",
-                                          }}
-                                      >
-                                          <Download fontSize="small" />
-                                      </IconButton>
-                                  )}
-                              </TableCell>
-                          </TableRow>
+                              obj={obj}
+                              namespace={namespace}
+                              collectionPath={collectionPath}
+                              downloadsInProgress={downloadsInProgress}
+                              onExplore={onExplore}
+                              onDownload={onDownload}
+                          />
                       ))}
                   </TableBody>
               </Table>
           </TableContainer>
         </Box>
     );
+}
+
+interface ObjectViewRowProps {
+    obj: ObjectList;
+    namespace?: string | null;
+    collectionPath?: string;
+    downloadsInProgress: Record<string, Download>;
+    onExplore: (href: string) => void;
+    onDownload: (href: string) => void;
+}
+
+function ObjectViewRow({ obj, namespace, collectionPath, downloadsInProgress, onExplore, onDownload }: ObjectViewRowProps) {
+    const download = Object.values(downloadsInProgress).find((d) => d.url.endsWith(obj.href));
+
+    const handleRowClick = () => {
+        if (obj.iscollection) {
+            onExplore(obj.href);
+        } else {
+            onDownload(obj.href);
+        }
+    };
+
+    return (
+        <TableRow
+            hover
+            onClick={handleRowClick}
+            sx={{
+                cursor: "pointer",
+                "@keyframes downloadGlow": {
+                    "0%, 100%": { backgroundColor: "rgba(25, 118, 210, 0.05)" },
+                    "50%": { backgroundColor: "rgba(25, 118, 210, 0.2)" },
+                },
+                animation: download ? "downloadGlow 1.5s ease-in-out infinite" : "none",
+            }}
+        >
+            <TableCell sx={{ px: 2, py: 1 }}>
+                <ObjectName {...obj} namespace={namespace} collectionPath={collectionPath} />
+            </TableCell>
+            <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
+                {obj.getlastmodified ? new Date(obj.getlastmodified).toLocaleString() : ''}
+            </TableCell>
+            <TableCell sx={{ px: 2, py: 1, textWrap: "nowrap" }}>
+                {obj.iscollection ? "" : formatBytes(obj.getcontentlength)}
+            </TableCell>
+            <TableCell sx={{ px: 2, py: 1, width: 90, minWidth: 90 }} align="right">
+                {obj.iscollection ? (
+                    <IconButton
+                        onClick={(e) => { e.stopPropagation(); onExplore(obj.href); }}
+                        aria-label={`Explore ${obj.href}`}
+                        style={{ background: "transparent", border: "none", color: "var(--mui-palette-text-primary, #000)", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.95rem" }}
+                    >
+                        <MenuOpen fontSize="small" />
+                    </IconButton>
+                ) : (
+                    <IconButton
+                        onClick={(e) => { e.stopPropagation(); onDownload(obj.href); }}
+                        aria-label={`Download ${obj.href}`}
+                        style={{ background: "transparent", border: "none", color: "var(--mui-palette-text-primary, #000)", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.95rem" }}
+                    >
+                      {download ? <ProgressIcon progress={download.progress} /> : <DownloadIcon fontSize="small" />}
+                    </IconButton>
+                )}
+            </TableCell>
+        </TableRow>
+    );
+}
+
+function ProgressIcon({ progress }: { progress: number }) {
+    return (
+        <Box position="relative" display="inline-flex" gap={1}>
+            <Typography variant={'subtitle2'}>{progress}%</Typography>
+            <CircularProgress size={20} variant="determinate" value={progress} aria-label={`Download progress: ${Math.round(progress)}%`} />
+        </Box>
+    )
 }
 
 function ObjectName(props: ObjectList & { namespace?: string | null, collectionPath?: string | null }) {

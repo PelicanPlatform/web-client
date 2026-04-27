@@ -31,7 +31,8 @@ function AuthenticatedClient() {
     handleUpload,
     federation,
     namespace,
-    getObjectList
+    getObjectList,
+    downloadsInProgress
   } = usePelicanClient();
 
   const uploadRef = useRef<ObjectUploadRef>(null);
@@ -59,7 +60,7 @@ function AuthenticatedClient() {
 
   // On mount attempt to load the object list
   useEffect(() => {
-    updateObjectList(objectUrl);
+    (async () => await updateObjectList(objectUrl))();
   }, []);
 
   // Wrap handleUpload to refresh object list after successful upload
@@ -77,23 +78,6 @@ function AuthenticatedClient() {
       return objectPath.replace(namespace.prefix, "")
     } catch {}
   }, [namespace, objectUrl]);
-
-  console.log({
-    error,
-    setError,
-    objectUrl,
-    setObjectUrl,
-    collections,
-    loading,
-    authorizationRequired,
-    authorized,
-    handleLogin,
-    handleDownload,
-    handleUpload,
-    federation,
-    namespace,
-    getObjectList
-  })
 
   return (
     <Box {...(uploadRef.current?.dragHandlers ?? {})}>
@@ -133,8 +117,12 @@ function AuthenticatedClient() {
                   if(!i.startsWith("/")) i = "/" + i;
                   if(i.endsWith("/")) i = i.slice(0, -1);
 
-                  setObjectUrl((prev: string) => prev + i)
-                  updateObjectList(objectUrl + i);
+                  setObjectUrl((prev: string) => {
+                    const newObjectUrl = prev + i;
+                    updateObjectList(newObjectUrl);
+                    return newObjectUrl;
+                  })
+                  ;
                 }}
               />
               <IconButton onClick={() => uploadRef.current?.triggerFileSelect()} disabled={!authorized}>
@@ -184,6 +172,7 @@ function AuthenticatedClient() {
                   setObjectUrl(newUrl);
                   updateObjectList(newUrl)
                 }}
+                downloadsInProgress={downloadsInProgress}
               />
             )}
           </Paper>

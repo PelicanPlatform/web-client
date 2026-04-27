@@ -1,5 +1,8 @@
+"use client";
+
 import { createContext, Dispatch, SetStateAction } from "react";
 import { Federation, Namespace, Collection, ObjectList } from "@pelicanplatform/web-client";
+import Download from "../types";
 
 export interface PelicanClientContextValue {
   // Metadata state
@@ -7,6 +10,7 @@ export interface PelicanClientContextValue {
   error: string | null;
   authorizationRequired: boolean;
   authorized: boolean;
+  downloadsInProgress: Record<string, Download>;
 
   // Metadata management
   setError: (error: string | null) => void;

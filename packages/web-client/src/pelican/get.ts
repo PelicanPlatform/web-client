@@ -12,9 +12,6 @@ const get = async (objectUrl: string, federation: Federation, namespace: Namespa
     const { objectPath } = parseObjectUrl(objectUrl);
     const token = getObjectToken(namespace);
 
-    if (!token) console.error("Getting a file without a token with namespace token:", namespace);
-    if (!token?.value) console.error("Getting a file without a token value with token:", token);
-
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
     const response = await fetch(objectHttpUrl, {
         headers: {

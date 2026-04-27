@@ -24,6 +24,7 @@ import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClient
 import { useSessionStorage } from "../helpers/useSessionStorage";
 import { useCodeVerifier } from "../helpers/useCodeVerifier";
 import { useAuthExchange } from "../helpers/useAuthExchange";
+import Download from "../types";
 
 export interface PelicanClientProviderProps {
   /** Initial object URL */
@@ -339,14 +340,18 @@ export function PelicanClientProvider({
       const currentCollections = getTokenCollections(namespace);
 
       // add parent directory entry
-      const pathParts = objectPath.split("/").filter((p) => p.length > 0);
+      const objectPathSansNamespace = objectPath.replace(namespace.prefix, "");
+      const pathParts = objectPathSansNamespace.split("/").filter((p) => p.length > 0);
       const parentParts = pathParts.slice(0, -1);
       const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
 
       // Check if the parent directory is within any of the user's collections before adding it to the list
-      if (pathParts.length > 0 && currentCollections.some(c => parentPath.startsWith(namespace.prefix + c.objectPath))) {
+      if (pathParts.length > 0 && (
+        currentCollections.some(c => parentPath.startsWith(namespace.prefix + c.objectPath)) ||
+          currentCollections.length === 0
+      )) {
         objects.push({
-          href: parentPath || "/",
+          href: namespace.prefix + parentPath || "/",
           getcontentlength: 0,
           getlastmodified: "",
           resourcetype: "collection",
@@ -397,12 +402,34 @@ export function PelicanClientProvider({
     }
   }, []);
 
+  const [downloadsInProgress, setDownloadsInProgress] = useState<Record<string, Download>>({});
+
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
+    setDownloadsInProgress((p) => {
+      return {
+        ...p,
+        [downloadObjectUrl]: {
+          url: downloadObjectUrl,
+          progress: 0
+        }
+      }
+    });
     try {
-      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl);
       if (!federation || !namespace) return;
       const response = await get(downloadObjectUrl, federation, namespace);
-      downloadResponse(response);
+      await downloadResponse(
+        response,
+        (percent) => setDownloadsInProgress((p) => {
+          return {
+            ...p,
+            [downloadObjectUrl]: {
+              url: downloadObjectUrl,
+              progress: percent
+            }
+          }
+        })
+      );
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
@@ -410,6 +437,13 @@ export function PelicanClientProvider({
       }
       setError(`Download failed: ${e}`);
       throw e;
+    } finally {
+      console.log("Finished download attempt for " + downloadObjectUrl);
+      setDownloadsInProgress((p) => {
+        const updated = { ...p };
+        delete updated[downloadObjectUrl];
+        return updated;
+      })
     }
   }, []);
 
@@ -478,6 +512,7 @@ export function PelicanClientProvider({
     handleUpload,
     handleLogin,
     setObjectUrl,
+    downloadsInProgress
   };
 
   return (
