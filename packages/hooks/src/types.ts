@@ -1,6 +1,11 @@
-interface Download {
-  url: string;
-  progress: number; // percentage of download completed, between 0 and 100
+export interface DownloadProgress {
+  id: string;
+  objectUrl: string;
+  bytesDownloaded: number;
+  totalByteSize: number;
+  status: "pending" | "in-progress" | "completed" | "failed";
 }
 
+// Keep default export for backward compatibility
+interface Download extends DownloadProgress {}
 export default Download

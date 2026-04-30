@@ -5,7 +5,7 @@ import { unstable_cache } from "next/cache";
 
 export default async function Page() {
   const ns = await getCachedPublicNamespaces();
-  return <HomePageClient namespaces={ns} />
+  return <HomePageClient namespaces={ns.sort((a, b) => a.path.localeCompare(b.path))} />
 }
 
 const getValidPublicNamespaces = async () => {

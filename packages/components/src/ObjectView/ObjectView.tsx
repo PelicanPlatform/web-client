@@ -16,7 +16,7 @@ import {
     Typography,
 } from "@mui/material";
 import {ObjectList, formatBytes} from "@pelicanplatform/web-client";
-import {Download} from "@pelicanplatform/hooks";
+import { DownloadProgress } from "@pelicanplatform/hooks";
 import { useMemo, useState } from "react";
 
 type SortableColumn = "href" | "getcontentlength" | "getlastmodified";
@@ -30,7 +30,7 @@ interface ObjectListProps {
     loginRequired: boolean;
     canLogin: boolean;
     onLoginRequest?: () => void;
-    downloadsInProgress: Record<string, Download>;
+    downloadsInProgress: Record<string, DownloadProgress>;
     /** Namespace prefix to strip from display (e.g., /namespace) */
     namespace?: string | null;
 }
@@ -138,8 +138,6 @@ function ObjectView({
       )
     }
 
-    console.log(downloadsInProgress);
-
     return (
       <Box>
           <TableContainer component={Box}>
@@ -199,13 +197,14 @@ interface ObjectViewRowProps {
     obj: ObjectList;
     namespace?: string | null;
     collectionPath?: string;
-    downloadsInProgress: Record<string, Download>;
+    downloadsInProgress: Record<string, DownloadProgress>;
     onExplore: (href: string) => void;
     onDownload: (href: string) => void;
 }
 
 function ObjectViewRow({ obj, namespace, collectionPath, downloadsInProgress, onExplore, onDownload }: ObjectViewRowProps) {
-    const download = Object.values(downloadsInProgress).find((d) => d.url.endsWith(obj.href));
+
+    const download = Object.values(downloadsInProgress).find((d) => d.objectUrl.endsWith(obj.href));
 
     const handleRowClick = () => {
         if (obj.iscollection) {
@@ -252,7 +251,7 @@ function ObjectViewRow({ obj, namespace, collectionPath, downloadsInProgress, on
                         aria-label={`Download ${obj.href}`}
                         style={{ background: "transparent", border: "none", color: "var(--mui-palette-text-primary, #000)", padding: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.95rem" }}
                     >
-                      {download ? <ProgressIcon progress={download.progress} /> : <DownloadIcon fontSize="small" />}
+                      {download ? <ProgressIcon bytesDownloaded={download.bytesDownloaded} totalByteSize={download.totalByteSize} /> : <DownloadIcon fontSize="small" />}
                     </IconButton>
                 )}
             </TableCell>
@@ -260,11 +259,12 @@ function ObjectViewRow({ obj, namespace, collectionPath, downloadsInProgress, on
     );
 }
 
-function ProgressIcon({ progress }: { progress: number }) {
+function ProgressIcon({ bytesDownloaded, totalByteSize }: { bytesDownloaded: number; totalByteSize: number }) {
+    const progress = totalByteSize > 0 ? Math.round((bytesDownloaded / totalByteSize) * 100) : 0;
     return (
         <Box position="relative" display="inline-flex" gap={1}>
             <Typography variant={'subtitle2'}>{progress}%</Typography>
-            <CircularProgress size={20} variant="determinate" value={progress} aria-label={`Download progress: ${Math.round(progress)}%`} />
+            <CircularProgress size={20} variant="determinate" value={progress} aria-label={`Download progress: ${progress}%`} />
         </Box>
     )
 }

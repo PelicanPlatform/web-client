@@ -404,16 +404,27 @@ export function PelicanClientProvider({
 
   const [downloadsInProgress, setDownloadsInProgress] = useState<Record<string, Download>>({});
 
-  const handleDownload = useCallback(async (downloadObjectUrl: string) => {
-    setDownloadsInProgress((p) => {
-      return {
-        ...p,
-        [downloadObjectUrl]: {
-          url: downloadObjectUrl,
-          progress: 0
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type !== "PELICAN_DOWNLOAD_PROGRESS") return;
+      const { type, ...progress } = event.data as { type: string } & Download;
+      setDownloadsInProgress((prev) => {
+        if (progress.status === "completed") {
+          const next = { ...prev };
+          delete next[progress.id];
+          return next;
         }
-      }
-    });
+        return { ...prev, [progress.id]: progress };
+      });
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, []);
+
+  const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {
       const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl);
       if (!federation || !namespace) return;

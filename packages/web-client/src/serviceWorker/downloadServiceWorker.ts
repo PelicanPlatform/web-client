@@ -83,6 +83,7 @@ async function downloadObject(request: Request): Promise<Response> {
 
   const db = await openDownloadDb();
   await storeDownloadRecord(db, download);
+  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "in-progress" });
 
   // Get the total object size
   const { objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request);
@@ -93,6 +94,7 @@ async function downloadObject(request: Request): Promise<Response> {
     pendingChunks
   };
   await patchDownloadRecord(db, download.id, downloadSizePatch);
+  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
 
   const abort = new AbortController();
 
@@ -104,6 +106,9 @@ async function downloadObject(request: Request): Promise<Response> {
   await runWorkers(pendingChunks, abort, downloadChunkFactory(db, request, download.id, download.chunkSize, totalByteSize, abort, cacheUrl, fileWritable));
 
   await fileWritable.close();
+
+  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
+
   const tmpFile = await tmpHandle.getFile();
   const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
   const cleanup = () => storageRoot.removeEntry(tmpName).catch(() => {});
@@ -149,6 +154,7 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   const fileWritable = await tmpHandle.createWritable({ keepExistingData: true });
 
   await patchDownloadRecord(db, id, { status: "in-progress", updatedAt: Date.now() });
+  await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
 
   const { cacheUrl } = await getObjectMetadata(request);
 
@@ -159,6 +165,9 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   );
 
   await fileWritable.close();
+
+  await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
+
   const tmpFile = await tmpHandle.getFile();
   const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
   const cleanup = () => storageRoot.removeEntry(filePath).catch(() => {});
@@ -178,6 +187,24 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   return new Response(r, { status: 200, headers: responseHeaders });
 }
 
+async function broadcastProgress(update: {
+  id: string;
+  objectUrl: string;
+  bytesDownloaded: number;
+  totalByteSize: number;
+  status: string;
+}) {
+  const clients = await getSw().clients.matchAll({ type: "window", includeUncontrolled: false });
+  for (const client of clients) {
+    try {
+      console.log("[Pelican SW] Broadcasting progress to client:", update);
+      client.postMessage({ type: "PELICAN_DOWNLOAD_PROGRESS", ...update });
+    } catch (e) {
+      // Client may have navigated away or closed — ignore disconnected port errors
+    }
+  }
+}
+
 function downloadChunkFactory(db: IDBDatabase, request: Request, id: string, chunkSize: number, totalByteSize: number, abort: AbortController, cacheUrl: URL, fileWritable: FileSystemWritableFileStream): (i: number) => Promise<void> {
   return async (i: number) => {
     const range = getByteRange(i, chunkSize, totalByteSize);
@@ -186,8 +213,9 @@ function downloadChunkFactory(db: IDBDatabase, request: Request, id: string, chu
     await patchDownloadRecord(db, id, (prev) => {
       const bytesDownloaded = prev.bytesDownloaded + data.byteLength;
       prev.pendingChunks?.delete(i);
+      broadcastProgress({ id, objectUrl: request.url, bytesDownloaded, totalByteSize, status: "in-progress" });
       return { bytesDownloaded, pendingChunks: prev.pendingChunks };
-    })
+    });
   }
 }
 
