@@ -1,5 +1,5 @@
-import UnauthenticatedError from "./UnauthenticatedError";
-import { getObjectToken, parseObjectUrl, UnauthorizedError } from "./index";
+import { getObjectToken, parseObjectUrl } from "./index";
+import { UnauthorizedError, UnauthenticatedError } from "../errors";
 import { Federation, Namespace } from "../types";
 
 const put = async (objectUrl: string, file: File, federation: Federation, namespace: Namespace): Promise<Response> => {

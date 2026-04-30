@@ -1,4 +1,4 @@
-import { pelicanFetchAndSave } from "./registerPelicanSw";
+import { pelicanFetchAndSave } from "../serviceWorker";
 
 const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB per parallel chunk
 const MAX_PARALLEL = 6;

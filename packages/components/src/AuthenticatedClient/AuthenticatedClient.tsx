@@ -63,6 +63,13 @@ function AuthenticatedClient() {
     (async () => await updateObjectList(objectUrl))();
   }, []);
 
+  // On mount ask if we can send notifications, this is needed to show notifications for downloads in progress
+  useEffect(() => {
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Wrap handleUpload to refresh object list after successful upload
   const handleUploadWithRefresh = useCallback(async (file: File) => {
     await handleUpload(file);

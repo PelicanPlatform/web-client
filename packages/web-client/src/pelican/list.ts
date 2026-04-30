@@ -1,7 +1,7 @@
 import { Federation, Namespace, ObjectList } from "../types";
-import { getObjectToken, parseObjectUrl, UnauthorizedError } from "./";
+import { getObjectToken, parseObjectUrl } from "./";
+import { UnauthorizedError, UnauthenticatedError } from "../errors";
 import { parseWebDavXmlToJson } from "../util";
-import UnauthenticatedError from "./UnauthenticatedError";
 
 const list = async (collectionUrl: string, federation: Federation, namespace?: Namespace): Promise<ObjectList[]> => {
     const { objectPath } = parseObjectUrl(collectionUrl);

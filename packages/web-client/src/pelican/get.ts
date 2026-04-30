@@ -1,6 +1,6 @@
-import { getObjectToken, parseObjectUrl, UnauthorizedError } from "./index";
+import { getObjectToken, parseObjectUrl } from "./index";
+import { UnauthorizedError, UnauthenticatedError } from "../errors";
 import { Federation, Namespace } from "../types";
-import UnauthenticatedError from "./UnauthenticatedError";
 
 /**
  * Get an object from a pelican federation

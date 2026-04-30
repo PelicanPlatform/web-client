@@ -1,29 +1,29 @@
 "use client";
 
-import { Box, Container } from "@mui/material";
+import { Box } from "@mui/material";
 import React from "react";
-import {AuthenticatedClient, PelicanClientProvider} from "@pelicanplatform/components";
-import ObjectUrlSetter from "../components/ObjectUrlSetter";
+import {AuthenticatedClient, usePelicanClient} from "@pelicanplatform/components";
+import NamespaceSelector from "@/components/NamespaceSelector/NamespaceSelector";
+import {Namespace} from "@/types";
 
-export default function HomePageClient() {
-
-    const [mounted, setMounted] =  React.useState(false);
-
-    React.useEffect(() => {
-      setMounted(true);
-    }, []);
-
-    return (
-        <Container maxWidth="lg">
-            <Box minHeight={"90vh"} margin={4} width={"100%"} mx={"auto"}>
-              {mounted &&
-                  <PelicanClientProvider initialObjectUrl={"pelican://osg-htc.org/ospool/ap40"} enableAuth={true} >
-                    <ObjectUrlSetter />
-                    <AuthenticatedClient />
-                  </PelicanClientProvider>
-              }
-            </Box>
-        </Container>
-    );
+interface HomePageClientProps {
+  namespaces: Namespace[];
 }
 
+export default function HomePageClient({namespaces}: HomePageClientProps) {
+    const {namespace, setObjectUrl, objectUrl, getObjectList} = usePelicanClient()
+
+    const directorNamespace = namespaces?.find(ns => ns.path === namespace?.prefix);
+
+    return (
+      <>
+        <>
+          <Box mb={2}>
+            <NamespaceSelector onChange={(ns) => setObjectUrl(`pelican://osg-htc.org${ns.path}`)} value={directorNamespace} data={namespaces || []} />
+          </Box>
+          {/*<ObjectUrlSetter />*/}
+          <AuthenticatedClient key={directorNamespace?.path} />
+        </>
+      </>
+    );
+}

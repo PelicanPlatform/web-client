@@ -1,6 +1,6 @@
 {
     "name": "@pelicanplatform/web-client",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "homepage": "https://pelicanplatform.org",
     "repository": {
         "type": "git",
@@ -17,22 +17,33 @@
     "exports": {
         ".": {
             "import": {
-              "development": "./src/index.ts",
-              "default": "./dist/index.js"
+                "development": "./src/index.ts",
+                "default": "./dist/index.js"
             },
             "require": "./dist/index.cjs"
+        },
+        "./serviceWorker/downloadServiceWorker": {
+            "import": {
+                "development": "./src/serviceWorker/index.ts",
+                "default": "./dist/serviceWorker/index.js"
+            },
+            "require": "./dist/serviceWorker/index.cjs"
         }
     },
     "publishConfig": {
-      "exports": {
-        ".": {
-          "import": "./dist/index.js",
-          "require": "./dist/index.cjs"
+        "exports": {
+            ".": {
+                "import": "./dist/index.js",
+                "require": "./dist/index.cjs"
+            },
+            "./serviceWorker/downloadServiceWorker": {
+                "import": "./dist/serviceWorker/index.js",
+                "require": "./dist/serviceWorker/index.cjs"
+            }
         }
-      }
     },
     "files": [
-        "dist/*",
+        "dist/**",
         "README.md",
         "package.json"
     ],
@@ -44,6 +55,7 @@
         "@types/jest": "^29.5.8",
         "@types/lodash-es": "^4.17.12",
         "@types/node": "^24.9.1",
+        "@types/wicg-file-system-access": "^2023.10.7",
         "i": "^0.3.7",
         "jest": "^29.7.0",
         "jest-environment-jsdom": "^29.7.0",

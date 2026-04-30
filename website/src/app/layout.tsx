@@ -2,6 +2,10 @@ import { Header } from "@/components/layout/Header";
 import { ThemeProviderClient } from "../../public/theme";
 import "./globals.css";
 import styles from "./page.module.css";
+import {Box, Container } from "@mui/material";
+import {PelicanClientProvider} from "@pelicanplatform/hooks";
+import PelicanSwRegistrar from "@/components/PelicanSwRegistrar";
+
 
 export const metadata = {
     title: "Example Web Client",
@@ -13,8 +17,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en">
             <ThemeProviderClient>
                 <body>
+                    <PelicanSwRegistrar />
                     <Header />
-                    <main className={styles.main}>{children}</main>
+                    <main className={styles.main}>
+                      <Container maxWidth="lg">
+                        <Box minHeight={"90vh"} margin={4} width={"100%"} mx={"auto"}>
+                          <PelicanClientProvider initialObjectUrl={`pelican://osg-htc.org`} enableAuth={true} >
+                            {children}
+                          </PelicanClientProvider>
+                        </Box>
+                      </Container>
+                    </main>
                 </body>
             </ThemeProviderClient>
         </html>

@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
+        "predev": "cp node_modules/@pelicanplatform/web-client/dist/serviceWorker/downloadServiceWorker.js public/downloadServiceWorker.js",
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
@@ -14,14 +15,15 @@
         "@emotion/styled": "^11.14.1",
         "@mui/icons-material": "^7.3.3",
         "@mui/material": "^7.3.3",
+        "@pelicanplatform/components": "workspace:*",
+        "@pelicanplatform/hooks": "workspace:*",
+        "@pelicanplatform/web-client": "workspace:*",
         "lodash-es": "^4.17.21",
         "next": "^16",
         "react": "^19",
         "react-dom": "^19",
-        "usehooks-ts": "^3.1.1",
-        "@pelicanplatform/components": "workspace:*",
-        "@pelicanplatform/web-client": "workspace:*",
-        "@pelicanplatform/hooks": "workspace:*"
+        "swr": "^2.4.1",
+        "usehooks-ts": "^3.1.1"
     },
     "devDependencies": {
         "@types/node": "^20",

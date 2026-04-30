@@ -9,7 +9,7 @@ import {
   downloadResponse,
   fetchFederation,
   fetchNamespace,
-  get,
+  download,
   list,
   parseObjectUrl,
   put,
@@ -417,19 +417,7 @@ export function PelicanClientProvider({
     try {
       const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl);
       if (!federation || !namespace) return;
-      const response = await get(downloadObjectUrl, federation, namespace);
-      await downloadResponse(
-        response,
-        (percent) => setDownloadsInProgress((p) => {
-          return {
-            ...p,
-            [downloadObjectUrl]: {
-              url: downloadObjectUrl,
-              progress: percent
-            }
-          }
-        })
-      );
+      await download(downloadObjectUrl, federation, namespace);
     } catch (e) {
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
