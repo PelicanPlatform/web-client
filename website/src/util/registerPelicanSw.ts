@@ -1,1 +1,1 @@
-export { registerPelicanSw, pelicanFetch } from "@pelican/web-client";
+export { registerPelicanSw, pelicanFetch } from "@pelicanplatform/web-client";
