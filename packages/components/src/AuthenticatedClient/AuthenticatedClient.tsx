@@ -39,7 +39,7 @@ function AuthenticatedClient() {
   const uploadRef = useRef<ObjectUploadRef>(null);
 
   const [objectList, setObjectList] = useState<ObjectList[]>([]);
-
+  const [listLoading, setListLoading] = useState<boolean>(false);
   const [muteError, setMuteError] = useState<boolean>(false);
 
 
@@ -57,7 +57,9 @@ function AuthenticatedClient() {
   }, [collections]);
 
   const updateObjectList = async (o: string) => {
+    setListLoading(true);
     setObjectList(await getObjectList(o, false));
+    setListLoading(false);
   }
 
   // On mount attempt to load the object list
@@ -164,7 +166,7 @@ function AuthenticatedClient() {
                   setShowCollections(false);
                 }}
               />
-            ) : loading ? (
+            ) : loading || listLoading ? (
               <Skeleton variant={"rectangular"} height={"350px"} width={"100%"} />
             ) : (
               <ObjectView

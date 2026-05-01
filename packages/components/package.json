@@ -40,8 +40,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@mui/icons-material": "^7.0.0",
+    "@pelicanplatform/hooks": "workspace:*",
     "@pelicanplatform/web-client": "workspace:*",
-    "@pelicanplatform/hooks": "workspace:*"
+    "react-virtuoso": "^4.18.6"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",
