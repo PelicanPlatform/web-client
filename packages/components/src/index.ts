@@ -2,3 +2,4 @@
 export * from "@pelicanplatform/hooks";
 
 export { default as AuthenticatedClient } from "./AuthenticatedClient";
+export { DownloadManager } from "./DownloadManager";
