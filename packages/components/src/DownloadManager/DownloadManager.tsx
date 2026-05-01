@@ -63,7 +63,7 @@ export function DownloadManager() {
     <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1400 }}>
       {minimized ? (
         <Tooltip title={`${badgeCount} download${badgeCount !== 1 ? "s" : ""} pending/active`} placement="left">
-          <Badge badgeContent={badgeCount} color="primary" overlap="circular">
+          <Badge badgeContent={badgeCount} color="primary" overlap="circular" sx={{ "& .MuiBadge-badge": { zIndex: 1401 } }}>
             <Fab color="default" size="medium" onClick={() => setMinimized(false)} aria-label="Show downloads">
               <DownloadIcon />
             </Fab>
@@ -107,32 +107,46 @@ export function DownloadManager() {
           {/* Pending (interrupted) downloads */}
           {pendingDownloads.length > 0 && (
             <>
-              <Box sx={{ px: 2, py: 1, bgcolor: "warning.light" }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Typography variant="caption" fontWeight="bold" color="warning.contrastText">
-                    {pendingDownloads.length} interrupted download{pendingDownloads.length !== 1 ? "s" : ""}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="warning"
-                    onClick={() => {
-                      retriggerPendingDownloads().catch(() => {});
-                      setPendingDownloads([]);
+              {pendingDownloads.map((d) => {
+                const progress = d.totalByteSize > 0 ? Math.round((d.bytesDownloaded / d.totalByteSize) * 100) : 0;
+                return (
+                  <Box
+                    key={d.id}
+                    sx={{
+                      px: 2,
+                      py: 1.25,
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
                     }}
-                    sx={{ py: 0.25, minWidth: 0 }}
                   >
-                    Resume All
-                  </Button>
-                </Box>
-                {pendingDownloads.map((d) => (
-                  <Tooltip key={d.id} title={d.objectUrl} placement="top">
-                    <Typography variant="caption" display="block" noWrap color="warning.contrastText" sx={{ mt: 0.5 }}>
-                      {fileName(d.objectUrl)}
-                    </Typography>
-                  </Tooltip>
-                ))}
-              </Box>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
+                      <Tooltip title={d.objectUrl} placement="top">
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 220, fontWeight: 500 }}>
+                          {fileName(d.objectUrl)}
+                        </Typography>
+                      </Tooltip>
+                      <Typography variant="caption" color="text.secondary">
+                        {progress}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={progress}
+                      color="warning"
+                      sx={{ borderRadius: 1, height: 5 }}
+                    />
+                    <Box display="flex" justifyContent="space-between" mt={0.5}>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatBytes(d.bytesDownloaded)}
+                        {d.totalByteSize > 0 && ` / ${formatBytes(d.totalByteSize)}`}
+                      </Typography>
+                      <Typography variant="caption" color="warning.main">
+                        interrupted
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
               {activeDownloads.length > 0 && <Divider />}
             </>
           )}
@@ -190,6 +204,25 @@ export function DownloadManager() {
               );
             })}
           </Box>
+          {pendingDownloads.length > 0 && (
+            <>
+              <Divider />
+              <Box sx={{ px: 2, py: 1, display: "flex", justifyContent: "flex-end" }}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="warning"
+                  onClick={() => {
+                    const activeIds = new Set(Object.keys(downloadsInProgress));
+                    retriggerPendingDownloads(activeIds).catch(() => {});
+                    setPendingDownloads([]);
+                  }}
+                >
+                  Resume All
+                </Button>
+              </Box>
+            </>
+          )}
         </Paper>
       )}
     </Box>

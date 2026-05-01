@@ -141,12 +141,17 @@ export async function pelicanFetchAndSave(
   }
 }
 
-export async function retriggerPendingDownloads(): Promise<void> {
+export async function retriggerPendingDownloads(activeIds: Set<string> = new Set()): Promise<void> {
   const pending = await getPendingDownloads();
 
   console.info("[Pelican SW] Retrigger pending:", pending);
 
   for (const record of pending) {
+    if (activeIds.has(record.id)) {
+      console.info(`[Pelican SW] Skipping ${record.id} — already downloading`);
+      continue;
+    }
+
     const filename = record.objectUrl.split("/").at(-1)?.split("?").at(0) ?? "download";
     const headers = new Headers();
     headers.set(RESUME_HEADER, record.id);
