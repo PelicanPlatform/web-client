@@ -52,8 +52,12 @@ export function DownloadManager() {
   const activeDownloads = Object.values(downloadsInProgress);
   const activeCount = activeDownloads.filter((d) => d.status === "in-progress").length;
   const totalVisible = activeDownloads.length + pendingDownloads.length;
-
   const badgeCount = activeCount + pendingDownloads.length;
+
+  // Reset hidden when new downloads appear so the panel reappears automatically
+  useEffect(() => {
+    if (totalVisible > 0) setHidden(false);
+  }, [totalVisible]);
 
   if (totalVisible === 0 || hidden) return null;
 
