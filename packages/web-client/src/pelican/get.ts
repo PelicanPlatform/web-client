@@ -10,14 +10,16 @@ import { Federation, Namespace } from "../types";
  */
 const get = async (objectUrl: string, federation: Federation, namespace: Namespace): Promise<Response> => {
     const { objectPath } = parseObjectUrl(objectUrl);
+
+    // Create the headers, adding the Authorization header if a token is available
     const token = getObjectToken(namespace);
+    const headers = new Headers()
+    if (token) {
+        headers.append("Authorization", `Bearer ${token.value}`);
+    }
 
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
-    const response = await fetch(objectHttpUrl, {
-        headers: {
-            Authorization: `Bearer ${token?.value}`,
-        },
-    });
+    const response = await fetch(objectHttpUrl, { headers });
 
     if (response.status === 200) {
         return response;

@@ -11,6 +11,7 @@ import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
 import { UploadFile, List, CreateNewFolderOutlined } from "@mui/icons-material";
 import AddCollectionButton from "../AddCollectionButton";
 import {usePelicanClient} from "@pelicanplatform/hooks";
+import {DownloadManager} from "../DownloadManager";
 
 /**
  * Inner component that uses the context
@@ -40,6 +41,7 @@ function AuthenticatedClient() {
   const [objectList, setObjectList] = useState<ObjectList[]>([]);
 
   const [muteError, setMuteError] = useState<boolean>(false);
+
 
   const [showCollections, setShowCollections] = useState<boolean>(false);
   const [highlightCollections, setHighlightCollections] = useState<boolean>(false);
@@ -184,6 +186,7 @@ function AuthenticatedClient() {
             )}
           </Paper>
         </Box>
+        <DownloadManager />
         <Snackbar
           open={error !== null && !muteError}
           autoHideDuration={6000}

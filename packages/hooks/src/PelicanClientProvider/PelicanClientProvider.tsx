@@ -24,7 +24,7 @@ import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClient
 import { useSessionStorage } from "../helpers/useSessionStorage";
 import { useCodeVerifier } from "../helpers/useCodeVerifier";
 import { useAuthExchange } from "../helpers/useAuthExchange";
-import Download from "../types";
+import { DownloadProgress } from "../types";
 
 export interface PelicanClientProviderProps {
   /** Initial object URL */
@@ -402,14 +402,14 @@ export function PelicanClientProvider({
     }
   }, []);
 
-  const [downloadsInProgress, setDownloadsInProgress] = useState<Record<string, Download>>({});
+  const [downloadsInProgress, setDownloadsInProgress] = useState<Record<string, DownloadProgress>>({});
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
 
     const handler = (event: MessageEvent) => {
       if (event.data?.type !== "PELICAN_DOWNLOAD_PROGRESS") return;
-      const { type, ...progress } = event.data as { type: string } & Download;
+      const { type, ...progress } = event.data as { type: string } & DownloadProgress;
       setDownloadsInProgress((prev) => {
         if (progress.status === "completed") {
           const next = { ...prev };

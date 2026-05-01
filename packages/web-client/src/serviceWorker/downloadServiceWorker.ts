@@ -17,8 +17,8 @@ import { Download } from "./types";
 const CHUNK_SIZE = 32 * 1024 * 1024;
 const MAX_PARALLEL = 6;
 const MAX_RETRIES = 3;
-const TRIGGER_HEADER = "x-pelican-parallel";
-const RESUME_HEADER = "x-pelican-resume-id";
+export const TRIGGER_HEADER = "x-pelican-parallel";
+export const RESUME_HEADER = "x-pelican-resume-id";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSw() {
@@ -35,6 +35,16 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
     if (!request.headers.has(TRIGGER_HEADER)) return;
     event.respondWith(parallelDownload(request));
   });
+  getSw().addEventListener("notificationclick", (event: any) => {
+    event.notification.close();
+    event.waitUntil(
+      getSw().clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients: any[]) => {
+        const existing = clients.find((c) => c.url && c.focus);
+        if (existing) return existing.focus();
+        return getSw().clients.openWindow(getSw().registration.scope);
+      })
+    );
+  });
 }
 
 // ─── Core logic ──────────────────────────────────────────────────────────────
@@ -47,6 +57,7 @@ async function parallelDownload(request: Request): Promise<Response> {
   }
 
   // If we have a resume download header, try to resume the download instead of starting a new one
+  console.log("[Pelican SW] Received request with headers:", Array.from(request.headers.entries()));
   if (request.headers.has(RESUME_HEADER)) {
     const id = request.headers.get(RESUME_HEADER)!;
     return resumeDownload(request, id);
@@ -120,6 +131,9 @@ async function downloadObject(request: Request): Promise<Response> {
     await getSw().registration.showNotification("Download complete", {
       body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
       icon: "https://pelicanplatform.org/favicon.ico",
+      actions: [
+        { action: "open", title: "Open File" },
+      ],
     });
   }
 
@@ -130,6 +144,9 @@ async function downloadObject(request: Request): Promise<Response> {
 }
 
 async function resumeDownload(request: Request, id: string): Promise<Response> {
+
+  console.log("[Pelican SW] Attempting to resume download with ID:", id);
+
   const db = await openDownloadDb();
   const download = await getDownloadRecord(db, id);
 
@@ -144,6 +161,8 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   }
 
   const { pendingChunks, totalByteSize, chunkSize, filePath } = download;
+
+  console.log(`[Pelican SW] Resuming download with: ${pendingChunks.size * chunkSize} bytes downloaded out of ${totalByteSize} total bytes`);
 
   const abort = new AbortController();
 
@@ -385,24 +404,13 @@ function openDownloadDb(): Promise<IDBDatabase> {
   });
 }
 
-export async function retriggerPendingDownloads(): Promise<void> {
+export async function getPendingDownloads(): Promise<Download[]> {
   const db = await openDownloadDb();
   const records = await getDownloadRecords(db);
-
-  const pending = records.filter(
-    (r) => r.status === "in-progress" && !r.authenticated
-  );
-
-  for (const record of pending) {
-    const headers = new Headers();
-    headers.set(TRIGGER_HEADER, "true");
-    headers.set(RESUME_HEADER, record.id);
-
-    fetch(record.objectUrl, { headers }).catch((err) => {
-      console.warn(`[Pelican SW] Failed to retrigger download ${record.id}:`, err);
-    });
-  }
+  console.log(records)
+  return records.filter((r) => r.status === "in-progress" && !r.authenticated);
 }
+
 
 async function anyClientVisible(): Promise<boolean> {
   const allClients = await getSw().clients.matchAll({ type: "window", includeUncontrolled: false });

@@ -2,7 +2,7 @@
 
 import { createContext, Dispatch, SetStateAction } from "react";
 import { Federation, Namespace, Collection, ObjectList } from "@pelicanplatform/web-client";
-import Download from "../types";
+import { DownloadProgress } from "../types";
 
 export interface PelicanClientContextValue {
   // Metadata state
@@ -10,7 +10,7 @@ export interface PelicanClientContextValue {
   error: string | null;
   authorizationRequired: boolean;
   authorized: boolean;
-  downloadsInProgress: Record<string, Download>;
+  downloadsInProgress: Record<string, DownloadProgress>;
 
   // Metadata management
   setError: (error: string | null) => void;

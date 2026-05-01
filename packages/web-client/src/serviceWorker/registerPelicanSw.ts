@@ -1,5 +1,8 @@
 
+import {getPendingDownloads, RESUME_HEADER,} from "./downloadServiceWorker";
+
 let _cachedDirHandle: FileSystemDirectoryHandle | null = null;
+let _pendingDirHandle: Promise<FileSystemDirectoryHandle | null> | null = null;
 
 /**
  * registerPelicanSw
@@ -79,11 +82,11 @@ export async function pelicanFetch(
 export async function pelicanFetchAndSave(
   url: string,
   filename: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  fileHandle?: FileSystemFileHandle
 ): Promise<void> {
   // showSaveFilePicker must be called synchronously within the user gesture —
   // do it before any awaited network activity or the transient activation is lost.
-  let fileHandle: FileSystemFileHandle | null = null;
   const dir = typeof window !== "undefined" ? await getDownloadDir() : null;
   if (dir) {
     fileHandle = await dir.getFileHandle(filename, { create: true });
@@ -116,6 +119,7 @@ export async function pelicanFetchAndSave(
     const writable = await fileHandle.createWritable();
     await response.body.pipeTo(writable);
     logStats(totalBytes ?? 0);
+    await deleteDownloadRecord(url);
     return;
   }
 
@@ -131,9 +135,52 @@ export async function pelicanFetchAndSave(
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    await deleteDownloadRecord(url);
   } finally {
     setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
   }
+}
+
+export async function retriggerPendingDownloads(): Promise<void> {
+  const pending = await getPendingDownloads();
+
+  console.info("[Pelican SW] Retrigger pending:", pending);
+
+  for (const record of pending) {
+    const filename = record.objectUrl.split("/").at(-1)?.split("?").at(0) ?? "download";
+    const headers = new Headers();
+    headers.set(RESUME_HEADER, record.id);
+
+    pelicanFetchAndSave(record.objectUrl, filename, { headers }).catch((err) => {
+      console.warn(`[Pelican] Failed to retrigger download ${record.id}:`, err);
+    });
+  }
+}
+
+async function deleteDownloadRecord(objectUrl: string): Promise<void> {
+  return new Promise((resolve) => {
+    const openReq = indexedDB.open("pelican-downloads", 1);
+    openReq.onsuccess = () => {
+      const db = openReq.result;
+      if (!db.objectStoreNames.contains("downloads")) { resolve(); return; }
+      const tx = db.transaction("downloads", "readwrite");
+      const store = tx.objectStore("downloads");
+      // Find the record by objectUrl then delete by its id key
+      const cursorReq = store.openCursor();
+      cursorReq.onsuccess = () => {
+        const cursor = cursorReq.result;
+        if (!cursor) { resolve(); return; }
+        if (cursor.value?.objectUrl === objectUrl) {
+          cursor.delete();
+          resolve();
+        } else {
+          cursor.continue();
+        }
+      };
+      cursorReq.onerror = () => resolve(); // non-fatal
+    };
+    openReq.onerror = () => resolve(); // non-fatal
+  });
 }
 
 async function getDownloadDir(): Promise<FileSystemDirectoryHandle | null> {
@@ -142,7 +189,18 @@ async function getDownloadDir(): Promise<FileSystemDirectoryHandle | null> {
     const perm = await _cachedDirHandle.requestPermission({ mode: "readwrite" });
     if (perm === "granted") return _cachedDirHandle;
   }
-  _cachedDirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-  return _cachedDirHandle;
+  if (_pendingDirHandle) return _pendingDirHandle;
+  _pendingDirHandle = (async () => {
+    try {
+      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      _cachedDirHandle = handle;
+      return handle;
+    } catch {
+      return null;
+    } finally {
+      _pendingDirHandle = null;
+    }
+  })();
+  return _pendingDirHandle;
 }
 

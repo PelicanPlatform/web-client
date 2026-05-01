@@ -1,2 +1,2 @@
 export * from "./registerPelicanSw";
-export { retriggerPendingDownloads } from "./downloadServiceWorker";
+export { getPendingDownloads } from "./downloadServiceWorker";

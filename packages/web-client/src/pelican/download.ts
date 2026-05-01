@@ -11,7 +11,13 @@ import { pelicanFetchAndSave } from "../serviceWorker";
  */
 const download = async (objectUrl: string, federation: Federation, namespace: Namespace): Promise<Response | void> => {
   const { objectPath } = parseObjectUrl(objectUrl);
+
+  // Create the headers, adding the Authorization header if a token is available
   const token = getObjectToken(namespace);
+  const headers = new Headers()
+  if (token) {
+    headers.append("Authorization", `Bearer ${token.value}`);
+  }
 
   const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
 
@@ -20,18 +26,11 @@ const download = async (objectUrl: string, federation: Federation, namespace: Na
   if (typeof navigator !== "undefined" && navigator.serviceWorker?.controller) {
     const parts = objectPath.split("/");
     const filename = (parts[parts.length - 1] ?? "object").split("?")[0] ?? "object";
-    return pelicanFetchAndSave(objectHttpUrl.toString(), filename, {
-      headers: {
-        Authorization: `Bearer ${token?.value}`,
-      },
-    });
+    return pelicanFetchAndSave(objectHttpUrl.toString(), filename, { headers });
   }
 
-  const response = await fetch(objectHttpUrl.toString(), {
-    headers: {
-      Authorization: `Bearer ${token?.value}`,
-    },
-  });
+  // Fallback to a normal fetch when no service worker is available
+  const response = await fetch(objectHttpUrl.toString(), { headers });
 
   if (response.status === 200) {
     return response;
