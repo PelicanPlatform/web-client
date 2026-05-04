@@ -1,6 +1,6 @@
 "use client";
 
-import {Alert, Badge, Box, IconButton, Paper, Skeleton, Snackbar } from "@mui/material";
+import {Alert, Badge, Box, Button, IconButton, Paper, Skeleton, Snackbar } from "@mui/material";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 
 import ClientMetadata from "../ClientMetadata";
@@ -8,7 +8,7 @@ import ObjectUpload, { ObjectUploadRef } from "../ObjectUpload";
 import ObjectView from "../ObjectView";
 import CollectionView from "../CollectionView";
 import {ObjectList, parseObjectUrl} from "@pelicanplatform/web-client";
-import { UploadFile, List, CreateNewFolderOutlined } from "@mui/icons-material";
+import { UploadFile, List, CreateNewFolderOutlined, Login } from "@mui/icons-material";
 import AddCollectionButton from "../AddCollectionButton";
 import {usePelicanClient} from "@pelicanplatform/hooks";
 import {DownloadManager} from "../DownloadManager";
@@ -121,37 +121,44 @@ function AuthenticatedClient() {
               onUpload={!authorized ? () => uploadRef.current?.triggerFileSelect() : undefined}
             />
             <Box display={'flex'} mb={-1}>
-              <AddCollectionButton
-                icon={<CreateNewFolderOutlined />}
-                onSubmit={(i) => {
-                  // Ensure the input starts with a "/" and does not end with a "/"
-                  if(!i.startsWith("/")) i = "/" + i;
-                  if(i.endsWith("/")) i = i.slice(0, -1);
+              {authorized ? (
+                <>
+                  <AddCollectionButton
+                    icon={<CreateNewFolderOutlined />}
+                    onSubmit={(i) => {
+                      // Ensure the input starts with a "/" and does not end with a "/"
+                      if(!i.startsWith("/")) i = "/" + i;
+                      if(i.endsWith("/")) i = i.slice(0, -1);
 
-                  setObjectUrl((prev: string) => {
-                    const newObjectUrl = prev + i;
-                    updateObjectList(newObjectUrl);
-                    return newObjectUrl;
-                  })
-                  ;
-                }}
-              />
-              <IconButton onClick={() => uploadRef.current?.triggerFileSelect()} disabled={!authorized}>
-                <UploadFile />
-              </IconButton>
-              <Badge invisible={!highlightCollections} badgeContent={collections.length} color={'primary'}>
-                <IconButton
-                  onClick={() => {
-                    // Check that the current object url starts in a collection
-                    if(collections.some(c => objectUrl.startsWith(`pelican://${federation?.hostname}${namespace?.prefix}${c.href}`))) {
-                      setShowCollections((x) => !x)
-                    }
-                  }}
-                  disabled={!authorized}
-                >
-                  <List />
-                </IconButton>
-              </Badge>
+                      setObjectUrl((prev: string) => {
+                        const newObjectUrl = prev + i;
+                        updateObjectList(newObjectUrl);
+                        return newObjectUrl;
+                      });
+                    }}
+                  />
+                  <IconButton onClick={() => uploadRef.current?.triggerFileSelect()}>
+                    <UploadFile />
+                  </IconButton>
+                  {collections.length > 0 && (
+                    <Badge invisible={!highlightCollections} badgeContent={collections.length} color={'primary'}>
+                      <IconButton
+                        onClick={() => {
+                          if(collections.some(c => objectUrl.startsWith(`pelican://${federation?.hostname}${namespace?.prefix}${c.href}`))) {
+                            setShowCollections((x) => !x)
+                          }
+                        }}
+                      >
+                        <List />
+                      </IconButton>
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <Button endIcon={<Login />} variant="contained" size="small" sx={{mb:1}} onClick={handleLogin}>
+                  Login
+                </Button>
+              )}
             </Box>
           </Box>
           <Paper elevation={1}>

@@ -154,7 +154,7 @@ export function PelicanClientProvider({
     return prevCollectionsRef.current;
   }, [namespace]);
 
-  const authorized = collections.length > 0 || !authorizationRequired || !enableAuth;
+  const authorized = collections.length > 0;
 
   /**
    * Helper function to remove expired tokens from state.
