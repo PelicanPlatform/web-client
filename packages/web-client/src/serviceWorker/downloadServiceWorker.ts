@@ -52,8 +52,8 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
 async function parallelDownload(request: Request): Promise<Response> {
 
   // Short-circuit if OPFS isn't supported - Firefox/Safari
-  if (!(await opfsSupported())) {
-    return fetch(request);
+  if (!opfsSupported()) {
+    return downloadWithoutOpfs(request);
   }
 
   // If we have a resume download header, try to resume the download instead of starting a new one
@@ -96,51 +96,54 @@ async function downloadObject(request: Request): Promise<Response> {
   await storeDownloadRecord(db, download);
   await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "in-progress" });
 
-  // Get the total object size
-  const { objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request);
-  const pendingChunks = new Set(Array.from({ length: Math.ceil(totalByteSize / CHUNK_SIZE) }, (_, i) => i))
+  try {
+    // Get the total object size
+    const { objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request);
+    const pendingChunks = new Set(Array.from({ length: Math.ceil(totalByteSize / CHUNK_SIZE) }, (_, i) => i))
 
-  const downloadSizePatch: Pick<Download, 'pendingChunks' | 'totalByteSize'> = {
-    totalByteSize,
-    pendingChunks
-  };
-  await patchDownloadRecord(db, download.id, downloadSizePatch);
-  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
+    const downloadSizePatch: Pick<Download, 'pendingChunks' | 'totalByteSize'> = {
+      totalByteSize,
+      pendingChunks
+    };
+    await patchDownloadRecord(db, download.id, downloadSizePatch);
+    await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
 
-  const abort = new AbortController();
+    const abort = new AbortController();
 
-  const storageRoot = await navigator.storage.getDirectory();
-  const tmpName = `pelican-tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const tmpHandle = await storageRoot.getFileHandle(tmpName, { create: true });
-  const fileWritable = await tmpHandle.createWritable();
+    const storageRoot = await navigator.storage.getDirectory();
+    const tmpName = `pelican-tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const tmpHandle = await storageRoot.getFileHandle(tmpName, { create: true });
+    const fileWritable = await tmpHandle.createWritable();
 
-  await runWorkers(pendingChunks, abort, downloadChunkFactory(db, request, download.id, download.chunkSize, totalByteSize, abort, cacheUrl, fileWritable));
+    await runWorkers(pendingChunks, abort, downloadChunkFactory(db, request, download.id, download.chunkSize, totalByteSize, abort, cacheUrl, fileWritable));
 
-  await fileWritable.close();
+    await fileWritable.close();
 
-  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
+    await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
 
-  const tmpFile = await tmpHandle.getFile();
-  const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
-  const cleanup = () => storageRoot.removeEntry(tmpName).catch(() => {});
-  const { readable: r, writable: passThrough } = new TransformStream<Uint8Array, Uint8Array>();
-  fileStream.pipeTo(passThrough).then(cleanup, cleanup);
+    const tmpFile = await tmpHandle.getFile();
+    const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
+    const cleanup = () => storageRoot.removeEntry(tmpName).catch(() => {});
+    const { readable: r, writable: passThrough } = new TransformStream<Uint8Array, Uint8Array>();
+    fileStream.pipeTo(passThrough).then(cleanup, cleanup);
 
-  // If Notifications permission is granted, show a notification when the download is complete
-  if (Notification.permission === "granted" && !(await anyClientVisible())) {
-    await getSw().registration.showNotification("Download complete", {
-      body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
-      icon: "https://pelicanplatform.org/favicon.ico",
-      actions: [
-        { action: "open", title: "Open File" },
-      ],
-    });
+    if (Notification.permission === "granted" && !(await anyClientVisible())) {
+      await getSw().registration.showNotification("Download complete", {
+        body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
+        icon: "https://pelicanplatform.org/favicon.ico",
+        actions: [{ action: "open", title: "Open File" }],
+      });
+    }
+
+    const responseHeaders = new Headers();
+    responseHeaders.set("Content-Length", String(totalByteSize));
+    return new Response(r, { status: 200, headers: responseHeaders });
+
+  } catch (err) {
+    await patchDownloadRecord(db, download.id, { status: "failed" }).catch(() => {});
+    await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize: download.totalByteSize ?? 0, status: "failed" });
+    throw err;
   }
-
-  const responseHeaders = new Headers();
-  responseHeaders.set("Content-Length", String(totalByteSize));
-
-  return new Response(r, { status: 200, headers: responseHeaders });
 }
 
 async function resumeDownload(request: Request, id: string): Promise<Response> {
@@ -166,44 +169,136 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
 
   const abort = new AbortController();
 
-  const storageRoot = await navigator.storage.getDirectory();
+  try {
+    const storageRoot = await navigator.storage.getDirectory();
+    const tmpHandle = await storageRoot.getFileHandle(filePath, { create: true });
+    const fileWritable = await tmpHandle.createWritable({ keepExistingData: true });
 
-  // Reuse the existing OPFS file if it exists, otherwise create a new one
-  const tmpHandle = await storageRoot.getFileHandle(filePath, { create: true });
-  const fileWritable = await tmpHandle.createWritable({ keepExistingData: true });
+    await patchDownloadRecord(db, id, { status: "in-progress", updatedAt: Date.now() });
+    await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
 
-  await patchDownloadRecord(db, id, { status: "in-progress", updatedAt: Date.now() });
-  await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
+    const { cacheUrl } = await getObjectMetadata(request);
 
-  const { cacheUrl } = await getObjectMetadata(request);
+    await runWorkers(
+      pendingChunks,
+      abort,
+      downloadChunkFactory(db, request, id, chunkSize, totalByteSize, abort, cacheUrl, fileWritable)
+    );
 
-  await runWorkers(
-    pendingChunks,
-    abort,
-    downloadChunkFactory(db, request, id, chunkSize, totalByteSize, abort, cacheUrl, fileWritable)
-  );
+    await fileWritable.close();
 
-  await fileWritable.close();
+    await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
 
-  await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
+    const tmpFile = await tmpHandle.getFile();
+    const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
+    const cleanup = () => storageRoot.removeEntry(filePath).catch(() => {});
+    const { readable: r, writable: passThrough } = new TransformStream<Uint8Array, Uint8Array>();
+    fileStream.pipeTo(passThrough).then(cleanup, cleanup);
 
-  const tmpFile = await tmpHandle.getFile();
-  const fileStream = tmpFile.stream() as ReadableStream<Uint8Array>;
-  const cleanup = () => storageRoot.removeEntry(filePath).catch(() => {});
-  const { readable: r, writable: passThrough } = new TransformStream<Uint8Array, Uint8Array>();
-  fileStream.pipeTo(passThrough).then(cleanup, cleanup);
+    if (Notification.permission === "granted" && !(await anyClientVisible())) {
+      await getSw().registration.showNotification("Download complete", {
+        body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
+        icon: "https://pelicanplatform.org/favicon.ico",
+      });
+    }
 
-  if (Notification.permission === "granted" && !(await anyClientVisible())) {
-    await getSw().registration.showNotification("Download complete", {
-      body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
-      icon: "https://pelicanplatform.org/favicon.ico",
-    });
+    const responseHeaders = new Headers();
+    responseHeaders.set("Content-Length", String(totalByteSize));
+    return new Response(r, { status: 200, headers: responseHeaders });
+
+  } catch (err) {
+    await patchDownloadRecord(db, id, { status: "failed" }).catch(() => {});
+    await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
+    throw err;
   }
+}
+
+/**
+ * Downloads an object sequentially without OPFS, for browsers that don't support it (Firefox/Safari).
+ * No resume support — if the connection drops the download must restart from the beginning.
+ * Progress tracking and notifications are still supported.
+ * Memory usage is bounded to roughly one chunk (~32MB) at a time due to backpressure.
+ */
+async function downloadWithoutOpfs(request: Request): Promise<Response> {
+
+  console.log("[Pelican SW] OPFS not supported — falling back to in-memory download for:", request.url);
+
+  const db = await openDownloadDb();
+
+  // If this is a resume attempt, delete the old stale record before starting fresh
+  const previousId = request.headers.get(RESUME_HEADER);
+  if (previousId) {
+    await deleteDownloadRecord(db, previousId).catch(() => {});
+  }
+
+  const download: Download = {
+    id: crypto.randomUUID(),
+    filePath: "",
+    objectUrl: request.url,
+    bytesDownloaded: 0,
+    chunkSize: CHUNK_SIZE,
+    status: "in-progress",
+    authenticated: request.headers.get("Authorization") !== null,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await storeDownloadRecord(db, download);
+  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "in-progress" });
+
+  let totalByteSize: number;
+  let cacheUrl: URL;
+  let totalChunks: number;
+
+  try {
+    ({ objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request));
+    totalChunks = Math.ceil(totalByteSize / CHUNK_SIZE);
+  } catch (err) {
+    await patchDownloadRecord(db, download.id, { status: "failed" }).catch(() => {});
+    await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "failed" });
+    return new Response(`Failed to fetch resource for size check: ${err instanceof Error ? err.message : String(err)}`, { status: 500 });
+  }
+
+  await patchDownloadRecord(db, download.id, { totalByteSize });
+  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
+
+  const abort = new AbortController();
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+
+  (async () => {
+    try {
+      for (let i = 0; i < totalChunks; i++) {
+        if (abort.signal.aborted) break;
+        const range = getByteRange(i, CHUNK_SIZE, totalByteSize);
+        const data = await fetchChunk(cacheUrl, range, request.headers, abort);
+        await writer.write(data);
+        download.bytesDownloaded += data.byteLength;
+        await patchDownloadRecord(db, download.id, { bytesDownloaded: download.bytesDownloaded });
+        console.log("[Pelican SW] Downloaded chunk", i + 1, "of", totalChunks, `(${download.bytesDownloaded}/${totalByteSize} bytes)`);
+        await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
+      }
+      await writer.close();
+      await patchDownloadRecord(db, download.id, { status: "completed" });
+      await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
+
+      if (Notification.permission === "granted" && !(await anyClientVisible())) {
+        await getSw().registration.showNotification("Download complete", {
+          body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
+          icon: "https://pelicanplatform.org/favicon.ico",
+        });
+      }
+    } catch (err) {
+      console.log("[Pelican SW] Download failed:", err);
+      await writer.abort(err);
+      await patchDownloadRecord(db, download.id, { status: "failed" });
+      await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
+    }
+  })();
 
   const responseHeaders = new Headers();
   responseHeaders.set("Content-Length", String(totalByteSize));
-
-  return new Response(r, { status: 200, headers: responseHeaders });
+  return new Response(readable, { status: 200, headers: responseHeaders });
 }
 
 async function broadcastProgress(update: {
@@ -239,6 +334,19 @@ function downloadChunkFactory(db: IDBDatabase, request: Request, id: string, chu
 }
 
 async function getObjectMetadata(request: Request): Promise<{objectSize: number, cacheUrl: URL}> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await getObjectMetadataOnce(request);
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Pelican SW] getObjectMetadata failed (attempt ${attempt}/${MAX_RETRIES}):`, err);
+    }
+  }
+  throw lastError;
+}
+
+async function getObjectMetadataOnce(request: Request): Promise<{objectSize: number, cacheUrl: URL}> {
 
   const headResp = await fetch(request.url, {
     headers: cleanHeaders(request.headers)
@@ -307,17 +415,11 @@ async function runWorkers(
   await Promise.all(workers);
 }
 
-async function opfsSupported(): Promise<boolean> {
-  try {
-    const root = await navigator.storage.getDirectory();
-    const h = await root.getFileHandle(`pelican-probe-${Date.now()}`, { create: true });
-    const w = await h.createWritable();
-    await w.close();
-    await root.removeEntry(h.name).catch(() => {});
-    return true;
-  } catch {
-    return false;
-  }
+function opfsSupported(): boolean {
+  const ua = self.navigator.userAgent;
+  const isFirefox = ua.includes("Firefox/");
+  const isSafari = ua.includes("Safari/") && !ua.includes("Chrome/");
+  return !isFirefox && !isSafari;
 }
 
 function getByteRange(index: number, chunkSize: number, total: number): {start: number, end: number} {
@@ -401,6 +503,15 @@ function openDownloadDb(): Promise<IDBDatabase> {
     };
     req.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result);
     req.onerror = (event) => reject((event.target as IDBOpenDBRequest).error);
+  });
+}
+
+async function deleteDownloadRecord(db: IDBDatabase, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("downloads", "readwrite");
+    tx.objectStore("downloads").delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
 }
 

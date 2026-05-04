@@ -416,6 +416,16 @@ export function PelicanClientProvider({
           delete next[progress.id];
           return next;
         }
+        if (progress.status === "failed") {
+          // Show the failure briefly, then remove it
+          setTimeout(() => {
+            setDownloadsInProgress((p) => {
+              const next = { ...p };
+              delete next[progress.id];
+              return next;
+            });
+          }, 5000);
+        }
         return { ...prev, [progress.id]: progress };
       });
     };
