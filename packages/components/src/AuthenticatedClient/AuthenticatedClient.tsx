@@ -40,7 +40,7 @@ function AuthenticatedClient() {
 
   const [objectList, setObjectList] = useState<ObjectList[]>([]);
   const [listLoading, setListLoading] = useState<boolean>(false);
-  const [muteError, setMuteError] = useState<boolean>(false);
+  const [muteError, setMuteError] = useState<boolean>(true);
 
 
   const [showCollections, setShowCollections] = useState<boolean>(false);
@@ -58,13 +58,27 @@ function AuthenticatedClient() {
 
   const updateObjectList = async (o: string) => {
     setListLoading(true);
+    const params = new URLSearchParams(window.location.search);
+    params.set("url", o);
+    window.history.replaceState(null, "", `?${params.toString()}`);
     setObjectList(await getObjectList(o, false));
     setListLoading(false);
   }
 
-  // On mount attempt to load the object list
+  // On mount: read url from query params and set it if present
   useEffect(() => {
-    (async () => await updateObjectList(objectUrl))();
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlFromAddress = params.get("url");
+      const initial = urlFromAddress ?? objectUrl;
+      if (urlFromAddress) {
+        setObjectUrl(urlFromAddress);
+      }
+      if(namespace) {
+        await updateObjectList(initial);
+      }
+      setMuteError(false);
+    })();
   }, []);
 
   // On mount ask if we can send notifications, this is needed to show notifications for downloads in progress
