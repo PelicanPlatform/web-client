@@ -344,18 +344,16 @@ function PelicanClientProvider({
       const currentCollections = getTokenCollections(namespace);
 
       // add parent directory entry
-      const objectPathSansNamespace = objectPath.replace(namespace.prefix, "");
-      const pathParts = objectPathSansNamespace.split("/").filter((p) => p.length > 0);
-      const parentParts = pathParts.slice(0, -1);
-      const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
       const inCollections = currentCollections && currentCollections.length > 0
-      const isParentInNamespace = parentPath.startsWith(namespace.prefix);
-      const isParentInCollections = currentCollections.some(c => parentPath.startsWith(c.objectPath));
 
       // If we are in collections we only show the parent if it is in a collection
+      const collectionPath = objectPath.replace(namespace.prefix, "");
+      const pathParts = collectionPath.split("/").filter((p) => p.length > 0);
+      const relativeParentPath = "/" + pathParts.slice(0, -1).join("/")
+      const isParentInCollections = currentCollections.some(c => relativeParentPath.startsWith(c.objectPath));
       if(inCollections && isParentInCollections) {
         objects.push({
-          href: namespace.prefix + parentPath || "/",
+          href: namespace.prefix + relativeParentPath || "/",
           getcontentlength: 0,
           getlastmodified: "",
           resourcetype: "collection",
@@ -366,9 +364,11 @@ function PelicanClientProvider({
       }
 
       // If we are not in collections we show the parent as long as it is in the namespace and not the root
+      const parentPath = "/" + objectPath.split("/").filter((p) => p.length > 0).slice(0, -1).join("/");
+      const isParentInNamespace = parentPath.startsWith(namespace.prefix);
       if(!inCollections && isParentInNamespace) {
         objects.push({
-          href: namespace.prefix + parentPath || "/",
+          href: parentPath || "/",
           getcontentlength: 0,
           getlastmodified: "",
           resourcetype: "collection",
