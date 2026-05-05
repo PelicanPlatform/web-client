@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, Dispatch, SetStateAction } from "react";
-import { Federation, Namespace, Collection, ObjectList } from "@pelicanplatform/web-client";
-import { DownloadProgress } from "../types";
+import { Federation, Namespace, Collection, ObjectList, UrlType } from "@pelicanplatform/web-client";
+import {DownloadProgress} from "../types";
 
 export interface PelicanClientContextValue {
   // Metadata state
@@ -26,7 +26,7 @@ export interface PelicanClientContextValue {
   collections: Collection[];
 
   // Core metadata function
-  ensureMetadata: (targetObjectUrl: string) => Promise<{
+  ensureMetadata: (targetObjectUrl: string, urlType: UrlType) => Promise<{
     federation: Federation;
     namespace: Namespace | null
   }>;

@@ -4,7 +4,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ErrorIcon from "@mui/icons-material/Error";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import { Box, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from "@mui/material";
+import { Box, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from "@mui/material";
 import { formatBytes } from "@pelicanplatform/web-client";
 import { DragEvent, Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
@@ -280,6 +280,8 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
                                             <CheckCircleIcon color="success" />
                                         ) : uploadFile.status === "error" ? (
                                             <ErrorIcon color="error" />
+                                        ) : uploadFile.status === "uploading" ? (
+                                            <CircularProgress size={24} />
                                         ) : (
                                             <InsertDriveFileIcon color="action" />
                                         )}
@@ -307,6 +309,24 @@ const ObjectUpload = ({ disabled = false, onUpload, currentPath, refs }: ObjectU
                                                             color="success.main"
                                                         >
                                                             Complete
+                                                        </Typography>
+                                                    )}
+                                                    {uploadFile.status === "uploading" && (
+                                                        <Typography
+                                                            variant="caption"
+                                                            component="span"
+                                                            color="primary"
+                                                        >
+                                                            Uploading…
+                                                        </Typography>
+                                                    )}
+                                                    {uploadFile.status === "pending" && (
+                                                        <Typography
+                                                            variant="caption"
+                                                            component="span"
+                                                            color="text.secondary"
+                                                        >
+                                                            Pending
                                                         </Typography>
                                                     )}
                                                 </Box>
