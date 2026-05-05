@@ -9,3 +9,6 @@ export interface DownloadProgress {
 // Keep default export for backward compatibility
 interface Download extends DownloadProgress {}
 export default Download
+
+// Url Type
+export type UrlType = "collection" | "object"

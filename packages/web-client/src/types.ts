@@ -107,3 +107,5 @@ export interface Collection {
     objectPath: string;
     permissions: CollectionPermission[];
 }
+
+export type UrlType = "collection" | "object";

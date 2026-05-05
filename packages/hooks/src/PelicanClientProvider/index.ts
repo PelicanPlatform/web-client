@@ -1,4 +1,4 @@
-export { PelicanClientProvider } from "./PelicanClientProvider";
+export {default as PelicanClientProvider} from "./PelicanClientProvider"
 export type { PelicanClientProviderProps } from "./PelicanClientProvider";
 export { PelicanClientContext } from "./PelicanClientContext";
 export type { PelicanClientContextValue } from "./PelicanClientContext";

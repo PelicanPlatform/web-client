@@ -24,7 +24,7 @@ import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClient
 import { useSessionStorage } from "../helpers/useSessionStorage";
 import { useCodeVerifier } from "../helpers/useCodeVerifier";
 import { useAuthExchange } from "../helpers/useAuthExchange";
-import { DownloadProgress } from "../types";
+import {DownloadProgress, UrlType} from "../types";
 
 export interface PelicanClientProviderProps {
   /** Initial object URL */
@@ -39,7 +39,7 @@ export interface PelicanClientProviderProps {
  * Provider component that manages Pelican client state and provides it to child components.
  * Wrap your app or component tree with this provider to enable usePelicanClient hook.
  */
-export function PelicanClientProvider({
+function PelicanClientProvider({
                                         initialObjectUrl = "",
                                         enableAuth = true,
                                         children
@@ -103,9 +103,9 @@ export function PelicanClientProvider({
     }
   });
 
-  const { federationHostname, objectPath } = useMemo(() => {
+  const { federationHostname, objectPath, collectionPath } = useMemo(() => {
     try {
-      return parseObjectUrl(objectUrl);
+      return parseObjectUrl(objectUrl, "collection");
     } catch {
       return { federationHostname: null, objectPath: null };
     }
@@ -121,11 +121,11 @@ export function PelicanClientProvider({
    */
   const [activeNamespace, setActiveNamespace] = useState<Namespace | null>(null);
   const derivedNamespace = useMemo(() => {
-    if (!objectPath || !federation) return null;
-    const namespaceKey = prefixToNamespace?.[objectPath]?.namespace;
+    if (!collectionPath || !federation) return null;
+    const namespaceKey = prefixToNamespace?.[collectionPath]?.namespace;
     if (!namespaceKey) return null;
     return federation.namespaces?.[namespaceKey] || null;
-  }, [prefixToNamespace, objectPath, federation]);
+  }, [prefixToNamespace, collectionPath, federation]);
 
   // On mount, attempt to set activeNamespace from stored federations if possible
   useEffect(() => {
@@ -187,14 +187,14 @@ export function PelicanClientProvider({
    * Helper function to ensure federation and namespace metadata is available.
    * Fetches on-demand if not in cache. Deduplicates concurrent requests for the same URL.
    */
-  const ensureMetadata = useCallback(async (targetObjectUrl: string) => {
-    const { federationHostname, objectPath } = parseObjectUrl(targetObjectUrl);
+  const ensureMetadata = useCallback(async (targetObjectUrl: string, type: UrlType) => {
+    const { federationHostname, objectPath, collectionPath } = parseObjectUrl(targetObjectUrl, type);
 
-    if (!federationHostname || !objectPath) {
+    if (!federationHostname || !collectionPath) {
       throw new Error(`Invalid object URL: ${targetObjectUrl}`);
     }
 
-    const cacheKey = `${federationHostname}:${objectPath}`;
+    const cacheKey = `${federationHostname}:${collectionPath}`;
 
     // Check if there's already an in-flight request for this URL
     const existingPromise = metadataPromises.current.get(cacheKey);
@@ -204,7 +204,7 @@ export function PelicanClientProvider({
 
     // Check if we already have both federation and namespace in cache
     const _federation = federations[federationHostname];
-    const namespaceKey = prefixToNamespace[objectPath]?.namespace;
+    const namespaceKey = prefixToNamespace[collectionPath]?.namespace;
     const _namespace = namespaceKey && _federation
       ? _federation.namespaces[namespaceKey]
       : null;
@@ -226,12 +226,19 @@ export function PelicanClientProvider({
         }
 
         // Check if we have already mapped that object prefix to a namespace
-        const namespaceKey = prefixToNamespace[objectPath]?.namespace;
+        const namespaceKey = prefixToNamespace[collectionPath]?.namespace;
         let namespace = namespaceKey ? federation.namespaces[namespaceKey] : null;
 
         // If it is not mapped, fetch the namespace metadata and map it
         if (!namespace) {
           namespace = await fetchNamespace(objectPath, federation);
+
+          // Check if this namespace already exists in the federation (it might if another URL with the
+          // same namespace but different path was loaded first), if so use the existing one instead of
+          // the newly fetched one to avoid overwriting tokens
+          if (namespace?.prefix && namespace.prefix in federation.namespaces) {
+            namespace = federation.namespaces[namespace.prefix];
+          }
 
           setActiveNamespace((p) => {
             if (p && p.prefix === namespace!.prefix) {
@@ -241,7 +248,7 @@ export function PelicanClientProvider({
           });
           setPrefixToNamespace((prev) => ({
             ...prev,
-            [objectPath]: {
+            [collectionPath]: {
               federation: federationHostname,
               namespace: (namespace as Namespace).prefix
             }
@@ -281,7 +288,7 @@ export function PelicanClientProvider({
     ensureMetadataRef.current = ensureMetadata;
   }, [ensureMetadata]);
 
-  // Pull Federation and Namespace Metadata as needed for the current objectUrl
+  // Pull Federation and Namespace Metadata as needed for the current collection Url
   useEffect(() => {
     (async () => {
 
@@ -295,7 +302,7 @@ export function PelicanClientProvider({
       }
 
       try {
-        await ensureMetadataRef.current(objectUrl);
+        await ensureMetadataRef.current(objectUrl, "collection");
       } catch (e) {
         setError(`Failed to fetch metadata for ${objectUrl}: ${e}`);
       }
@@ -321,7 +328,7 @@ export function PelicanClientProvider({
       }
 
       const { federationHostname, objectPath } = parseObjectUrl(urlToFetch);
-      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl, "collection");
 
       if (!federation || !namespace) {
         throw new Error("Federation or Namespace metadata is missing");
@@ -340,12 +347,25 @@ export function PelicanClientProvider({
       const pathParts = objectPathSansNamespace.split("/").filter((p) => p.length > 0);
       const parentParts = pathParts.slice(0, -1);
       const parentPath = parentParts.length > 0 ? "/" + parentParts.join("/") : "";
+      const inCollections = currentCollections && currentCollections.length > 0
+      const isParentInNamespace = parentPath.startsWith(namespace.prefix);
+      const isParentInCollections = currentCollections.some(c => parentPath.startsWith(c.objectPath));
 
-      // Check if the parent directory is within any of the user's collections before adding it to the list
-      if (pathParts.length > 0 && (
-        currentCollections.some(c => parentPath.startsWith(namespace.prefix + c.objectPath)) ||
-          currentCollections.length === 0
-      )) {
+      // If we are in collections we only show the parent if it is in a collection
+      if(inCollections && isParentInCollections) {
+        objects.push({
+          href: namespace.prefix + parentPath || "/",
+          getcontentlength: 0,
+          getlastmodified: "",
+          resourcetype: "collection",
+          iscollection: true,
+          executable: "",
+          status: "",
+        });
+      }
+
+      // If we are not in collections we show the parent as long as it is in the namespace and not the root
+      if(!inCollections && isParentInNamespace) {
         objects.push({
           href: namespace.prefix + parentPath || "/",
           getcontentlength: 0,
@@ -432,7 +452,7 @@ export function PelicanClientProvider({
 
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {
-      const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl, "object");
       if (!federation || !namespace) return;
       await download(downloadObjectUrl, federation, namespace);
     } catch (e) {
@@ -458,7 +478,7 @@ export function PelicanClientProvider({
   ) => {
     try {
       const targetUrl = uploadObjectUrl || objectUrl;
-      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl, "object");
       if (!federation || !namespace) return;
 
       const finalUploadUrl = targetUrl.endsWith("/")
@@ -481,7 +501,7 @@ export function PelicanClientProvider({
 
   const handleLogin = useCallback(async () => {
     try {
-      const { federation, namespace } = await ensureMetadataRef.current(objectUrl);
+      const { federation, namespace } = await ensureMetadataRef.current(objectUrl, "collection");
 
       if (!federation || !namespace) return;
       if (!enableAuth) return;
@@ -526,3 +546,5 @@ export function PelicanClientProvider({
     </PelicanClientContext.Provider>
   );
 }
+
+export default PelicanClientProvider
