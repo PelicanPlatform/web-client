@@ -18,13 +18,14 @@ import {
   Federation,
   getTokenCollections,
   Collection,
-  Namespace
+  Namespace,
+  UrlType
 } from "@pelicanplatform/web-client";
 import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClientContext";
 import { useSessionStorage } from "../helpers/useSessionStorage";
 import { useCodeVerifier } from "../helpers/useCodeVerifier";
 import { useAuthExchange } from "../helpers/useAuthExchange";
-import {DownloadProgress, UrlType} from "../types";
+import {DownloadProgress} from "../types";
 
 export interface PelicanClientProviderProps {
   /** Initial object URL */
@@ -107,7 +108,7 @@ function PelicanClientProvider({
     try {
       return parseObjectUrl(objectUrl, "collection");
     } catch {
-      return { federationHostname: null, objectPath: null };
+      return { federationHostname: null, objectPath: null, collectionPath: null };
     }
   }, [objectUrl]);
 
