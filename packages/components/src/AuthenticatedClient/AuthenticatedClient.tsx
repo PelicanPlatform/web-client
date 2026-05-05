@@ -42,7 +42,6 @@ function AuthenticatedClient() {
   const [listLoading, setListLoading] = useState<boolean>(false);
   const [muteError, setMuteError] = useState<boolean>(true);
 
-
   const [showCollections, setShowCollections] = useState<boolean>(false);
   const [highlightCollections, setHighlightCollections] = useState<boolean>(false);
 
@@ -74,9 +73,7 @@ function AuthenticatedClient() {
       if (urlFromAddress) {
         setObjectUrl(urlFromAddress);
       }
-      if(namespace) {
-        await updateObjectList(initial);
-      }
+      await updateObjectList(initial);
       setMuteError(false);
     })();
   }, []);

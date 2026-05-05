@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <main className={styles.main}>
                       <Container maxWidth="lg">
                         <Box minHeight={"90vh"} margin={4} width={"100%"} mx={"auto"}>
-                          <PelicanClientProvider initialObjectUrl={`pelican://osg-htc.org`} enableAuth={true} >
+                          <PelicanClientProvider initialObjectUrl={`pelican://osg-htc.org/ncar`} enableAuth={true} >
                             {children}
                           </PelicanClientProvider>
                         </Box>
