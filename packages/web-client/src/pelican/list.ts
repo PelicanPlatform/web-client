@@ -9,13 +9,41 @@ const list = async (collectionUrl: string, federation: Federation, namespace?: N
 
     const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
 
-    const response = await fetch(objectHttpUrl, {
+
+
+    // Check and handle per browser
+
+    let response: Response;
+
+    // If Safari
+    if (navigator.userAgent.includes("Safari")) {
+      const partialResponse = await fetch(objectHttpUrl, {
         method: "PROPFIND",
         headers: {
-            Authorization: `Bearer ${token?.value}`,
-            Depth: "1",
+          Authorization: `Bearer ${token?.value}`,
+          Depth: "1",
         },
-    });
+      });
+
+      const partialUrl = partialResponse.url
+
+      response = await fetch(partialUrl, {
+        method: "PROPFIND",
+        headers: {
+          Authorization: `Bearer ${token?.value}`,
+          Depth: "1",
+        },
+      });
+
+    } else {
+      response = await fetch(objectHttpUrl, {
+        method: "PROPFIND",
+        headers: {
+          Authorization: `Bearer ${token?.value}`,
+          Depth: "1",
+        },
+      });
+    }
 
     if (response.status === 200 || response.status === 207) {
         return parseWebDavXmlToJson(await response.text());
