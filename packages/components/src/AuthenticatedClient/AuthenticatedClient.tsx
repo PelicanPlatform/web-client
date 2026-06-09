@@ -115,7 +115,7 @@ function AuthenticatedClient() {
         gap={2}
       >
         <Box display={"flex"} flexDirection={"column"} flexGrow={1}>
-          {authorized && enableAuth (
+          {authorized && enableAuth && (
             <Box>
               <ObjectUpload
                 refs={uploadRef}
@@ -167,7 +167,7 @@ function AuthenticatedClient() {
                   )}
                 </>
               )}
-              {!authorized && enableAuth (
+              {!authorized && enableAuth && (
                 <Button endIcon={<Login />} variant="contained" size="small" sx={{mb:1}} onClick={handleLogin}>
                   Login
                 </Button>
