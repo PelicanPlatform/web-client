@@ -5,6 +5,10 @@ import { Federation, Namespace, Collection, ObjectList, UrlType } from "@pelican
 import {DownloadProgress} from "../types";
 
 export interface PelicanClientContextValue {
+
+  // Config pass through
+  enableAuth: boolean;
+
   // Metadata state
   loading: boolean;
   error: string | null;

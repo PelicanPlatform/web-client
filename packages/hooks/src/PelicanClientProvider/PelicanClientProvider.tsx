@@ -151,7 +151,7 @@ function PelicanClientProvider({
     return prevCollectionsRef.current;
   }, [namespace]);
 
-  const authorized = collections.length > 0 || !enableAuth;
+  const authorized = collections.length > 0;
 
   /**
    * Helper function to remove expired tokens from state.
@@ -520,6 +520,7 @@ function PelicanClientProvider({
   }, [objectUrl, ensureCodeVerifier, enableAuth]);
 
   const contextValue: PelicanClientContextValue = {
+    enableAuth,
     loading: loading || authLoading,
     error,
     setError,

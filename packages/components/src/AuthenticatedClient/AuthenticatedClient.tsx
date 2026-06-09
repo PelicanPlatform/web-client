@@ -19,6 +19,7 @@ import {DownloadManager} from "../DownloadManager";
 function AuthenticatedClient() {
 
   const {
+    enableAuth,
     error,
     setError,
     objectUrl,
@@ -114,7 +115,7 @@ function AuthenticatedClient() {
         gap={2}
       >
         <Box display={"flex"} flexDirection={"column"} flexGrow={1}>
-          {authorized && (
+          {authorized && enableAuth (
             <Box>
               <ObjectUpload
                 refs={uploadRef}
@@ -132,7 +133,7 @@ function AuthenticatedClient() {
               onUpload={!authorized ? () => uploadRef.current?.triggerFileSelect() : undefined}
             />
             <Box display={'flex'} mb={-1}>
-              {authorized ? (
+              {authorized && enableAuth && (
                 <>
                   <AddCollectionButton
                     icon={<CreateNewFolderOutlined />}
@@ -165,7 +166,8 @@ function AuthenticatedClient() {
                     </Badge>
                   )}
                 </>
-              ) : (
+              )}
+              {!authorized && enableAuth (
                 <Button endIcon={<Login />} variant="contained" size="small" sx={{mb:1}} onClick={handleLogin}>
                   Login
                 </Button>
@@ -173,7 +175,7 @@ function AuthenticatedClient() {
             </Box>
           </Box>
           <Paper elevation={1}>
-            {showCollections && authorized ? (
+            {showCollections && authorized && enableAuth ? (
               <CollectionView
                 collections={collections}
                 onExplore={(collectionPath: string) => {
