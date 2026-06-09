@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { Close, Download as DownloadIcon, ExpandMore } from "@mui/icons-material";
 import { DownloadProgress, usePelicanClient } from "@pelicanplatform/hooks";
-import { formatBytes, getPendingDownloads, retriggerPendingDownloads } from "@pelicanplatform/web-client";
+import { cancelDownload, formatBytes, getPendingDownloads, retriggerPendingDownloads } from "@pelicanplatform/web-client";
 
 interface SpeedSample {
   timestamp: number;
@@ -102,6 +102,13 @@ export function DownloadManager() {
 
   const fileName = (objectUrl: string) => objectUrl.split("/").at(-1) ?? objectUrl;
 
+  // Cancel/abandon a download (active or interrupted). The service worker aborts
+  // any in-flight transfer and cleans up; we also drop it from the local pending list.
+  const handleCancel = (id: string) => {
+    cancelDownload(id).catch(() => {});
+    setPendingDownloads((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
     <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1400 }}>
       {minimized ? (
@@ -163,11 +170,23 @@ export function DownloadManager() {
                   <Box key={d.id} sx={{ px: 2, py: 1.25, borderBottom: "1px solid", borderColor: "divider" }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
                       <Tooltip title={d.objectUrl} placement="top">
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 220, fontWeight: 500 }}>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 190, fontWeight: 500 }}>
                           {fileName(d.objectUrl)}
                         </Typography>
                       </Tooltip>
-                      <Typography variant="caption" color="text.secondary">{progress}%</Typography>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Typography variant="caption" color="text.secondary">{progress}%</Typography>
+                        <Tooltip title="Cancel download" placement="top">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCancel(d.id)}
+                            aria-label={`Cancel download ${fileName(d.objectUrl)}`}
+                            sx={{ p: 0.25 }}
+                          >
+                            <Close fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Box>
                     <LinearProgress variant="determinate" value={progress} color="warning" sx={{ borderRadius: 1, height: 5 }} />
                     <Box display="flex" justifyContent="space-between" mt={0.5}>
@@ -198,13 +217,25 @@ export function DownloadManager() {
                 >
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
                     <Tooltip title={d.objectUrl} placement="top">
-                      <Typography variant="body2" noWrap sx={{ maxWidth: 200, fontWeight: 500 }}>
+                      <Typography variant="body2" noWrap sx={{ maxWidth: 170, fontWeight: 500 }}>
                         {fileName(d.objectUrl)}
                       </Typography>
                     </Tooltip>
                     <Box display="flex" alignItems="center" gap={0.5}>
                       {isActive && <CircularProgress size={14} thickness={5} />}
                       <Typography variant="caption" color="text.secondary">{progress}%</Typography>
+                      {(d.status === "in-progress" || d.status === "failed") && (
+                        <Tooltip title={isActive ? "Cancel download" : "Dismiss"} placement="top">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCancel(d.id)}
+                            aria-label={`Cancel download ${fileName(d.objectUrl)}`}
+                            sx={{ p: 0.25 }}
+                          >
+                            <Close fontSize="inherit" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </Box>
                   </Box>
                   <LinearProgress

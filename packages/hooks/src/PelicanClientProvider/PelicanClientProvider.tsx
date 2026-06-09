@@ -428,7 +428,7 @@ function PelicanClientProvider({
       if (event.data?.type !== "PELICAN_DOWNLOAD_PROGRESS") return;
       const { type, ...progress } = event.data as { type: string } & DownloadProgress;
       setDownloadsInProgress((prev) => {
-        if (progress.status === "completed") {
+        if (progress.status === "completed" || progress.status === "cancelled") {
           const next = { ...prev };
           delete next[progress.id];
           return next;

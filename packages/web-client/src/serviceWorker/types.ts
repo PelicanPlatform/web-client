@@ -13,6 +13,6 @@ interface Download {
   updatedAt: number;
 }
 
-type DownloadStatus = "pending" | "in-progress" | "completed" | "failed";
+type DownloadStatus = "pending" | "in-progress" | "completed" | "failed" | "cancelled";
 
 export type { Download };

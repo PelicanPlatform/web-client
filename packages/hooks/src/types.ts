@@ -3,7 +3,7 @@ export interface DownloadProgress {
   objectUrl: string;
   bytesDownloaded: number;
   totalByteSize: number;
-  status: "pending" | "in-progress" | "completed" | "failed";
+  status: "pending" | "in-progress" | "completed" | "failed" | "cancelled";
 }
 
 // Keep default export for backward compatibility

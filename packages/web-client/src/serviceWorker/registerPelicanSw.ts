@@ -95,6 +95,13 @@ export async function pelicanFetchAndSave(
   const t0 = performance.now();
   const response = await pelicanFetch(url, init);
 
+  // 499 is the service worker's signal that the user cancelled the download.
+  // This is not an error — the SW has already cleaned up and notified the page,
+  // so we just return quietly instead of surfacing a "Download failed" error.
+  if (response.status === 499) {
+    return;
+  }
+
   if (!response.ok) {
     throw new Error(`Download failed: ${response.status} ${response.statusText}`);
   }
@@ -183,6 +190,54 @@ async function deleteDownloadRecord(objectUrl: string): Promise<void> {
         }
       };
       cursorReq.onerror = () => resolve(); // non-fatal
+    };
+    openReq.onerror = () => resolve(); // non-fatal
+  });
+}
+
+/**
+ * cancelDownload
+ *
+ * Cancels/abandons a download by its id. Works for both:
+ *  - active downloads — the service worker aborts the in-flight network transfer, and
+ *  - interrupted/pending downloads — the persisted record is simply discarded.
+ *
+ * The service worker cleans up the OPFS staging file and IndexedDB record, then
+ * broadcasts a `"cancelled"` progress update so the UI can remove the entry.
+ *
+ * A local fallback cleanup runs in case there is no controlling service worker
+ * (e.g. it was unregistered or never claimed the page).
+ *
+ * @example
+ *   <button onClick={() => cancelDownload(download.id)} />
+ */
+export async function cancelDownload(id: string): Promise<void> {
+  const controller =
+    typeof navigator !== "undefined" && "serviceWorker" in navigator
+      ? navigator.serviceWorker.controller
+      : null;
+
+  if (controller) {
+    controller.postMessage({ type: "PELICAN_CANCEL_DOWNLOAD", id });
+    return;
+  }
+
+  // Fallback: no controlling SW — clean up the record directly so it stops
+  // showing up as pending/interrupted.
+  await deleteDownloadRecordById(id).catch(() => {});
+}
+
+async function deleteDownloadRecordById(id: string): Promise<void> {
+  if (typeof indexedDB === "undefined") return;
+  return new Promise((resolve) => {
+    const openReq = indexedDB.open("pelican-downloads", 1);
+    openReq.onsuccess = () => {
+      const db = openReq.result;
+      if (!db.objectStoreNames.contains("downloads")) { resolve(); return; }
+      const tx = db.transaction("downloads", "readwrite");
+      tx.objectStore("downloads").delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve(); // non-fatal
     };
     openReq.onerror = () => resolve(); // non-fatal
   });

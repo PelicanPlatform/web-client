@@ -25,6 +25,55 @@ function getSw() {
   return self as any;
 }
 
+// ─── Cancellation registry ───────────────────────────────────────────────────
+
+interface ActiveDownload {
+  abort: AbortController;
+  objectUrl: string;
+  tmpName?: string; // OPFS staging file to remove on cancel
+}
+
+/** In-flight downloads keyed by download id, so they can be aborted on request. */
+const activeDownloads = new Map<string, ActiveDownload>();
+/** Ids that were explicitly cancelled, so the running task reports "cancelled" instead of "failed". */
+const cancelledIds = new Set<string>();
+
+/**
+ * Cancel/abort a download. Works for both in-flight downloads (aborts the
+ * network transfer) and interrupted/pending downloads (just removes the record).
+ * Cleans up the OPFS staging file and the IndexedDB record, then notifies the page.
+ */
+async function cancelDownload(id: string): Promise<void> {
+  cancelledIds.add(id);
+
+  const active = activeDownloads.get(id);
+  active?.abort.abort(new DOMException("Download cancelled", "AbortError"));
+
+  const db = await openDownloadDb().catch(() => null);
+  const record = db ? await getDownloadRecord(db, id).catch(() => null) : null;
+
+  // Remove the OPFS staging file if we know about it.
+  const tmpName = active?.tmpName ?? record?.filePath;
+  if (tmpName) {
+    try {
+      const storageRoot = await navigator.storage.getDirectory();
+      await storageRoot.removeEntry(tmpName);
+    } catch {
+      // file may not exist yet — ignore
+    }
+  }
+
+  if (db) await deleteDownloadRecord(db, id).catch(() => {});
+
+  await broadcastProgress({
+    id,
+    objectUrl: active?.objectUrl ?? record?.objectUrl ?? "",
+    bytesDownloaded: record?.bytesDownloaded ?? 0,
+    totalByteSize: record?.totalByteSize ?? 0,
+    status: "cancelled",
+  });
+}
+
 // ─── Install / Activate ──────────────────────────────────────────────────────
 
 if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
@@ -34,6 +83,11 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
     const { request } = event;
     if (!request.headers.has(TRIGGER_HEADER)) return;
     event.respondWith(parallelDownload(request));
+  });
+  getSw().addEventListener("message", (event: any) => {
+    if (event.data?.type === "PELICAN_CANCEL_DOWNLOAD" && event.data.id) {
+      event.waitUntil(cancelDownload(event.data.id).catch(() => {}));
+    }
   });
   getSw().addEventListener("notificationclick", (event: any) => {
     event.notification.close();
@@ -96,6 +150,11 @@ async function downloadObject(request: Request): Promise<Response> {
   await storeDownloadRecord(db, download);
   await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "in-progress" });
 
+  const abort = new AbortController();
+  activeDownloads.set(download.id, { abort, objectUrl: request.url });
+
+  let fileWritable: FileSystemWritableFileStream | undefined;
+
   try {
     // Get the total object size
     const { objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request);
@@ -108,14 +167,16 @@ async function downloadObject(request: Request): Promise<Response> {
     await patchDownloadRecord(db, download.id, downloadSizePatch);
     await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
 
-    const abort = new AbortController();
-
     const storageRoot = await navigator.storage.getDirectory();
     const tmpName = `pelican-tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    activeDownloads.get(download.id)!.tmpName = tmpName;
+    await patchDownloadRecord(db, download.id, { filePath: tmpName });
     const tmpHandle = await storageRoot.getFileHandle(tmpName, { create: true });
-    const fileWritable = await tmpHandle.createWritable();
+    fileWritable = await tmpHandle.createWritable();
 
     await runWorkers(pendingChunks, abort, downloadChunkFactory(db, request, download.id, download.chunkSize, totalByteSize, abort, cacheUrl, fileWritable));
+
+    if (abort.signal.aborted) throw new DOMException("Download cancelled", "AbortError");
 
     await fileWritable.close();
 
@@ -140,9 +201,17 @@ async function downloadObject(request: Request): Promise<Response> {
     return new Response(r, { status: 200, headers: responseHeaders });
 
   } catch (err) {
+    await fileWritable?.abort().catch(() => {});
+    if (cancelledIds.has(download.id)) {
+      cancelledIds.delete(download.id);
+      // cancelDownload already cleaned up the record and notified the page.
+      return new Response("Download cancelled", { status: 499 });
+    }
     await patchDownloadRecord(db, download.id, { status: "failed" }).catch(() => {});
     await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize: download.totalByteSize ?? 0, status: "failed" });
     throw err;
+  } finally {
+    activeDownloads.delete(download.id);
   }
 }
 
@@ -168,11 +237,14 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   console.log(`[Pelican SW] Resuming download with: ${pendingChunks.size * chunkSize} bytes downloaded out of ${totalByteSize} total bytes`);
 
   const abort = new AbortController();
+  activeDownloads.set(id, { abort, objectUrl: request.url, tmpName: filePath });
+
+  let fileWritable: FileSystemWritableFileStream | undefined;
 
   try {
     const storageRoot = await navigator.storage.getDirectory();
     const tmpHandle = await storageRoot.getFileHandle(filePath, { create: true });
-    const fileWritable = await tmpHandle.createWritable({ keepExistingData: true });
+    fileWritable = await tmpHandle.createWritable({ keepExistingData: true });
 
     await patchDownloadRecord(db, id, { status: "in-progress", updatedAt: Date.now() });
     await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
@@ -184,6 +256,8 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
       abort,
       downloadChunkFactory(db, request, id, chunkSize, totalByteSize, abort, cacheUrl, fileWritable)
     );
+
+    if (abort.signal.aborted) throw new DOMException("Download cancelled", "AbortError");
 
     await fileWritable.close();
 
@@ -207,9 +281,17 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
     return new Response(r, { status: 200, headers: responseHeaders });
 
   } catch (err) {
+    await fileWritable?.abort().catch(() => {});
+    if (cancelledIds.has(id)) {
+      cancelledIds.delete(id);
+      // cancelDownload already cleaned up the record and notified the page.
+      return new Response("Download cancelled", { status: 499 });
+    }
     await patchDownloadRecord(db, id, { status: "failed" }).catch(() => {});
     await broadcastProgress({ id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
     throw err;
+  } finally {
+    activeDownloads.delete(id);
   }
 }
 
@@ -263,6 +345,7 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
   await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
 
   const abort = new AbortController();
+  activeDownloads.set(download.id, { abort, objectUrl: request.url });
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
@@ -278,6 +361,7 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
         console.log("[Pelican SW] Downloaded chunk", i + 1, "of", totalChunks, `(${download.bytesDownloaded}/${totalByteSize} bytes)`);
         await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
       }
+      if (abort.signal.aborted) throw new DOMException("Download cancelled", "AbortError");
       await writer.close();
       await patchDownloadRecord(db, download.id, { status: "completed" });
       await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
@@ -289,10 +373,17 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
         });
       }
     } catch (err) {
+      await writer.abort(err).catch(() => {});
+      if (cancelledIds.has(download.id)) {
+        cancelledIds.delete(download.id);
+        // cancelDownload already cleaned up the record and notified the page.
+        return;
+      }
       console.log("[Pelican SW] Download failed:", err);
-      await writer.abort(err);
       await patchDownloadRecord(db, download.id, { status: "failed" });
       await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
+    } finally {
+      activeDownloads.delete(download.id);
     }
   })();
 
