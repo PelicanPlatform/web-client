@@ -19,7 +19,11 @@ import {
   getTokenCollections,
   Collection,
   Namespace,
-  UrlType
+  Token,
+  UrlType,
+  queryAuthStatus,
+  namespaceKey,
+  parseNamespaceKey
 } from "@pelicanplatform/web-client";
 import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClientContext";
 import { useSessionStorage } from "../helpers/useSessionStorage";
@@ -450,6 +454,69 @@ function PelicanClientProvider({
     navigator.serviceWorker.addEventListener("message", handler);
     return () => navigator.serviceWorker.removeEventListener("message", handler);
   }, []);
+
+  /**
+   * Keep page auth-state in sync with the service worker, which is the sole holder of
+   * the access tokens. Handles in-session silent refresh (new exp), logout, and
+   * reconciling stale claims after the SW was terminated (its in-memory tokens are
+   * then gone, so anything the page still believes it holds is stale).
+   */
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.serviceWorker || !enableAuth) return;
+
+    const applyStatus = (nsKey: string, status: Omit<Token, "value"> | null) => {
+      const { host, prefix } = parseNamespaceKey(nsKey);
+      setFederations((prev) => {
+        const fed = prev[host];
+        if (!fed || !fed.namespaces[prefix]) return prev;
+        const ns: Namespace = { ...fed.namespaces[prefix] };
+        if (status) ns.token = status as Token; else delete ns.token;
+        return { ...prev, [host]: { ...fed, namespaces: { ...fed.namespaces, [prefix]: ns } } };
+      });
+      setActiveNamespace((p) => {
+        if (!p || p.prefix !== prefix) return p;
+        const next: Namespace = { ...p };
+        if (status) next.token = status as Token; else delete next.token;
+        return next;
+      });
+    };
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type !== "PELICAN_AUTH_STATUS") return;
+      applyStatus(event.data.nsKey, event.data.status ?? null);
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+
+    // Reconcile stored claims against what the SW actually holds. Drop anything the page
+    // thinks it has but the SW does not (stale after SW termination → forces re-login).
+    (async () => {
+      try {
+        const statuses = await queryAuthStatus();
+        setFederations((prev) => {
+          let changed = false;
+          const next: FederationStore = {};
+          for (const [host, fed] of Object.entries(prev)) {
+            const namespaces: Record<string, Namespace> = {};
+            for (const [prefix, ns] of Object.entries(fed.namespaces)) {
+              if (ns.token && !statuses[namespaceKey(host, prefix)]) {
+                const { token, ...rest } = ns;
+                namespaces[prefix] = rest;
+                changed = true;
+              } else {
+                namespaces[prefix] = ns;
+              }
+            }
+            next[host] = { ...fed, namespaces };
+          }
+          return changed ? next : prev;
+        });
+      } catch {
+        // No controlling SW yet — skip; the exchange/broadcast path will sync state.
+      }
+    })();
+
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [enableAuth]);
 
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
     try {

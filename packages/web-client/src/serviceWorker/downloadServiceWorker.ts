@@ -19,6 +19,40 @@ const MAX_PARALLEL = 6;
 const MAX_RETRIES = 3;
 export const TRIGGER_HEADER = "x-pelican-parallel";
 export const RESUME_HEADER = "x-pelican-resume-id";
+/** Non-secret routing hint: which in-memory token to inject. `${enc(host)}:${enc(prefix)}`. */
+export const NAMESPACE_HEADER = "x-pelican-namespace";
+/** Set on a synthetic 401 the SW returns when it holds no usable token for a tagged request. */
+export const AUTH_REQUIRED_HEADER = "x-pelican-auth-required";
+
+// ─── In-memory authorization store ─────────────────────────────────────────────
+//
+// Access + refresh tokens live ONLY here, in service-worker module memory. They are
+// never written to sessionStorage, IndexedDB, or handed back to the page in raw form.
+// When the SW is terminated (idle) this map is lost and the user must re-authenticate
+// — that is the deliberate cost of the memory-only XSS-hardening guarantee.
+
+interface TokenEntry {
+  accessToken: string;
+  refreshToken?: string;
+  exp: number; // seconds since epoch
+  scope: string;
+  // Cached at exchange time so silent refresh needs no page round-trip.
+  tokenEndpoint: string;
+  clientId: string;
+  clientSecret: string;
+}
+
+/** Non-secret token claims handed back to the page (never includes the JWT itself). */
+interface TokenClaims {
+  iss?: string;
+  sub?: string;
+  aud?: string;
+  exp: number;
+  iat?: number;
+  scope: string;
+}
+
+const tokenStore = new Map<string, TokenEntry>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSw() {
@@ -81,12 +115,40 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
   getSw().addEventListener("activate", (event: any) => { event.waitUntil(getSw().clients.claim()); });
   getSw().addEventListener("fetch", (event: any) => {
     const { request } = event;
-    if (!request.headers.has(TRIGGER_HEADER)) return;
-    event.respondWith(parallelDownload(request));
+    // Parallel/SW-managed download path (also injects auth when tagged with a namespace).
+    if (request.headers.has(TRIGGER_HEADER)) {
+      event.respondWith(parallelDownload(request));
+      return;
+    }
+    // Plain request that wants the SW to inject its in-memory token.
+    if (request.headers.has(NAMESPACE_HEADER)) {
+      event.respondWith(authPassthrough(request));
+      return;
+    }
+    // Untagged request — leave it alone.
   });
   getSw().addEventListener("message", (event: any) => {
-    if (event.data?.type === "PELICAN_CANCEL_DOWNLOAD" && event.data.id) {
-      event.waitUntil(cancelDownload(event.data.id).catch(() => {}));
+    const data = event.data;
+    if (data?.type === "PELICAN_CANCEL_DOWNLOAD" && data.id) {
+      event.waitUntil(cancelDownload(data.id).catch(() => {}));
+      return;
+    }
+    // Auth messages reply on the MessageChannel port the page supplied.
+    const port: MessagePort | undefined = event.ports?.[0];
+    if (data?.type === "PELICAN_AUTH_EXCHANGE") {
+      event.waitUntil(handleAuthExchange(data).then((r) => port?.postMessage(r)).catch((e) =>
+        port?.postMessage({ ok: false, error: e instanceof Error ? e.message : String(e) })
+      ));
+      return;
+    }
+    if (data?.type === "PELICAN_AUTH_LOGOUT") {
+      handleAuthLogout(data.nsKey);
+      port?.postMessage({ ok: true });
+      return;
+    }
+    if (data?.type === "PELICAN_AUTH_STATUS_QUERY") {
+      port?.postMessage({ statuses: snapshotAuthStatuses(data.nsKey) });
+      return;
     }
   });
   getSw().addEventListener("notificationclick", (event: any) => {
@@ -101,9 +163,198 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
   });
 }
 
+// ─── Authorization ─────────────────────────────────────────────────────────────
+
+interface AuthExchangePayload {
+  type: "PELICAN_AUTH_EXCHANGE";
+  nsKey: string;
+  code: string;
+  codeVerifier: string;
+  clientId: string;
+  clientSecret: string;
+  tokenEndpoint: string;
+  redirectUri: string;
+}
+
+/**
+ * Exchange an OAuth authorization code for tokens and store them in memory.
+ * Returns only non-secret claims to the page — the access/refresh tokens stay here.
+ */
+async function handleAuthExchange(p: AuthExchangePayload): Promise<{ ok: true; status: TokenClaims } | { ok: false; error: string }> {
+  const params = new URLSearchParams();
+  params.append("grant_type", "authorization_code");
+  params.append("code", p.code);
+  params.append("redirect_uri", p.redirectUri);
+  params.append("code_verifier", p.codeVerifier);
+  params.append("client_id", p.clientId);
+  params.append("client_secret", p.clientSecret);
+
+  const response = await fetch(p.tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+
+  if (!response.ok) {
+    return { ok: false, error: `Failed to get token: ${response.status} ${response.statusText}` };
+  }
+
+  const { access_token, refresh_token, expires_in } = await response.json();
+  const claims = parseJWT(access_token);
+  const entry: TokenEntry = {
+    accessToken: access_token,
+    refreshToken: refresh_token,
+    exp: claims.exp ?? Math.floor(Date.now() / 1000) + (expires_in ?? 0),
+    scope: claims.scope ?? "",
+    tokenEndpoint: p.tokenEndpoint,
+    clientId: p.clientId,
+    clientSecret: p.clientSecret,
+  };
+  tokenStore.set(p.nsKey, entry);
+  return { ok: true, status: claimsOf(entry) };
+}
+
+function handleAuthLogout(nsKey?: string): void {
+  if (nsKey) {
+    tokenStore.delete(nsKey);
+    broadcastAuthStatus(nsKey, null);
+  } else {
+    const keys = Array.from(tokenStore.keys());
+    tokenStore.clear();
+    keys.forEach((k) => broadcastAuthStatus(k, null));
+  }
+}
+
+function snapshotAuthStatuses(nsKey?: string): Record<string, TokenClaims> {
+  const out: Record<string, TokenClaims> = {};
+  for (const [key, entry] of tokenStore.entries()) {
+    if (nsKey && key !== nsKey) continue;
+    out[key] = claimsOf(entry);
+  }
+  return out;
+}
+
+/**
+ * Return a usable access token for a namespace, refreshing it first if expired.
+ * Returns null when nothing usable is available (caller should force re-login).
+ */
+async function getValidAccessToken(nsKey: string | null): Promise<string | null> {
+  if (!nsKey) return null;
+  const entry = tokenStore.get(nsKey);
+  if (!entry) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (entry.exp > now + 5) return entry.accessToken; // small skew buffer
+
+  // Expired — attempt an in-session silent refresh (refresh token is memory-only too).
+  if (!entry.refreshToken) {
+    tokenStore.delete(nsKey);
+    broadcastAuthStatus(nsKey, null);
+    return null;
+  }
+  try {
+    const refreshed = await refreshAccessToken(entry);
+    tokenStore.set(nsKey, refreshed);
+    broadcastAuthStatus(nsKey, claimsOf(refreshed));
+    return refreshed.accessToken;
+  } catch (err) {
+    console.warn("[Pelican SW] Token refresh failed:", err);
+    tokenStore.delete(nsKey);
+    broadcastAuthStatus(nsKey, null);
+    return null;
+  }
+}
+
+async function refreshAccessToken(entry: TokenEntry): Promise<TokenEntry> {
+  const params = new URLSearchParams();
+  params.append("grant_type", "refresh_token");
+  params.append("refresh_token", entry.refreshToken!);
+  params.append("client_id", entry.clientId);
+  params.append("client_secret", entry.clientSecret);
+
+  const response = await fetch(entry.tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+  if (!response.ok) throw new Error(`Refresh failed: ${response.status} ${response.statusText}`);
+
+  const { access_token, refresh_token, expires_in } = await response.json();
+  const claims = parseJWT(access_token);
+  return {
+    ...entry,
+    accessToken: access_token,
+    // Honor refresh-token rotation when the server issues a new one.
+    refreshToken: refresh_token ?? entry.refreshToken,
+    exp: claims.exp ?? Math.floor(Date.now() / 1000) + (expires_in ?? 0),
+    scope: claims.scope ?? entry.scope,
+  };
+}
+
+function broadcastAuthStatus(nsKey: string, status: TokenClaims | null): void {
+  getSw().clients.matchAll({ type: "window", includeUncontrolled: false }).then((clients: any[]) => {
+    for (const client of clients) {
+      try {
+        client.postMessage({ type: "PELICAN_AUTH_STATUS", nsKey, status });
+      } catch {
+        // client gone — ignore
+      }
+    }
+  });
+}
+
+function claimsOf(entry: TokenEntry): TokenClaims {
+  const c = parseJWT(entry.accessToken);
+  return { iss: c.iss, sub: c.sub, aud: c.aud, exp: entry.exp, iat: c.iat, scope: entry.scope };
+}
+
+function parseJWT(token: string): Record<string, any> {
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("Invalid JWT token");
+  const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+  const pad = base64.length % 4;
+  const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
+  return JSON.parse(atob(padded));
+}
+
+/**
+ * Inject the in-memory Authorization for a namespace-tagged request, strip the
+ * routing header, and forward it. Returns a synthetic 401 (carrying
+ * AUTH_REQUIRED_HEADER) when no usable token is held, so the page re-authenticates.
+ */
+async function authPassthrough(request: Request): Promise<Response> {
+  const nsKey = request.headers.get(NAMESPACE_HEADER);
+  const accessToken = await getValidAccessToken(nsKey);
+  if (!accessToken) {
+    return new Response(null, { status: 401, headers: { [AUTH_REQUIRED_HEADER]: "true" } });
+  }
+  const headers = cleanHeaders(request.headers);
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  // Rebuild the request with the resolved headers (body included for PUT/PROPFIND).
+  const forwarded = new Request(request, { headers });
+  return fetch(forwarded);
+}
+
 // ─── Core logic ──────────────────────────────────────────────────────────────
 
 async function parallelDownload(request: Request): Promise<Response> {
+  // Resolve the in-memory token (if any) into an Authorization header up front, so the
+  // download helpers can keep operating purely on request.headers. The page never sends
+  // Authorization itself — only the non-secret X-Pelican-Namespace routing tag.
+  const nsKey = request.headers.get(NAMESPACE_HEADER);
+  if (nsKey) {
+    const accessToken = await getValidAccessToken(nsKey);
+    if (!accessToken) {
+      return new Response(null, { status: 401, headers: { [AUTH_REQUIRED_HEADER]: "true" } });
+    }
+    const headers = new Headers(request.headers);
+    headers.set("Authorization", `Bearer ${accessToken}`);
+    request = new Request(request, { headers });
+  }
+  return parallelDownloadResolved(request);
+}
+
+async function parallelDownloadResolved(request: Request): Promise<Response> {
 
   // Short-circuit if OPFS isn't supported - Firefox/Safari
   if (!opfsSupported()) {
@@ -458,6 +709,7 @@ function cleanHeaders(headers: Headers): Headers {
   const clean = new Headers(headers);
   clean.delete(TRIGGER_HEADER);
   clean.delete(RESUME_HEADER);
+  clean.delete(NAMESPACE_HEADER);
   return clean;
 }
 

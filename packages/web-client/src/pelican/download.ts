@@ -1,7 +1,7 @@
 import { getObjectToken, parseObjectUrl } from "./index";
 import { Federation, Namespace } from "../types";
 import { UnauthenticatedError, UnauthorizedError } from "../errors";
-import { pelicanFetchAndSave } from "../serviceWorker";
+import { NAMESPACE_HEADER, namespaceKey, pelicanFetchAndSave } from "../serviceWorker";
 
 /**
  * Get an object from a pelican federation
@@ -12,11 +12,12 @@ import { pelicanFetchAndSave } from "../serviceWorker";
 const download = async (objectUrl: string, federation: Federation, namespace: Namespace): Promise<Response | void> => {
   const { objectPath } = parseObjectUrl(objectUrl);
 
-  // Create the headers, adding the Authorization header if a token is available
+  // Tag with the namespace so the service worker injects the in-memory access token
+  // on its range requests. The raw token never lives on the page.
   const token = getObjectToken(namespace);
   const headers = new Headers()
   if (token) {
-    headers.append("Authorization", `Bearer ${token.value}`);
+    headers.set(NAMESPACE_HEADER, namespaceKey(federation.hostname, namespace.prefix));
   }
 
   const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);

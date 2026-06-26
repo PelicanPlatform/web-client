@@ -18,7 +18,12 @@ export interface AuthorizationClient {
 }
 
 export interface Token {
-    value: string;
+    /**
+     * The raw access-token JWT. Present only transiently; in the service-worker auth
+     * model the JWT lives solely in SW memory and the page holds the claims below
+     * (scope/exp/…) without `value`. Treat as optional on the page side.
+     */
+    value?: string;
     iss: string;
     sub: string;
     aud: string;

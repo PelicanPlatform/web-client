@@ -1,2 +1,2 @@
 export * from "./registerPelicanSw";
-export { getPendingDownloads } from "./downloadServiceWorker";
+export { getPendingDownloads, NAMESPACE_HEADER, AUTH_REQUIRED_HEADER } from "./downloadServiceWorker";

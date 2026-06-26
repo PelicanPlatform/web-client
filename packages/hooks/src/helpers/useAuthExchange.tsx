@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import {
+    exchangeAuthCode,
     getAuthorizationCode,
-    getToken,
+    namespaceKey,
     Namespace,
     Token
 } from "@pelicanplatform/web-client";
@@ -92,7 +93,7 @@ export function useAuthExchange({
                     return;
                 }
 
-                if (!namespace.oidcConfiguration) {
+                if (!namespace.oidcConfiguration?.token_endpoint) {
                     const errorMsg = `Cannot exchange code: missing OIDC configuration for namespace ${namespacePrefix}`;
                     console.error(errorMsg);
                     setError(errorMsg);
@@ -100,21 +101,25 @@ export function useAuthExchange({
                     return;
                 }
 
-                // Exchange authorization code for access token
-                const tokenData = await getToken(
-                    namespace.oidcConfiguration,
+                // Exchange the authorization code for tokens *inside the service worker*.
+                // The access/refresh tokens never reach the page — only the non-secret
+                // claims (scope/exp/…) are returned for UI state.
+                const status = await exchangeAuthCode({
+                    nsKey: namespaceKey(federationHostname, namespacePrefix),
+                    code,
                     codeVerifier,
-                    namespace.clientId,
-                    namespace.clientSecret,
-                    code
-                );
+                    clientId: namespace.clientId,
+                    clientSecret: namespace.clientSecret,
+                    tokenEndpoint: namespace.oidcConfiguration.token_endpoint,
+                    redirectUri: `${window.location.origin}${window.location.pathname}`,
+                });
 
-                // Notify parent component of successful token acquisition
+                // Notify parent component of successful authentication (claims only).
                 if (onTokenReceived) {
                     onTokenReceived({
                         federationHostname,
                         namespacePrefix,
-                        token: tokenData.accessToken,
+                        token: status as Token,
                     });
                 }
 

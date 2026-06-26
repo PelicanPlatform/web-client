@@ -1,5 +1,7 @@
 
-import {getPendingDownloads, RESUME_HEADER,} from "./downloadServiceWorker";
+import {AUTH_REQUIRED_HEADER, getPendingDownloads, RESUME_HEADER,} from "./downloadServiceWorker";
+import { UnauthenticatedError } from "../errors";
+import type { Token } from "../types";
 
 let _cachedDirHandle: FileSystemDirectoryHandle | null = null;
 let _pendingDirHandle: Promise<FileSystemDirectoryHandle | null> | null = null;
@@ -100,6 +102,13 @@ export async function pelicanFetchAndSave(
   // so we just return quietly instead of surfacing a "Download failed" error.
   if (response.status === 499) {
     return;
+  }
+
+  // 401 + AUTH_REQUIRED_HEADER means the SW holds no usable token for this namespace
+  // (e.g. it was terminated and its in-memory tokens were lost). Surface it as an
+  // authentication error so the UI prompts the user to log in again.
+  if (response.status === 401 && response.headers.get(AUTH_REQUIRED_HEADER) === "true") {
+    throw new UnauthenticatedError("Access token required to access the object");
   }
 
   if (!response.ok) {
@@ -241,6 +250,96 @@ async function deleteDownloadRecordById(id: string): Promise<void> {
     };
     openReq.onerror = () => resolve(); // non-fatal
   });
+}
+
+// ─── Authorization messaging (page → service worker) ──────────────────────────
+//
+// The access/refresh tokens live ONLY in the service worker's memory. These helpers
+// are the page's entire interface to them: hand the SW an auth code to exchange,
+// ask which namespaces are currently authenticated, or drop a token. The raw JWT is
+// never returned to the page — only non-secret claims.
+
+/** Non-secret token claims the SW reports back (no `value`/JWT). */
+export type NamespaceTokenStatus = Omit<Token, "value">;
+
+export interface AuthExchangeRequest {
+  /** `${encodeURIComponent(host)}:${encodeURIComponent(prefix)}` — see namespaceKey(). */
+  nsKey: string;
+  code: string;
+  codeVerifier: string;
+  clientId: string;
+  clientSecret: string;
+  tokenEndpoint: string;
+  redirectUri: string;
+}
+
+/** Build the non-secret namespace routing key used in messages and the X-Pelican-Namespace header. */
+export function namespaceKey(host: string, prefix: string): string {
+  return `${encodeURIComponent(host)}:${encodeURIComponent(prefix)}`;
+}
+
+/** Inverse of namespaceKey(). */
+export function parseNamespaceKey(nsKey: string): { host: string; prefix: string } {
+  const [h, p] = nsKey.split(":");
+  return { host: decodeURIComponent(h ?? ""), prefix: decodeURIComponent(p ?? "") };
+}
+
+/** Resolve a controlling service worker, waiting briefly for it to claim this client. */
+async function getController(timeoutMs = 3000): Promise<ServiceWorker | null> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
+  if (navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+  await navigator.serviceWorker.ready.catch(() => null);
+  if (navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      clearTimeout(timer);
+      navigator.serviceWorker.removeEventListener("controllerchange", onChange);
+    };
+    const onChange = () => { cleanup(); resolve(navigator.serviceWorker.controller); };
+    const timer = setTimeout(() => { cleanup(); resolve(navigator.serviceWorker.controller); }, timeoutMs);
+    navigator.serviceWorker.addEventListener("controllerchange", onChange);
+  });
+}
+
+/** Send a message to the SW and await its reply over a dedicated MessageChannel. */
+async function sendAuthMessage<T>(message: Record<string, unknown>): Promise<T> {
+  const controller = await getController();
+  if (!controller) throw new Error("No controlling Pelican service worker");
+  return new Promise<T>((resolve) => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (e) => resolve(e.data as T);
+    controller.postMessage(message, [channel.port2]);
+  });
+}
+
+/**
+ * Exchange an OAuth authorization code for tokens inside the service worker.
+ * The tokens stay in SW memory; only the non-secret claims are returned here.
+ */
+export async function exchangeAuthCode(req: AuthExchangeRequest): Promise<NamespaceTokenStatus> {
+  const reply = await sendAuthMessage<
+    { ok: true; status: NamespaceTokenStatus } | { ok: false; error: string }
+  >({ type: "PELICAN_AUTH_EXCHANGE", ...req });
+  if (!reply.ok) throw new Error(reply.error);
+  return reply.status;
+}
+
+/** Drop a namespace's token from SW memory (or all tokens when nsKey is omitted). */
+export async function logoutNamespace(nsKey?: string): Promise<void> {
+  await sendAuthMessage({ type: "PELICAN_AUTH_LOGOUT", nsKey }).catch(() => {});
+}
+
+/**
+ * Ask the SW which namespaces it currently holds usable tokens for.
+ * Rejects when there is no controlling SW, so callers can distinguish
+ * "the SW reports no tokens" from "the SW isn't ready yet".
+ */
+export async function queryAuthStatus(nsKey?: string): Promise<Record<string, NamespaceTokenStatus>> {
+  const reply = await sendAuthMessage<{ statuses: Record<string, NamespaceTokenStatus> }>({
+    type: "PELICAN_AUTH_STATUS_QUERY",
+    nsKey,
+  });
+  return reply.statuses;
 }
 
 async function getDownloadDir(): Promise<FileSystemDirectoryHandle | null> {
