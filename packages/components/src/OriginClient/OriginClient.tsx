@@ -12,8 +12,12 @@ import AuthenticatedClient from "../AuthenticatedClient";
 export interface OriginClientProps {
   /** Base URL of the Origin's data (XRootD) endpoint, e.g. `https://origin.example.org:8443`. */
   originBaseUrl: string;
-  /** Stable host key used in object URLs and service-worker token routing, e.g. `origin.example.org`. */
-  originHost: string;
+  /**
+   * Stable internal key used in object URLs and service-worker token routing — not a network
+   * target. Defaults to the host (incl. port) of `originBaseUrl`. Only set this when `originBaseUrl`
+   * is relative (e.g. a same-origin proxy path) or you need a key independent of the data URL.
+   */
+  originHost?: string;
   /** Namespaces served by the Origin, with their issuers. */
   namespaces: OriginNamespaceConfig[];
   /** Namespace prefix to open initially. Defaults to the first supplied namespace. */
@@ -184,14 +188,17 @@ export function OriginClient({
   publicClientId,
   autoLogin = true,
 }: OriginClientProps) {
+  // Stable internal key for object URLs / SW token routing. Defaults to the data endpoint's host;
+  // callers only pass `originHost` when `originBaseUrl` is relative or they want a custom key.
+  const host = originHost ?? new URL(originBaseUrl).host;
   const startPrefix = initialPrefix ?? namespaces[0]?.prefix;
-  const initialObjectUrl = startPrefix ? `pelican://${originHost}${startPrefix}` : "";
+  const initialObjectUrl = startPrefix ? `pelican://${host}${startPrefix}` : "";
 
   return (
     <PelicanClientProvider
       localOnly
       enableAuth={enableAuth}
-      originHost={originHost}
+      originHost={host}
       originBaseUrl={originBaseUrl}
       namespaces={namespaces}
       publicClientId={publicClientId}
@@ -199,7 +206,7 @@ export function OriginClient({
     >
       <OriginAutoLoginGate enabled={autoLogin}>
         <Box mb={2}>
-          <OriginNamespaceSelector originHost={originHost} namespaces={namespaces} />
+          <OriginNamespaceSelector originHost={host} namespaces={namespaces} />
         </Box>
         <AuthenticatedClient />
       </OriginAutoLoginGate>
