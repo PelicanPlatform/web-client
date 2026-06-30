@@ -56,27 +56,35 @@ function AuthenticatedClient() {
     }
   }, [collections]);
 
-  const updateObjectList = async (o: string) => {
-    setListLoading(true);
-    const params = new URLSearchParams(window.location.search);
-    params.set("url", o);
-    window.history.replaceState(null, "", `?${params.toString()}`);
-    setObjectList(await getObjectList(o, false));
-    setListLoading(false);
-  }
-
-  // On mount: read url from query params and set it if present
+  // Single source of truth: refetch the listing whenever the active objectUrl changes — whether
+  // from the namespace selector, a deep link, exploring into a folder, or any consumer calling
+  // setObjectUrl. Navigation handlers below only need to setObjectUrl; this effect does the fetch
+  // and mirrors the URL to ?url for deep-linking. The cancelled guard drops a stale in-flight
+  // result if the user switches again before it resolves.
   useEffect(() => {
+    if (!objectUrl) return;
+    let cancelled = false;
     (async () => {
+      setListLoading(true);
       const params = new URLSearchParams(window.location.search);
-      const urlFromAddress = params.get("url");
-      const initial = urlFromAddress ?? objectUrl;
-      if (urlFromAddress) {
-        setObjectUrl(urlFromAddress);
-      }
-      await updateObjectList(initial);
-      setMuteError(false);
+      params.set("url", objectUrl);
+      window.history.replaceState(null, "", `?${params.toString()}`);
+      const list = await getObjectList(objectUrl, false);
+      if (cancelled) return;
+      setObjectList(list);
+      setListLoading(false);
     })();
+    return () => { cancelled = true; };
+  }, [objectUrl, getObjectList]);
+
+  // On mount, seed objectUrl from a ?url deep link if present; the effect above does the fetching.
+  useEffect(() => {
+    const urlFromAddress = new URLSearchParams(window.location.search).get("url");
+    if (urlFromAddress && urlFromAddress !== objectUrl) {
+      setObjectUrl(urlFromAddress);
+    }
+    setMuteError(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // On mount ask if we can send notifications, this is needed to show notifications for downloads in progress
@@ -141,12 +149,8 @@ function AuthenticatedClient() {
                       // Ensure the input starts with a "/" and does not end with a "/"
                       if(!i.startsWith("/")) i = "/" + i;
                       if(i.endsWith("/")) i = i.slice(0, -1);
-
-                      setObjectUrl((prev: string) => {
-                        const newObjectUrl = prev + i;
-                        updateObjectList(newObjectUrl);
-                        return newObjectUrl;
-                      });
+                      // Navigate; the objectUrl effect refetches the listing.
+                      setObjectUrl((prev: string) => prev + i);
                     }}
                   />
                   <IconButton onClick={() => uploadRef.current?.triggerFileSelect()}>
@@ -180,9 +184,7 @@ function AuthenticatedClient() {
                 collections={collections}
                 onExplore={(collectionPath: string) => {
                   if (!federation || !namespace) return;
-                  const newUrl = `pelican://${federation.hostname}${namespace.prefix}${collectionPath}`;
-                  setObjectUrl(newUrl);
-                  updateObjectList(newUrl)
+                  setObjectUrl(`pelican://${federation.hostname}${namespace.prefix}${collectionPath}`);
                   setShowCollections(false);
                 }}
               />
@@ -199,9 +201,7 @@ function AuthenticatedClient() {
                 namespace={namespace?.prefix}
                 onExplore={(objectHref) => {
                   const {federationHostname} = parseObjectUrl(objectUrl);
-                  const newUrl = `pelican://${federationHostname}${objectHref}`;
-                  setObjectUrl(newUrl);
-                  updateObjectList(newUrl)
+                  setObjectUrl(`pelican://${federationHostname}${objectHref}`);
                 }}
                 downloadsInProgress={downloadsInProgress}
               />
