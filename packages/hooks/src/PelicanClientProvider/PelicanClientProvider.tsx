@@ -733,7 +733,10 @@ function PelicanClientProvider({
   ) => {
     try {
       const targetUrl = uploadObjectUrl || objectUrl;
-      const { federation, namespace } = await ensureMetadataRef.current(objectUrl, "object");
+      // The upload target is the directory being uploaded into — a collection, not an object.
+      // Parsing it as "object" takes its parent, which is empty at a single-segment namespace
+      // root (e.g. pelican://host/test) and makes ensureMetadata reject the URL.
+      const { federation, namespace } = await ensureMetadataRef.current(targetUrl, "collection");
       if (!federation || !namespace) return;
 
       const finalUploadUrl = targetUrl.endsWith("/")
