@@ -39,7 +39,8 @@ interface TokenEntry {
   // Cached at exchange time so silent refresh needs no page round-trip.
   tokenEndpoint: string;
   clientId: string;
-  clientSecret: string;
+  /** Absent for public clients (PKCE without a client secret). */
+  clientSecret?: string;
 }
 
 /** Non-secret token claims handed back to the page (never includes the JWT itself). */
@@ -171,7 +172,8 @@ interface AuthExchangePayload {
   code: string;
   codeVerifier: string;
   clientId: string;
-  clientSecret: string;
+  /** Omitted for public clients (PKCE without a client secret). */
+  clientSecret?: string;
   tokenEndpoint: string;
   redirectUri: string;
 }
@@ -187,7 +189,8 @@ async function handleAuthExchange(p: AuthExchangePayload): Promise<{ ok: true; s
   params.append("redirect_uri", p.redirectUri);
   params.append("code_verifier", p.codeVerifier);
   params.append("client_id", p.clientId);
-  params.append("client_secret", p.clientSecret);
+  // Public clients authenticate with PKCE alone — only send a secret for confidential clients.
+  if (p.clientSecret) params.append("client_secret", p.clientSecret);
 
   const response = await fetch(p.tokenEndpoint, {
     method: "POST",
@@ -270,7 +273,7 @@ async function refreshAccessToken(entry: TokenEntry): Promise<TokenEntry> {
   params.append("grant_type", "refresh_token");
   params.append("refresh_token", entry.refreshToken!);
   params.append("client_id", entry.clientId);
-  params.append("client_secret", entry.clientSecret);
+  if (entry.clientSecret) params.append("client_secret", entry.clientSecret);
 
   const response = await fetch(entry.tokenEndpoint, {
     method: "POST",

@@ -40,6 +40,7 @@ const filePath = "/example/file/path.txt";
 
 const webClient = new Client(discoveryUrl);
 
+
 try {
     await webClient.getObject(filePath); // Downloads file to path.txt
 } catch (e) {

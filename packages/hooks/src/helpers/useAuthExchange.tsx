@@ -85,8 +85,10 @@ export function useAuthExchange({
                     return;
                 }
 
-                if (!namespace.clientId || !namespace.clientSecret) {
-                    const errorMsg = `Cannot exchange code: missing client credentials for namespace ${namespacePrefix}`;
+                // A clientId is always required; a clientSecret is only present for confidential
+                // clients. Public clients (e.g. `pelican-public-client`) authenticate with PKCE alone.
+                if (!namespace.clientId) {
+                    const errorMsg = `Cannot exchange code: missing client id for namespace ${namespacePrefix}`;
                     console.error(errorMsg);
                     setError(errorMsg);
                     setLoading(false);

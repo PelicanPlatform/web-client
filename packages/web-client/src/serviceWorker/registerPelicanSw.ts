@@ -268,7 +268,8 @@ export interface AuthExchangeRequest {
   code: string;
   codeVerifier: string;
   clientId: string;
-  clientSecret: string;
+  /** Omitted for public clients (PKCE without a client secret, e.g. `pelican-public-client`). */
+  clientSecret?: string;
   tokenEndpoint: string;
   redirectUri: string;
 }

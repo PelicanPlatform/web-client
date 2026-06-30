@@ -9,11 +9,15 @@ import {
   downloadResponse,
   fetchFederation,
   fetchNamespace,
+  fetchOpenIDConfiguration,
   download,
   list,
   parseObjectUrl,
   put,
   startAuthorizationCodeFlow,
+  silentLogin,
+  SilentLoginError,
+  exchangeAuthCode,
   verifyToken,
   Federation,
   getTokenCollections,
@@ -31,11 +35,35 @@ import { useCodeVerifier } from "../helpers/useCodeVerifier";
 import { useAuthExchange } from "../helpers/useAuthExchange";
 import {DownloadProgress} from "../types";
 
+/** A namespace served by an Origin, supplied directly in Origin-local mode. */
+export interface OriginNamespaceConfig {
+  /** Namespace prefix, e.g. `/ospool/ap40`. */
+  prefix: string;
+  /** Token issuer base URL; its OIDC config is discovered lazily for login. */
+  issuer: string;
+  /** Whether reads require a token (public namespaces can be browsed anonymously). */
+  requireToken?: boolean;
+}
+
 export interface PelicanClientProviderProps {
   /** Initial object URL */
   initialObjectUrl?: string;
   /** Whether to enable authentication features */
   enableAuth?: boolean;
+  /**
+   * Origin-local mode: keep every call local to a single Origin instead of discovering a
+   * federation. When set, `originBaseUrl`, `originHost`, and `namespaces` are required and
+   * federation/director discovery is skipped entirely.
+   */
+  localOnly?: boolean;
+  /** Base URL of the Origin's data (XRootD) endpoint, e.g. `https://origin.example.org:8443`. */
+  originBaseUrl?: string;
+  /** Stable host key used in object URLs and service-worker token routing, e.g. `origin.example.org`. */
+  originHost?: string;
+  /** Namespaces served by the Origin, with their issuers. */
+  namespaces?: OriginNamespaceConfig[];
+  /** OAuth client id to use for every issuer (a public, PKCE-only client). */
+  publicClientId?: string;
   /** Child components that will have access to the context */
   children: React.ReactNode;
 }
@@ -47,6 +75,11 @@ export interface PelicanClientProviderProps {
 function PelicanClientProvider({
                                         initialObjectUrl = "",
                                         enableAuth = true,
+                                        localOnly = false,
+                                        originBaseUrl,
+                                        originHost,
+                                        namespaces: originNamespaces,
+                                        publicClientId = "pelican-public-client",
                                         children
                                       }: PelicanClientProviderProps) {
 
@@ -66,6 +99,11 @@ function PelicanClientProvider({
 
   const [authorizationRequired, setAuthorizationRequired] = useState(!enableAuth);
 
+  // True once we've reconciled page auth-state against the service worker at least once. Until
+  // then, cached claims (from sessionStorage) can't be trusted — a consumer gating UI on auth
+  // should wait for this so a stale "authorized" doesn't flash before the SW confirms it.
+  const [authReconciled, setAuthReconciled] = useState(false);
+
   // Store in-flight metadata fetch promises to prevent duplicate concurrent requests
   const metadataPromises = useRef<Map<string, Promise<{
     federation: Federation;
@@ -80,6 +118,50 @@ function PelicanClientProvider({
 
   // Cache TTL in milliseconds (5 minutes)
   const OBJECT_LIST_CACHE_TTL = 5 * 60 * 1000;
+
+  // ─── Origin-local mode ───────────────────────────────────────────────────────
+  // In local mode we never reach out to a federation/director. Namespaces (and their
+  // issuers) are supplied via props; we seed them into the same FederationStore the rest
+  // of the client already understands, modeling the Origin as a single "federation" whose
+  // director_endpoint points straight at the Origin's data endpoint.
+  const originNamespacesKey = JSON.stringify(originNamespaces ?? []);
+  const originConfigByPrefix = useMemo(() => {
+    const m = new Map<string, OriginNamespaceConfig>();
+    for (const ns of originNamespaces ?? []) m.set(ns.prefix, ns);
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originNamespacesKey]);
+
+  useEffect(() => {
+    if (!localOnly || !originHost || !originBaseUrl || !originNamespaces?.length) return;
+
+    // Merge, never clobber: preserve any namespace we already hold so SW-restored token
+    // claims and previously discovered OIDC config survive a re-seed.
+    setFederations((prev) => {
+      const existing = prev[originHost];
+      const nextNamespaces: Record<string, Namespace> = { ...(existing?.namespaces ?? {}) };
+      for (const ns of originNamespaces) {
+        if (!nextNamespaces[ns.prefix]) {
+          nextNamespaces[ns.prefix] = { prefix: ns.prefix, clientId: publicClientId, requireToken: ns.requireToken };
+        }
+      }
+      return {
+        ...prev,
+        [originHost]: {
+          hostname: originHost,
+          configuration: { ...(existing?.configuration ?? {}), director_endpoint: originBaseUrl },
+          namespaces: nextNamespaces,
+        },
+      };
+    });
+
+    setPrefixToNamespace((prev) => {
+      const next = { ...prev };
+      for (const ns of originNamespaces) next[ns.prefix] = { federation: originHost, namespace: ns.prefix };
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localOnly, originHost, originBaseUrl, publicClientId, originNamespacesKey]);
 
   // Handle OAuth authorization code exchange
   const [codeVerifier, ensureCodeVerifier] = useCodeVerifier();
@@ -157,6 +239,18 @@ function PelicanClientProvider({
 
   const authorized = collections.length > 0;
 
+  // Debug: surface what the page believes about auth and where that belief comes from.
+  useEffect(() => {
+    console.log("[Pelican AuthState]", {
+      authorized,
+      namespacePrefix: namespace?.prefix,
+      hasCachedToken: !!namespace?.token,
+      tokenScope: namespace?.token?.scope,
+      namespaceSource: derivedNamespace ? "derived(federations)" : activeNamespace ? "activeNamespace(stale-safe)" : "none",
+      swController: typeof navigator !== "undefined" && !!navigator.serviceWorker?.controller,
+    });
+  }, [authorized, namespace, derivedNamespace, activeNamespace]);
+
   /**
    * Helper function to remove expired tokens from state.
    */
@@ -205,6 +299,83 @@ function PelicanClientProvider({
     const existingPromise = metadataPromises.current.get(cacheKey);
     if (existingPromise) {
       return existingPromise;
+    }
+
+    // Origin-local mode: resolve everything from supplied config — no federation/director.
+    if (localOnly) {
+      if (!originHost || !originBaseUrl) {
+        throw new Error("Origin-local mode requires originHost and originBaseUrl");
+      }
+      // The Origin is modeled as a single federation; build it from props so we don't race
+      // the seeding effect on first render. Reuse seeded state when present (keeps tokens).
+      const federation: Federation = federations[federationHostname] ?? {
+        hostname: originHost,
+        configuration: { director_endpoint: originBaseUrl },
+        namespaces: {},
+      };
+
+      // Match the supplied namespace whose prefix is the longest prefix of the object path.
+      const config = Array.from(originConfigByPrefix.values())
+        .filter((ns) => objectPath === ns.prefix || objectPath.startsWith(ns.prefix + "/") || objectPath.startsWith(ns.prefix))
+        .sort((a, b) => b.prefix.length - a.prefix.length)[0];
+      if (!config) {
+        throw new Error(`No configured Origin namespace matches ${targetObjectUrl}`);
+      }
+
+      const cached = federation.namespaces[config.prefix];
+      // OIDC config is only needed for login; once discovered we can serve from cache.
+      if (cached?.oidcConfiguration) {
+        return { federation, namespace: cached };
+      }
+
+      const fetchPromise = (async () => {
+        try {
+          let oidcConfiguration;
+          try {
+            console.log("[Pelican Origin] discovering OIDC config for", config.prefix, "issuer:", config.issuer);
+            oidcConfiguration = await fetchOpenIDConfiguration(config.issuer);
+            console.log("[Pelican Origin] OIDC config for", config.prefix, "→ authorization_endpoint:",
+              oidcConfiguration?.authorization_endpoint, "token_endpoint:", oidcConfiguration?.token_endpoint);
+          } catch (e) {
+            console.warn("[Pelican Origin] OIDC discovery FAILED for", config.prefix, "issuer:", config.issuer,
+              "— requireToken:", config.requireToken, "error:", e);
+            // Public namespaces remain browsable even if their issuer can't be reached.
+            if (config.requireToken) throw e;
+          }
+          const namespace: Namespace = {
+            ...cached,
+            prefix: config.prefix,
+            clientId: publicClientId,
+            requireToken: config.requireToken,
+            oidcConfiguration: oidcConfiguration ?? cached?.oidcConfiguration,
+          };
+          setActiveNamespace((p) => (p && p.prefix === namespace.prefix ? p : namespace));
+          setFederations((prev) => {
+            const f = prev[federationHostname] ?? federation;
+            return {
+              ...prev,
+              [federationHostname]: {
+                ...f,
+                configuration: { ...f.configuration, director_endpoint: originBaseUrl },
+                namespaces: { ...f.namespaces, [namespace.prefix]: { ...f.namespaces[namespace.prefix], ...namespace } },
+              },
+            };
+          });
+          setPrefixToNamespace((prev) => ({
+            ...prev,
+            [collectionPath]: { federation: federationHostname, namespace: namespace.prefix },
+          }));
+          return { federation, namespace };
+        } catch (e) {
+          setError("Couldn't load namespace metadata: " + e);
+          throw e;
+        } finally {
+          metadataPromises.current.delete(cacheKey);
+        }
+      })();
+
+      metadataPromises.current.set(cacheKey, fetchPromise);
+      return fetchPromise;
     }
 
     // Check if we already have both federation and namespace in cache
@@ -284,7 +455,7 @@ function PelicanClientProvider({
 
     metadataPromises.current.set(cacheKey, fetchPromise);
     return fetchPromise;
-  }, [federations, prefixToNamespace]);
+  }, [federations, prefixToNamespace, localOnly, originHost, originBaseUrl, publicClientId, originConfigByPrefix]);
 
   // Store the latest ensureMetadata function in a ref
   const ensureMetadataRef = useRef(ensureMetadata);
@@ -322,7 +493,7 @@ function PelicanClientProvider({
    */
   const getObjectList = useCallback(async (targetObjectUrl?: string, forceRefresh = false): Promise<ObjectList[]> => {
     try {
-      const urlToFetch = targetObjectUrl || objectUrl;
+      const urlToFetch = (targetObjectUrl || objectUrl);
 
       // Check cache first (unless force refresh is requested)
       if (!forceRefresh) {
@@ -382,10 +553,14 @@ function PelicanClientProvider({
         });
       }
 
+      // Drop the collection's self-entry (PROPFIND returns the directory itself alongside its
+      // children) and any blank entries. Normalize trailing slashes on BOTH sides so a self
+      // href of "/test/" matches the requested path "/test".
       const objectPathWithoutSlash = objectPath.replace(/\/+$/, "");
-      objects = objects.filter((obj) =>
-        obj.href !== objectPathWithoutSlash && obj.href !== ""
-      );
+      objects = objects.filter((obj) => {
+        const href = obj.href.replace(/\/+$/, "");
+        return href !== objectPathWithoutSlash && href !== "";
+      });
 
       objects.reverse();
 
@@ -462,7 +637,11 @@ function PelicanClientProvider({
    * then gone, so anything the page still believes it holds is stale).
    */
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.serviceWorker || !enableAuth) return;
+    if (typeof navigator === "undefined" || !navigator.serviceWorker || !enableAuth) {
+      // Nothing to reconcile against — don't hold consumers waiting on the reconcile.
+      setAuthReconciled(true);
+      return;
+    }
 
     const applyStatus = (nsKey: string, status: Omit<Token, "value"> | null) => {
       const { host, prefix } = parseNamespaceKey(nsKey);
@@ -491,7 +670,10 @@ function PelicanClientProvider({
     // thinks it has but the SW does not (stale after SW termination → forces re-login).
     (async () => {
       try {
+        console.log("[Pelican Reconcile] querying SW. controller present:",
+          !!navigator.serviceWorker.controller);
         const statuses = await queryAuthStatus();
+        console.log("[Pelican Reconcile] SW reports tokens for:", Object.keys(statuses));
         setFederations((prev) => {
           let changed = false;
           const next: FederationStore = {};
@@ -499,6 +681,8 @@ function PelicanClientProvider({
             const namespaces: Record<string, Namespace> = {};
             for (const [prefix, ns] of Object.entries(fed.namespaces)) {
               if (ns.token && !statuses[namespaceKey(host, prefix)]) {
+                console.warn("[Pelican Reconcile] DROPPING stale page token for",
+                  namespaceKey(host, prefix), "— SW has no matching token");
                 const { token, ...rest } = ns;
                 namespaces[prefix] = rest;
                 changed = true;
@@ -510,8 +694,11 @@ function PelicanClientProvider({
           }
           return changed ? next : prev;
         });
-      } catch {
+      } catch (e) {
         // No controlling SW yet — skip; the exchange/broadcast path will sync state.
+        console.warn("[Pelican Reconcile] SKIPPED (no controlling SW?) — stale page claims kept:", e);
+      } finally {
+        setAuthReconciled(true);
       }
     })();
 
@@ -586,6 +773,70 @@ function PelicanClientProvider({
     }
   }, [objectUrl, ensureCodeVerifier, enableAuth]);
 
+  /**
+   * Attempt a non-interactive login (no page navigation). Only works when the page and issuer
+   * share an origin and the user already has an issuer session. Returns:
+   *  - true  → signed in (claims stored, `authorized` will flip)
+   *  - false → can't even attempt (auth disabled, or namespace/OIDC not ready)
+   * and throws (e.g. SilentLoginError "login_required") when interaction is required — callers
+   * should fall back to `handleLogin()`'s redirect.
+   */
+  const handleSilentLogin = useCallback(async (): Promise<boolean> => {
+    if (!enableAuth) return false;
+
+    const { federation, namespace } = await ensureMetadataRef.current(objectUrl, "collection");
+    const authorizationEndpoint = namespace?.oidcConfiguration?.authorization_endpoint;
+    const tokenEndpoint = namespace?.oidcConfiguration?.token_endpoint;
+    if (!federation || !namespace || !namespace.clientId || !authorizationEndpoint || !tokenEndpoint) {
+      return false;
+    }
+
+    // Must be identical for the authorize request and the token exchange.
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
+    const codeVerifier = ensureCodeVerifier();
+
+    // Silent login is a *credentialed* request, so it must be same-origin (a wildcard CORS
+    // origin is rejected with credentials). Route the authorize call through this page's own
+    // origin: in production that's already the issuer's origin (a no-op); in dev a Next rewrite
+    // proxies it to the real issuer. The token exchange stays on the discovered endpoint — it's
+    // non-credentialed, so cross-origin with a wildcard ACAO is fine.
+    const sameOriginAuthorize = new URL(authorizationEndpoint);
+    sameOriginAuthorize.protocol = window.location.protocol;
+    sameOriginAuthorize.host = window.location.host;
+
+    const { code } = await silentLogin({
+      authorizationEndpoint: sameOriginAuthorize.toString(),
+      clientId: namespace.clientId,
+      codeVerifier,
+      redirectUri,
+    });
+
+    // Exchange the code in the service worker; only the non-secret claims come back to the page.
+    const status = await exchangeAuthCode({
+      nsKey: namespaceKey(federation.hostname, namespace.prefix),
+      code,
+      codeVerifier,
+      clientId: namespace.clientId,
+      clientSecret: namespace.clientSecret,
+      tokenEndpoint,
+      redirectUri,
+    });
+
+    const updated: Namespace = { ...namespace, token: status as Token };
+    setActiveNamespace(updated);
+    setFederations((f) => ({
+      ...f,
+      [federation.hostname]: {
+        ...f[federation.hostname],
+        namespaces: {
+          ...f[federation.hostname]?.namespaces,
+          [namespace.prefix]: { ...f[federation.hostname]?.namespaces?.[namespace.prefix], token: status as Token },
+        },
+      },
+    }));
+    return true;
+  }, [enableAuth, objectUrl, ensureCodeVerifier]);
+
   const contextValue: PelicanClientContextValue = {
     enableAuth,
     loading: loading || authLoading,
@@ -593,6 +844,7 @@ function PelicanClientProvider({
     setError,
     authorizationRequired,
     authorized,
+    authReconciled,
     objectUrl,
     federationHostname,
     objectPath,
@@ -605,6 +857,7 @@ function PelicanClientProvider({
     handleDownload,
     handleUpload,
     handleLogin,
+    handleSilentLogin,
     setObjectUrl,
     downloadsInProgress
   };

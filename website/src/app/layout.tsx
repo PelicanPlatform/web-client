@@ -3,7 +3,6 @@ import { ThemeProviderClient } from "../../public/theme";
 import "./globals.css";
 import styles from "./page.module.css";
 import {Box, Container } from "@mui/material";
-import {PelicanClientProvider} from "@pelicanplatform/hooks";
 import PelicanSwRegistrar from "@/components/PelicanSwRegistrar";
 
 
@@ -22,9 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <main className={styles.main}>
                       <Container maxWidth="lg">
                         <Box minHeight={"90vh"} margin={4} width={"100%"} mx={"auto"}>
-                          <PelicanClientProvider initialObjectUrl={`pelican://osg-htc.org/ncar`} enableAuth={true} >
-                            {children}
-                          </PelicanClientProvider>
+                          {children}
                         </Box>
                       </Container>
                     </main>

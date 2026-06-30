@@ -10,6 +10,9 @@ export interface Namespace {
     clientSecret?: string;
     clientId?: string;
     oidcConfiguration?: OidcConfiguration;
+    /** Whether reads require a token. Known up-front in Origin-local mode; otherwise the
+     *  server enforces it and the UI reacts to a 401/403. */
+    requireToken?: boolean;
 }
 
 export interface AuthorizationClient {

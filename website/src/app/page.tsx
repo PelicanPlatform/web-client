@@ -1,6 +1,7 @@
 import HomePageClient from "./HomePageClient";
 import {Namespace} from "@/types";
 import {fetchFederation, list} from "@pelicanplatform/web-client";
+import {PelicanClientProvider} from "@pelicanplatform/hooks";
 import { unstable_cache } from "next/cache";
 import fs from "fs";
 import path from "path";
@@ -27,7 +28,11 @@ function writeFileCache(data: Namespace[]) {
 
 export default async function Page() {
   const ns = await getCachedPublicNamespaces();
-  return <HomePageClient namespaces={ns.sort((a, b) => a.path.localeCompare(b.path))} />
+  return (
+    <PelicanClientProvider initialObjectUrl={`pelican://osg-htc.org/ncar`} enableAuth={true}>
+      <HomePageClient namespaces={ns.sort((a, b) => a.path.localeCompare(b.path))} />
+    </PelicanClientProvider>
+  );
 }
 
 const getValidPublicNamespaces = async () => {

@@ -14,6 +14,8 @@ export interface PelicanClientContextValue {
   error: string | null;
   authorizationRequired: boolean;
   authorized: boolean;
+  /** True once page auth-state has been reconciled against the service worker at least once. */
+  authReconciled: boolean;
   downloadsInProgress: Record<string, DownloadProgress>;
 
   // Metadata management
@@ -41,6 +43,9 @@ export interface PelicanClientContextValue {
   handleDownload: (downloadObjectUrl: string) => Promise<void>;
   handleUpload: (file: File, uploadObjectUrl?: string) => Promise<void>;
   handleLogin: () => Promise<void>;
+  /** Attempt a non-interactive login (no redirect). Resolves true on success, false when it
+   *  can't be attempted; rejects when interaction is required (caller falls back to handleLogin). */
+  handleSilentLogin: () => Promise<boolean>;
 
   // URL management
   setObjectUrl: Dispatch<SetStateAction<string>>;

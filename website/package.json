@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "predev": "cp node_modules/@pelicanplatform/web-client/dist/serviceWorker/downloadServiceWorker.js public/downloadServiceWorker.js",
-        "dev": "next dev",
+        "dev": "NODE_EXTRA_CA_CERTS=/Users/clock/.config/pelican/certificates/tlsca.pem next dev",
         "build": "next build",
         "start": "next start",
         "lint": "next lint"
