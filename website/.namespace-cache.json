@@ -1,0 +1,3160 @@
+{
+  "timestamp": 1977663280044,
+  "data": [
+    {
+      "path": "/ospool/images",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "OSPool-Images-Origin"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ospool/uc-shared/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "UChicago_OSGConnect_Pelican_Public_Origin"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/pelicanfacilitation",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/pelicanfacilitation"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "mo-origin.nationalresearchplatform.org"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ncar-gdex",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://ncar-s3-origin.nationalresearchplatform.org:8000"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ncar-gdex"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://ncar-s3-origin.nationalresearchplatform.org:8000"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NCAR_OSDF_S3_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/jkb-lab-public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-htc.org/osdf/jkb-lab"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/jkb-lab-public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-htc.org/osdf/jkb-lab"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NEBRASKA_NRP_OSDF_ORIGIN2"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/kennesaw",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://kennesaw-origin.nationalresearchplatform.org:8080"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/kennesaw"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://kennesaw-origin.nationalresearchplatform.org:8080"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "KENNESAW_OSSTORE_PUBLIC"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/purdue",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-htc.org/ospool"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/purdue"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-htc.org/ospool"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "PURDUE_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ucsd/physics",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://t.nationalresearchplatform.org/ucsdphysics"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ucsd/physics"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://t.nationalresearchplatform.org/ucsdphysics"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/chtc-public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc-public-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/chtc-public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc-public-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "CHTC-PUBLIC-OSDF-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/pelicanplatform",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "CHTC_PELICANPLATFORM_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ncar",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://ncar.nationalresearchplatform.org:8080"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ncar"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://ncar.nationalresearchplatform.org:8080"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NCAR_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/vdc/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "Utah-SCI-VDC-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nasa/nsdf/climate2",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nasa/nsdf/climate2"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NSDF-CLIMATE2-PELICAN-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/amsc",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "CHTC_AMSC_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nrp/sio",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-htc.org/osdf/sio"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nrp/sio"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-htc.org/osdf/sio"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/routeviews",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "KENNESAW_OSSTORE_PUBLIC"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/osg-public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-public-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/osg-public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-public-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "OSG-PUBLIC-OSDF-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ePIC/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osstore-epic-origin.nationalresearchplatform.org:50091"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ePIC/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osstore-epic-origin.nationalresearchplatform.org:50091"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "OSSTORE_EPIC_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/envistor",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "pelican.fiu.edu"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nrp/awesome",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://t.nationalresearchplatform.org/awesome"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nrp/awesome"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://t.nationalresearchplatform.org/awesome"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/et-gw/PUBLIC",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://ingrid-osdf.cism.ucl.ac.be:8444"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/et-gw/PUBLIC"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://ingrid-osdf.cism.ucl.ac.be:8444"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "UCL-Virgo-StashCache-Origin"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/EHT/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osstore-eht-origin.nationalresearchplatform.org:50024"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/EHT/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osstore-eht-origin.nationalresearchplatform.org:50024"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "OSSTORE_EHT_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/noaa/fisheries-1",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "KENNESAW_OSSTORE_PUBLIC"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ospool/uw-shared/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://collab-shared-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ospool/uw-shared/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://collab-shared-pelican-origin.svc.osg-htc.org"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "COLLABORATIONS-SHARED-OSDF-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/mals",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-htc.org/osdf/mals"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/mals"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-htc.org/osdf/mals"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "PURDUE_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nrp/so",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://t.nationalresearchplatform.org/so"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nrp/so"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://t.nationalresearchplatform.org/so"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/REDTOP/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osstore-kennesaw-redtop-origin.nationalresearchplatform.org:50095"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/REDTOP/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osstore-kennesaw-redtop-origin.nationalresearchplatform.org:50095"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "OSSTORE_KENNESAW_REDTOP_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ndp/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://mo-ndp-origin.nationalresearchplatform.org:1094"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ndp/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://mo-ndp-origin.nationalresearchplatform.org:1094"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "MISSOURI_RISE_NRP_NDP_PUBLIC_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nrp/cachetest",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://sdsc-origin.nationalresearchplatform.org:8081"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nrp/cachetest"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://sdsc-origin.nationalresearchplatform.org:8081"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/hydroshare-demo",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "HYDROSHARE-DEMO-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/mo",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/mo"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "mo-origin.nationalresearchplatform.org"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nasa/nsdf/climate1",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nasa/nsdf/climate1"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NSDF-CLIMATE1-PELICAN-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/gwdata",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "CIT_LIGO_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "SU_STASHCACHE_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "ComputeCanada-Cedar-Cache",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nasa/nsdf/climate3",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nasa/nsdf/climate3"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://chtc.cs.wisc.edu/nsdf"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NSDF-CLIMATE3-PELICAN-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/hepsim/public",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osstore-hepsim-origin.nationalresearchplatform.org:50002"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/hepsim/public"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osstore-hepsim-origin.nationalresearchplatform.org:50002"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "OSSTORE_HEPSIM_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/nsdf",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://nsdf-origin.svc.osg-htc.org"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/nsdf"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://nsdf-origin.svc.osg-htc.org"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "NSDF-S3-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/jlab-osdf-test",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "JLAB-dtn2304"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/unity-hpc",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://umass-amherst-s3.osdf-prod.chtc.io"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/unity-hpc"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://umass-amherst-s3.osdf-prod.chtc.io"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "UMASS-AMHEST-S3-OSN-PELICAN-ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/noaa/fisheries-2",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "NEBRASKA_NRP_HCC_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/uhkoa",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://t.nationalresearchplatform.org/uhkoa"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/uhkoa"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://t.nationalresearchplatform.org/uhkoa"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "KOASTORE_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/knightlab",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://t.nationalresearchplatform.org/knightlab"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/knightlab"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://t.nationalresearchplatform.org/knightlab"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/ndp/burnpro3d",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://osg-htc.org/osdf/burnpro3d"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/ndp/burnpro3d"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://osg-htc.org/osdf/burnpro3d"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "SDSC_NRP_OSDF_ORIGIN"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/umass-amherst-test",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": true,
+        "Listing": true,
+        "FallBackRead": true
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "OAuth2",
+          "vaultServer": "",
+          "maxScopeDepth": 3,
+          "issuer": "https://umass-amherst-test-origin.osdf-prod.chtc.io:443"
+        }
+      ],
+      "tokenIssuer": [
+        {
+          "basePaths": [
+            "/umass-amherst-test"
+          ],
+          "restrictedPaths": null,
+          "issuer": "https://umass-amherst-test-origin.osdf-prod.chtc.io:443"
+        }
+      ],
+      "fromTopology": false,
+      "origins": [
+        "UMass-Amherst-Test-Origin"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    },
+    {
+      "path": "/jlab-osdf-ro",
+      "capabilities": {
+        "PublicRead": true,
+        "Read": true,
+        "Write": false,
+        "Listing": true,
+        "FallBackRead": false
+      },
+      "tokenGeneration": [
+        {
+          "strategy": "",
+          "vaultServer": "",
+          "maxScopeDepth": 0,
+          "issuer": ""
+        }
+      ],
+      "tokenIssuer": null,
+      "fromTopology": false,
+      "origins": [
+        "JLAB-dtn2304"
+      ],
+      "caches": [
+        "Stashcache-Houston",
+        "BOISE_INTERNET2_OSDF_CACHE",
+        "SU-ITS-PELICAN-CACHE",
+        "MGHPCC_NRP_OSDF_CACHE",
+        "NCAR_NRP_CACHE_OSDF",
+        "SURF_MS4_OSDF_CACHE",
+        "SUT-STASHCACHE",
+        "IN2P3_CC_PELICAN_OSDF_CACHE",
+        "CIT_LIGO_OSDFTESTCACHE",
+        "PIC_STASHCACHE_CACHE",
+        "LONDON_ESNET_OSDF_CACHE",
+        "NY-Kubernetes-PRP",
+        "PURDUE_OSDF_CACHE",
+        "NEBRASKA_NRP_OSDF_CACHE",
+        "FDP_HP_OSDF_CACHE",
+        "DUKE_CACHE",
+        "AMSTERDAM_ESNET_OSDF_CACHE",
+        "SINGAPORE_INTERNET2_OSDF_CACHE",
+        "JACKSONVILLE_INTERNET2_OSDF_CACHE",
+        "AMST_INTERNET2_OSDF_CACHE",
+        "LEHIGH-HAWK-OSDF-CACHE",
+        "AEI-OSDF-CACHE",
+        "Sunnyvale-I2-PRP",
+        "Stashcache-UofAP",
+        "SDSC_NRP_OSDF_CACHE",
+        "ComputeCanada-Cedar-Cache",
+        "GEORGIA_TECH_PACE_OSDF_CACHE",
+        "HOUSTON2_INTERNET2_OSDF_CACHE",
+        "PSU-OSDF-CACHE",
+        "osdfcache.gw.iucaa.in",
+        "Stashcache-Kansas",
+        "Stashcache-Chicago",
+        "KOASTORE_OSDF_CACHE",
+        "Kisti-Kubernetes-PRP",
+        "KAGRA_OSDF_CACHE",
+        "UKI-SCOTGRID-ECDF-STASHCACHE",
+        "SOUTH_KOREA_OSDF_CACHE",
+        "UCSD-Kubernetes-PRP",
+        "CINCINNATI_INTERNET2_OSDF_CACHE",
+        "DENVER_INTERNET2_OSDF_CACHE",
+        "CHTC_PELICAN_CACHE"
+      ]
+    }
+  ]
+}
