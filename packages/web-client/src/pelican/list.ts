@@ -53,6 +53,10 @@ const list = async (collectionUrl: string, federation: Federation, namespace?: N
         throw new UnauthenticatedError("Access token required to access the object");
     } else if (response.status === 403) {
         throw new UnauthorizedError("Provided token does not have access to the object");
+    } else if (response.status === 404) {
+        // The collection doesn't exist yet (e.g. a path that was just created/navigated into but
+        // has no objects). Treat it as an empty listing instead of surfacing an error.
+        return [];
     } else {
         throw new Error(`Could not get object: ${response.status} ${response.statusText}`);
     }
