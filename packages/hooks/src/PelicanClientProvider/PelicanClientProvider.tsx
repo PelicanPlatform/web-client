@@ -6,18 +6,23 @@ import {
   ObjectList,
   ObjectPrefixStore,
   UnauthenticatedError,
-  downloadResponse,
   fetchFederation,
   fetchNamespace,
   fetchOpenIDConfiguration,
   download,
+  cancelDownload as swCancelDownload,
   list,
   parseObjectUrl,
   put,
   startAuthorizationCodeFlow,
   silentLogin,
   SilentLoginError,
-  exchangeAuthCode,
+  exchangeCodeForToken,
+  namespaceKey,
+  parseNamespaceKey,
+  queryAuthStatus,
+  usesServiceWorkerAuth,
+  usesServiceWorkerDownload,
   verifyToken,
   Federation,
   getTokenCollections,
@@ -25,9 +30,6 @@ import {
   Namespace,
   Token,
   UrlType,
-  queryAuthStatus,
-  namespaceKey,
-  parseNamespaceKey
 } from "@pelicanplatform/web-client";
 import { PelicanClientContext, PelicanClientContextValue } from "./PelicanClientContext";
 import { useSessionStorage } from "../helpers/useSessionStorage";
@@ -165,18 +167,21 @@ function PelicanClientProvider({
 
   // Handle OAuth authorization code exchange
   const [codeVerifier, ensureCodeVerifier] = useCodeVerifier();
-  const { loading: authLoading } = useAuthExchange({
-    enabled: enableAuth,
-    codeVerifier: codeVerifier,
-    getNamespace: (federationHostname, namespacePrefix) => {
-      return federations[federationHostname]?.namespaces[namespacePrefix];
-    },
-    onTokenReceived: (result) => {
+  // Memoized so useAuthExchange's effect doesn't re-fire on every render — an unstable
+  // identity here made it run each render, and during a download's progress re-renders that
+  // spammed getAuthorizationCode → history.replaceState, tripping Firefox's rate limit.
+  const getNamespaceForExchange = useCallback(
+    (federationHostname: string, namespacePrefix: string) =>
+      federations[federationHostname]?.namespaces[namespacePrefix],
+    [federations]
+  );
+  const onTokenReceived = useCallback(
+    (result: { federationHostname: string; namespacePrefix: string; token: Token }) => {
       const newNamespace = {
         ...federations[result.federationHostname]?.namespaces[result.namespacePrefix],
-        token: result.token
+        token: result.token,
       };
-      setActiveNamespace(newNamespace)
+      setActiveNamespace(newNamespace);
       setFederations((f) => ({
         ...f,
         [result.federationHostname]: {
@@ -187,7 +192,14 @@ function PelicanClientProvider({
           },
         },
       }));
-    }
+    },
+    [federations]
+  );
+  const { loading: authLoading } = useAuthExchange({
+    enabled: enableAuth,
+    codeVerifier,
+    getNamespace: getNamespaceForExchange,
+    onTokenReceived,
   });
 
   const { federationHostname, objectPath, collectionPath } = useMemo(() => {
@@ -599,6 +611,9 @@ function PelicanClientProvider({
   }, []);
 
   const [downloadsInProgress, setDownloadsInProgress] = useState<Record<string, DownloadProgress>>({});
+  // AbortControllers for in-flight page-side (Firefox/Safari) downloads, keyed by objectUrl,
+  // so cancelDownload() can abort them.
+  const pageDownloadAborts = useRef<Record<string, AbortController>>({});
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
@@ -631,14 +646,16 @@ function PelicanClientProvider({
   }, []);
 
   /**
-   * Keep page auth-state in sync with the service worker, which is the sole holder of
-   * the access tokens. Handles in-session silent refresh (new exp), logout, and
-   * reconciling stale claims after the SW was terminated (its in-memory tokens are
-   * then gone, so anything the page still believes it holds is stale).
+   * Keep page auth-state in sync with the service worker on Chromium, where the SW is still
+   * the sole holder of the access tokens: handle in-session silent refresh (new exp), logout,
+   * and reconcile stale claims after the SW was terminated (its in-memory tokens are then
+   * gone, so anything the page still believes it holds is stale). On Firefox/Safari auth is
+   * page-authoritative (the token lives in `federations`), so there is nothing to reconcile —
+   * expired tokens are dropped by cleanExpiredTokens, which triggers re-login.
    */
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.serviceWorker || !enableAuth) {
-      // Nothing to reconcile against — don't hold consumers waiting on the reconcile.
+    if (!enableAuth || typeof navigator === "undefined" || !navigator.serviceWorker || !usesServiceWorkerAuth()) {
+      // Page-authoritative (or auth disabled) — don't hold consumers waiting on a reconcile.
       setAuthReconciled(true);
       return;
     }
@@ -670,10 +687,7 @@ function PelicanClientProvider({
     // thinks it has but the SW does not (stale after SW termination → forces re-login).
     (async () => {
       try {
-        console.log("[Pelican Reconcile] querying SW. controller present:",
-          !!navigator.serviceWorker.controller);
         const statuses = await queryAuthStatus();
-        console.log("[Pelican Reconcile] SW reports tokens for:", Object.keys(statuses));
         setFederations((prev) => {
           let changed = false;
           const next: FederationStore = {};
@@ -681,8 +695,6 @@ function PelicanClientProvider({
             const namespaces: Record<string, Namespace> = {};
             for (const [prefix, ns] of Object.entries(fed.namespaces)) {
               if (ns.token && !statuses[namespaceKey(host, prefix)]) {
-                console.warn("[Pelican Reconcile] DROPPING stale page token for",
-                  namespaceKey(host, prefix), "— SW has no matching token");
                 const { token, ...rest } = ns;
                 namespaces[prefix] = rest;
                 changed = true;
@@ -694,9 +706,8 @@ function PelicanClientProvider({
           }
           return changed ? next : prev;
         });
-      } catch (e) {
+      } catch {
         // No controlling SW yet — skip; the exchange/broadcast path will sync state.
-        console.warn("[Pelican Reconcile] SKIPPED (no controlling SW?) — stale page claims kept:", e);
       } finally {
         setAuthReconciled(true);
       }
@@ -706,11 +717,65 @@ function PelicanClientProvider({
   }, [enableAuth]);
 
   const handleDownload = useCallback(async (downloadObjectUrl: string) => {
+    // Ignore repeat clicks while this object is already downloading page-side — a second
+    // start would clobber the first's AbortController and progress row.
+    if (pageDownloadAborts.current[downloadObjectUrl]) return;
+
+    let lastProgressAt = 0;
+    // The page-side path (Firefox/Safari) is cancellable via an AbortController we register
+    // here so cancelDownload() can find and abort it. Chromium goes through the SW, which is
+    // cancelled over postMessage and reports its own progress — so we only set up the page
+    // side (and seed an immediate progress indicator) when this download takes that branch.
+    // The decision is made ONCE here and passed to download(), so the UI state and the
+    // actual transfer path can never disagree.
+    const pageSide = !usesServiceWorkerDownload();
+    const abortController = pageSide ? new AbortController() : undefined;
+    if (pageSide) {
+      pageDownloadAborts.current[downloadObjectUrl] = abortController!;
+      // Show a progress indicator the instant the button is clicked — before the metadata /
+      // resolve / fetch round trips.
+      setDownloadsInProgress((p) => ({
+        ...p,
+        [downloadObjectUrl]: {
+          id: downloadObjectUrl,
+          objectUrl: downloadObjectUrl,
+          bytesDownloaded: 0,
+          totalByteSize: 0,
+          status: "in-progress",
+        },
+      }));
+    }
     try {
       const { federation, namespace } = await ensureMetadataRef.current(downloadObjectUrl, "object");
       if (!federation || !namespace) return;
-      await download(downloadObjectUrl, federation, namespace);
+      // On the page-side path progress is reported here into the same downloadsInProgress
+      // state the SW broadcasts into for Chromium — so the in-app progress UI is identical.
+      await download(downloadObjectUrl, federation, namespace, {
+        pageSide,
+        signal: abortController?.signal,
+        onProgress: (bytesDownloaded, total) => {
+          // Throttle to ~5 updates/sec so per-chunk progress doesn't re-render the provider on
+          // every 4 MB chunk (a render storm that also re-triggered history writes in Firefox).
+          const now = Date.now();
+          if (now - lastProgressAt < 200) return;
+          lastProgressAt = now;
+          setDownloadsInProgress((p) => ({
+            ...p,
+            [downloadObjectUrl]: {
+              id: downloadObjectUrl,
+              objectUrl: downloadObjectUrl,
+              bytesDownloaded,
+              totalByteSize: total ?? 0,
+              status: "in-progress",
+            },
+          }));
+        },
+      });
     } catch (e) {
+      // A user-initiated cancel aborts the fetch — that's not an error to surface.
+      if (abortController?.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) {
+        return;
+      }
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
         cleanExpiredTokens()
@@ -718,13 +783,33 @@ function PelicanClientProvider({
       setError(`Download failed: ${e}`);
       throw e;
     } finally {
-      console.log("Finished download attempt for " + downloadObjectUrl);
+      delete pageDownloadAborts.current[downloadObjectUrl];
       setDownloadsInProgress((p) => {
         const updated = { ...p };
         delete updated[downloadObjectUrl];
         return updated;
       })
     }
+  }, []);
+
+  /**
+   * Cancel a download by id. Page-side (Firefox/Safari) downloads are aborted via their
+   * registered AbortController and cleared from the progress list here; Chromium and
+   * interrupted records defer to the service-worker/IndexedDB cancel.
+   */
+  const cancelDownload = useCallback((id: string) => {
+    const abortController = pageDownloadAborts.current[id];
+    if (abortController) {
+      abortController.abort();
+      delete pageDownloadAborts.current[id];
+      setDownloadsInProgress((p) => {
+        const updated = { ...p };
+        delete updated[id];
+        return updated;
+      });
+      return;
+    }
+    swCancelDownload(id).catch(() => {});
   }, []);
 
   const handleUpload = useCallback(async (
@@ -814,18 +899,17 @@ function PelicanClientProvider({
       redirectUri,
     });
 
-    // Exchange the code in the service worker; only the non-secret claims come back to the page.
-    const status = await exchangeAuthCode({
-      nsKey: namespaceKey(federation.hostname, namespace.prefix),
+    // Exchange via the browser-appropriate model (Chromium: inside the SW, claims only;
+    // Firefox/Safari: on the page, refresh token discarded).
+    const token: Token = await exchangeCodeForToken({
+      federationHostname: federation.hostname,
+      namespace,
       code,
       codeVerifier,
-      clientId: namespace.clientId,
-      clientSecret: namespace.clientSecret,
-      tokenEndpoint,
       redirectUri,
     });
 
-    const updated: Namespace = { ...namespace, token: status as Token };
+    const updated: Namespace = { ...namespace, token };
     setActiveNamespace(updated);
     setFederations((f) => ({
       ...f,
@@ -833,14 +917,17 @@ function PelicanClientProvider({
         ...f[federation.hostname],
         namespaces: {
           ...f[federation.hostname]?.namespaces,
-          [namespace.prefix]: { ...f[federation.hostname]?.namespaces?.[namespace.prefix], token: status as Token },
+          [namespace.prefix]: { ...f[federation.hostname]?.namespaces?.[namespace.prefix], token },
         },
       },
     }));
     return true;
   }, [enableAuth, objectUrl, ensureCodeVerifier]);
 
-  const contextValue: PelicanClientContextValue = {
+  // Memoized so provider re-renders that change nothing consumers read don't cascade a new
+  // context identity through every usePelicanClient consumer. (Progress updates still
+  // re-render consumers — downloadsInProgress is part of the value — but they're throttled.)
+  const contextValue: PelicanClientContextValue = useMemo(() => ({
     enableAuth,
     loading: loading || authLoading,
     error,
@@ -858,12 +945,38 @@ function PelicanClientProvider({
     getObjectList,
     invalidateObjectListCache,
     handleDownload,
+    cancelDownload,
     handleUpload,
     handleLogin,
     handleSilentLogin,
     setObjectUrl,
     downloadsInProgress
-  };
+  }), [
+    enableAuth,
+    loading,
+    authLoading,
+    error,
+    setError,
+    authorizationRequired,
+    authorized,
+    authReconciled,
+    objectUrl,
+    federationHostname,
+    objectPath,
+    federation,
+    namespace,
+    collections,
+    ensureMetadata,
+    getObjectList,
+    invalidateObjectListCache,
+    handleDownload,
+    cancelDownload,
+    handleUpload,
+    handleLogin,
+    handleSilentLogin,
+    setObjectUrl,
+    downloadsInProgress
+  ]);
 
   return (
     <PelicanClientContext.Provider value={contextValue}>

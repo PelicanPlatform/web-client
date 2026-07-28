@@ -7,7 +7,10 @@
         "dev": "NODE_EXTRA_CA_CERTS=/Users/clock/.config/pelican/certificates/tlsca.pem next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:e2e:report": "playwright show-report"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
@@ -26,9 +29,11 @@
         "usehooks-ts": "^3.1.1"
     },
     "devDependencies": {
+        "@playwright/test": "^1.48.0",
         "@types/node": "^20",
         "@types/react": "^18",
         "@types/react-dom": "^18",
+        "dotenv": "^16.4.5",
         "eslint": "^8",
         "eslint-config-next": "14.0.2",
         "typescript": "^5"

@@ -1,7 +1,6 @@
-import { getObjectToken, parseObjectUrl } from "./index";
-import { UnauthorizedError, UnauthenticatedError } from "../errors";
+import { parseObjectUrl, resolveObjectUrl } from "./index";
+import { buildAuthHeaders, assertAuthorized } from "./authorization";
 import { Federation, Namespace } from "../types";
-import { AUTH_REQUIRED_HEADER, NAMESPACE_HEADER, namespaceKey } from "../serviceWorker";
 
 /**
  * Get an object from a pelican federation
@@ -12,30 +11,18 @@ import { AUTH_REQUIRED_HEADER, NAMESPACE_HEADER, namespaceKey } from "../service
 const get = async (objectUrl: string, federation: Federation, namespace: Namespace): Promise<Response> => {
     const { objectPath } = parseObjectUrl(objectUrl);
 
-    // Tag the request with the namespace so the service worker injects the in-memory
-    // access token. The raw token never lives on the page. Only tag when we believe we
-    // hold a token (non-secret claims present); otherwise let it through unauthenticated.
-    const token = getObjectToken(namespace);
-    const headers = new Headers()
-    if (token) {
-        headers.set(NAMESPACE_HEADER, namespaceKey(federation.hostname, namespace.prefix));
-    }
+    // Resolve the director redirect to a concrete endpoint, then request it directly so the
+    // cross-origin redirect (which strips Authorization) is never involved.
+    const cacheUrl = await resolveObjectUrl(`${federation.configuration.director_endpoint}${objectPath}`, "GET");
 
-    const objectHttpUrl = new URL(`${federation.configuration.director_endpoint}${objectPath}`);
-    const response = await fetch(objectHttpUrl, { headers });
+    const { headers, token } = buildAuthHeaders(federation, namespace);
+    const response = await fetch(cacheUrl, { headers });
 
     if (response.status === 200) {
         return response;
-    } else if (response.status === 401 && response.headers.get(AUTH_REQUIRED_HEADER) === "true") {
-        // SW holds no usable token (e.g. it was terminated) — re-authentication required.
-        throw new UnauthenticatedError("Access token required to access the object");
-    } else if (response.status === 403 && !token) {
-        throw new UnauthenticatedError("Access token required to access the object");
-    } else if (response.status === 403) {
-        throw new UnauthorizedError("Provided token does not have access to the object");
-    } else {
-        throw new Error(`Could not get object: ${response.status} ${response.statusText}`);
     }
+    assertAuthorized(response, token);
+    throw new Error(`Could not get object: ${response.status} ${response.statusText}`);
 };
 
 export default get;

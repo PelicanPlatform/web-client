@@ -257,11 +257,19 @@ function ObjectView({
 }
 
 function ProgressIcon({ bytesDownloaded, totalByteSize }: { bytesDownloaded: number; totalByteSize: number }) {
-    const progress = totalByteSize > 0 ? Math.round((bytesDownloaded / totalByteSize) * 100) : 0;
+    // Until the total size is known (e.g. right after the button is clicked), show a spinning
+    // indeterminate indicator so there's immediate feedback; switch to a percentage once known.
+    const known = totalByteSize > 0;
+    const progress = known ? Math.round((bytesDownloaded / totalByteSize) * 100) : 0;
     return (
         <Box position="relative" display="inline-flex" gap={1}>
-            <Typography variant={"subtitle2"}>{progress}%</Typography>
-            <CircularProgress size={20} variant="determinate" value={progress} aria-label={`Download progress: ${progress}%`} />
+            {known && <Typography variant={"subtitle2"}>{progress}%</Typography>}
+            <CircularProgress
+                size={20}
+                variant={known ? "determinate" : "indeterminate"}
+                value={progress}
+                aria-label={known ? `Download progress: ${progress}%` : "Download starting"}
+            />
         </Box>
     );
 }

@@ -6,6 +6,9 @@ export { default as getAuthorizationCode } from "./getAuthorizationCode";
 
 export { default as getToken } from "./getToken";
 
+export { default as exchangeCodeForToken } from "./exchangeCodeForToken";
+export type { ExchangeCodeForTokenParams } from "./exchangeCodeForToken";
+
 export { default as registerClient } from "./registerClient";
 
 export { default as startAuthorizationCodeFlow } from "./startAuthorizationCodeFlow";

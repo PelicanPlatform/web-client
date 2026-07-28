@@ -1,6 +1,7 @@
 export { default as fetchOpenIDConfiguration } from "./fetchOpenIDConfiguration";
 export { default as fetchFederation } from "./fetchFederation";
 export { default as parseObjectUrl } from "./parseObjectUrl";
+export { default as resolveObjectUrl } from "./resolveObjectUrl";
 export { default as fetchNamespaceMetadata } from "./fetchDirectorNamespaceMetadata";
 export { default as getObjectToken } from "./getObjectToken";
 export { default as fetchDynamicClient } from "./fetchDynamicClient";

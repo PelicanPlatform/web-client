@@ -41,6 +41,8 @@ export interface PelicanClientContextValue {
   getObjectList: (targetObjectUrl?: string, forceRefresh?: boolean) => Promise<ObjectList[]>;
   invalidateObjectListCache: (targetObjectUrl?: string) => void;
   handleDownload: (downloadObjectUrl: string) => Promise<void>;
+  /** Cancel/abort an in-flight download by id (page-side abort or SW cancel). */
+  cancelDownload: (id: string) => void;
   handleUpload: (file: File, uploadObjectUrl?: string) => Promise<void>;
   handleLogin: () => Promise<void>;
   /** Attempt a non-interactive login (no redirect). Resolves true on success, false when it

@@ -2,7 +2,7 @@
 
 import githubMark from "../../../public/static/images/github-mark.png";
 import { useState, useEffect } from "react";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import styles from "../../app/page.module.css";
 import Link from "next/link";
 
@@ -43,11 +43,20 @@ export const Header = () => {
                 </Link>
             </Box>
 
-            <div>
+            <Box display={"flex"} alignItems={"center"} gap={1}>
+                <Button component={Link} href={"/"} color={"inherit"} size={"small"}>
+                    /ospool/ap40
+                </Button>
+                <Button component={Link} href={"/public"} color={"inherit"} size={"small"}>
+                    Public
+                </Button>
+                <Button component={Link} href={"/origin"} color={"inherit"} size={"small"}>
+                    Origin
+                </Button>
                 <a href={"https://github.com/PelicanPlatform"}>
                     <img src={githubMark.src} alt={"Github Mark"} height={32} />
                 </a>
-            </div>
+            </Box>
         </div>
     );
 };

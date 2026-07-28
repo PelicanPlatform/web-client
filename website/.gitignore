@@ -9,6 +9,13 @@
 # testing
 /coverage
 
+# playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+/e2e/.env
+
 # next.js
 /.next/
 /out/
@@ -34,3 +41,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.namespace-cache.json

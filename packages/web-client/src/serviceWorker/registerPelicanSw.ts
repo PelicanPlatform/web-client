@@ -23,11 +23,56 @@ let _pendingDirHandle: Promise<FileSystemDirectoryHandle | null> | null = null;
  *   import { registerPelicanSw } from "@pelican/web-client";
  *   registerPelicanSw();
  */
+/**
+ * Whether this browser uses the service-worker model (OAuth tokens kept in SW memory,
+ * SW-accelerated downloads). True only on Chromium, where the SW is reliable. Firefox and
+ * Safari return false and use the page-side fallback (token on the page, plain downloads).
+ *
+ * `navigator.userAgentData` is implemented only by Chromium engines, so it doubles as a
+ * clean feature-based Chromium check without user-agent string sniffing.
+ */
+export function usesServiceWorkerAuth(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    "serviceWorker" in navigator &&
+    !!(navigator as unknown as { userAgentData?: unknown }).userAgentData
+  );
+}
+
+/**
+ * Whether downloads should go through the service worker: the SW model applies AND a SW is
+ * actually controlling this page. The single owner of the download-path decision — the
+ * page (progress seeding, AbortController registration) and download() must use the same
+ * predicate, decided once per download, or they can route the same transfer differently.
+ */
+export function usesServiceWorkerDownload(): boolean {
+  return usesServiceWorkerAuth() && !!navigator.serviceWorker?.controller;
+}
+
 export async function registerPelicanSw(
   swUrl = "/pelican/downloadServiceWorker.js",
   scope = "/"
 ): Promise<ServiceWorkerRegistration | null> {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return null;
+  }
+
+  // Chromium only. Firefox/Safari use the page-side fallback and must NOT have a controlling
+  // SW, which would otherwise re-route downloads back through the unreliable SW path.
+  if (!usesServiceWorkerAuth()) {
+    console.info("[Pelican SW] Non-Chromium browser — using page-side fallback, not registering the SW.");
+    // A previous (pre-gating) deploy may have registered the SW on this browser; unregister
+    // it so it stops controlling on the next load. (The current page may still be controlled
+    // for this session — unregister takes effect on navigation.)
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+      .then((results) => {
+        if (results.some(Boolean)) {
+          console.info("[Pelican SW] Unregistered stale service worker(s) from a previous version.");
+        }
+      })
+      .catch(() => {});
     return null;
   }
 
@@ -133,14 +178,37 @@ export async function pelicanFetchAndSave(
 
   if (fileHandle) {
     const writable = await fileHandle.createWritable();
-    await response.body.pipeTo(writable);
-    logStats(totalBytes ?? 0);
+    let written = 0;
+    const counter = new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        written += chunk.byteLength;
+        controller.enqueue(chunk);
+      },
+    });
+    await response.body.pipeThrough(counter).pipeTo(writable);
+    if (totalBytes !== null && written < totalBytes) {
+      throw new Error(`Truncated download: wrote ${written} of ${totalBytes} bytes to disk`);
+    }
+    logStats(written);
     await deleteDownloadRecord(url);
     return;
   }
 
-  // Fallback: collect into a blob (will buffer in memory) and click a link.
-  const blob = await response.blob();
+  // Fallback: collect into a blob (buffers in memory) and click a link. Count bytes so a
+  // short read fails loudly instead of saving a truncated file.
+  const reader = response.body.getReader();
+  const parts: Uint8Array<ArrayBuffer>[] = [];
+  let pageBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(value);
+    pageBytes += value.byteLength;
+  }
+  if (totalBytes !== null && pageBytes < totalBytes) {
+    throw new Error(`Truncated download: received ${pageBytes} of ${totalBytes} bytes`);
+  }
+  const blob = new Blob(parts);
   logStats(blob.size);
   const objectUrl = URL.createObjectURL(blob);
   try {

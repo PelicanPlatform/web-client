@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-    exchangeAuthCode,
+    exchangeCodeForToken,
     getAuthorizationCode,
-    namespaceKey,
     Namespace,
     Token
 } from "@pelicanplatform/web-client";
@@ -103,25 +102,22 @@ export function useAuthExchange({
                     return;
                 }
 
-                // Exchange the authorization code for tokens *inside the service worker*.
-                // The access/refresh tokens never reach the page — only the non-secret
-                // claims (scope/exp/…) are returned for UI state.
-                const status = await exchangeAuthCode({
-                    nsKey: namespaceKey(federationHostname, namespacePrefix),
+                // Exchange via the browser-appropriate model (Chromium: inside the SW,
+                // claims only; Firefox/Safari: on the page, refresh token discarded).
+                const token: Token = await exchangeCodeForToken({
+                    federationHostname,
+                    namespace,
                     code,
                     codeVerifier,
-                    clientId: namespace.clientId,
-                    clientSecret: namespace.clientSecret,
-                    tokenEndpoint: namespace.oidcConfiguration.token_endpoint,
                     redirectUri: `${window.location.origin}${window.location.pathname}`,
                 });
 
-                // Notify parent component of successful authentication (claims only).
+                // Notify parent component of successful authentication.
                 if (onTokenReceived) {
                     onTokenReceived({
                         federationHostname,
                         namespacePrefix,
-                        token: status as Token,
+                        token,
                     });
                 }
 

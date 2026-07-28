@@ -4,8 +4,9 @@ async function getToken(
     oidcConfiguration: OidcConfiguration,
     codeVerifier: string,
     clientId: string,
-    clientSecret: string,
-    authCode: string
+    clientSecret: string | undefined,
+    authCode: string,
+    redirectUri?: string
 ) {
     if (!oidcConfiguration.token_endpoint) {
         throw new Error("OIDC configuration is missing token endpoint.");
@@ -14,10 +15,12 @@ async function getToken(
     const params = new URLSearchParams();
     params.append("grant_type", "authorization_code");
     params.append("code", authCode);
-    params.append("redirect_uri", `${window.location.origin}${window.location.pathname}`);
+    // Must match the redirect_uri used on the authorize request exactly.
+    params.append("redirect_uri", redirectUri ?? `${window.location.origin}${window.location.pathname}`);
     params.append("code_verifier", codeVerifier);
     params.append("client_id", clientId);
-    params.append("client_secret", clientSecret);
+    // Public clients (PKCE, e.g. `pelican-public-client`) authenticate without a secret.
+    if (clientSecret) params.append("client_secret", clientSecret);
 
     const response = await fetch(oidcConfiguration.token_endpoint, {
         method: "POST",

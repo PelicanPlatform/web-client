@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { Close, Download as DownloadIcon, ExpandMore } from "@mui/icons-material";
 import { DownloadProgress, usePelicanClient } from "@pelicanplatform/hooks";
-import { cancelDownload, formatBytes, getPendingDownloads, retriggerPendingDownloads } from "@pelicanplatform/web-client";
+import { formatBytes, getPendingDownloads, retriggerPendingDownloads } from "@pelicanplatform/web-client";
 
 interface SpeedSample {
   timestamp: number;
@@ -41,7 +41,7 @@ function computeEta(d: DownloadProgress, samples: Record<string, SpeedSample>): 
 }
 
 export function DownloadManager() {
-  const { downloadsInProgress } = usePelicanClient();
+  const { downloadsInProgress, cancelDownload } = usePelicanClient();
   const [minimized, setMinimized] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [pendingDownloads, setPendingDownloads] = useState<DownloadProgress[]>([]);
@@ -102,10 +102,11 @@ export function DownloadManager() {
 
   const fileName = (objectUrl: string) => objectUrl.split("/").at(-1) ?? objectUrl;
 
-  // Cancel/abandon a download (active or interrupted). The service worker aborts
-  // any in-flight transfer and cleans up; we also drop it from the local pending list.
+  // Cancel/abandon a download (active or interrupted). Page-side downloads are aborted and
+  // cleared by the provider; the SW aborts its own in-flight transfers. We also drop it from
+  // the local pending list.
   const handleCancel = (id: string) => {
-    cancelDownload(id).catch(() => {});
+    cancelDownload(id);
     setPendingDownloads((prev) => prev.filter((p) => p.id !== id));
   };
 

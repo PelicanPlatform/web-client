@@ -118,7 +118,11 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
     const { request } = event;
     // Parallel/SW-managed download path (also injects auth when tagged with a namespace).
     if (request.headers.has(TRIGGER_HEADER)) {
-      event.respondWith(parallelDownload(request));
+      // Pass event.waitUntil down so the background byte-pump can anchor the worker's
+      // lifetime to itself. Without this, respondWith settles as soon as the streamed
+      // Response is returned and Firefox is free to terminate the worker mid-download
+      // (truncating the file and wiping the in-memory tokenStore).
+      event.respondWith(parallelDownload(request, (p: Promise<unknown>) => event.waitUntil(p)));
       return;
     }
     // Plain request that wants the SW to inject its in-memory token.
@@ -244,9 +248,9 @@ function snapshotAuthStatuses(nsKey?: string): Record<string, TokenClaims> {
 async function getValidAccessToken(nsKey: string | null): Promise<string | null> {
   if (!nsKey) return null;
   const entry = tokenStore.get(nsKey);
+  const now = Math.floor(Date.now() / 1000);
   if (!entry) return null;
 
-  const now = Math.floor(Date.now() / 1000);
   if (entry.exp > now + 5) return entry.accessToken; // small skew buffer
 
   // Expired — attempt an in-session silent refresh (refresh token is memory-only too).
@@ -340,7 +344,7 @@ async function authPassthrough(request: Request): Promise<Response> {
 
 // ─── Core logic ──────────────────────────────────────────────────────────────
 
-async function parallelDownload(request: Request): Promise<Response> {
+async function parallelDownload(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
   // Resolve the in-memory token (if any) into an Authorization header up front, so the
   // download helpers can keep operating purely on request.headers. The page never sends
   // Authorization itself — only the non-secret X-Pelican-Namespace routing tag.
@@ -354,14 +358,14 @@ async function parallelDownload(request: Request): Promise<Response> {
     headers.set("Authorization", `Bearer ${accessToken}`);
     request = new Request(request, { headers });
   }
-  return parallelDownloadResolved(request);
+  return parallelDownloadResolved(request, keepAlive);
 }
 
-async function parallelDownloadResolved(request: Request): Promise<Response> {
+async function parallelDownloadResolved(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
 
   // Short-circuit if OPFS isn't supported - Firefox/Safari
   if (!opfsSupported()) {
-    return downloadWithoutOpfs(request);
+    return downloadWithoutOpfs(request, keepAlive);
   }
 
   // If we have a resume download header, try to resume the download instead of starting a new one
@@ -555,9 +559,7 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
  * Progress tracking and notifications are still supported.
  * Memory usage is bounded to roughly one chunk (~32MB) at a time due to backpressure.
  */
-async function downloadWithoutOpfs(request: Request): Promise<Response> {
-
-  console.log("[Pelican SW] OPFS not supported — falling back to in-memory download for:", request.url);
+async function downloadWithoutOpfs(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
 
   const db = await openDownloadDb();
 
@@ -603,7 +605,7 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
-  (async () => {
+  const pumpDone = (async () => {
     try {
       for (let i = 0; i < totalChunks; i++) {
         if (abort.signal.aborted) break;
@@ -612,7 +614,6 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
         await writer.write(data);
         download.bytesDownloaded += data.byteLength;
         await patchDownloadRecord(db, download.id, { bytesDownloaded: download.bytesDownloaded });
-        console.log("[Pelican SW] Downloaded chunk", i + 1, "of", totalChunks, `(${download.bytesDownloaded}/${totalByteSize} bytes)`);
         await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
       }
       if (abort.signal.aborted) throw new DOMException("Download cancelled", "AbortError");
@@ -633,13 +634,16 @@ async function downloadWithoutOpfs(request: Request): Promise<Response> {
         // cancelDownload already cleaned up the record and notified the page.
         return;
       }
-      console.log("[Pelican SW] Download failed:", err);
+      console.warn("[Pelican SW] Download failed:", err);
       await patchDownloadRecord(db, download.id, { status: "failed" });
       await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
     } finally {
       activeDownloads.delete(download.id);
     }
   })();
+
+  // Anchor the worker's lifetime to the pump so it isn't terminated mid-download.
+  keepAlive?.(pumpDone);
 
   const responseHeaders = new Headers();
   responseHeaders.set("Content-Length", String(totalByteSize));
