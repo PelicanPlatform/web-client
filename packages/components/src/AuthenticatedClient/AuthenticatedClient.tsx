@@ -28,6 +28,7 @@ function AuthenticatedClient() {
     loading,
     authorizationRequired,
     authorized,
+    authenticatedNoAccess,
     handleLogin,
     handleDownload,
     handleUpload,
@@ -173,7 +174,7 @@ function AuthenticatedClient() {
               )}
               {!authorized && enableAuth && (
                 <Button endIcon={<Login />} variant="contained" size="small" sx={{mb:1}} onClick={handleLogin}>
-                  Login
+                  {authenticatedNoAccess ? "Log in again" : "Login"}
                 </Button>
               )}
             </Box>
@@ -190,6 +191,30 @@ function AuthenticatedClient() {
               />
             ) : loading || listLoading ? (
               <Skeleton variant={"rectangular"} height={"350px"} width={"100%"} />
+            ) : authenticatedNoAccess && objectList.length === 0 ? (
+              // Signed in, but the token grants no storage access: say so explicitly instead
+              // of showing the login prompt or the empty-collection screen. (If the namespace
+              // is publicly readable and objects listed anyway, the listing still shows.)
+              <Box
+                pt={4}
+                pb={4}
+                px={2}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                gap={2}
+                minHeight={300}
+              >
+                <Alert severity="warning" sx={{ maxWidth: 520 }}>
+                  You are signed in, but your token does not grant access to any collections
+                  {namespace?.prefix ? ` in ${namespace.prefix}` : ""}. Log in again to request
+                  new permissions, or contact your administrator if this keeps happening.
+                </Alert>
+                <Button variant="contained" endIcon={<Login />} onClick={handleLogin}>
+                  Log in again
+                </Button>
+              </Box>
             ) : (
               <ObjectView
                 objectList={objectList}

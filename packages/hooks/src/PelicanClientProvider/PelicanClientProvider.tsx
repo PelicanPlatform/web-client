@@ -251,6 +251,12 @@ function PelicanClientProvider({
 
   const authorized = collections.length > 0;
 
+  // Signed in, but the token's scopes grant no storage access — a distinct state from "not
+  // logged in": the user successfully authenticated, yet their token carries no
+  // storage.read/create/modify scopes, so no collections can be derived from it. The UI
+  // should say so instead of showing the login prompt or an empty-collection screen.
+  const authenticatedNoAccess = enableAuth && verifyToken(namespace?.token) && collections.length === 0;
+
   // Debug: surface what the page believes about auth and where that belief comes from.
   useEffect(() => {
     console.log("[Pelican AuthState]", {
@@ -934,6 +940,7 @@ function PelicanClientProvider({
     setError,
     authorizationRequired,
     authorized,
+    authenticatedNoAccess,
     authReconciled,
     objectUrl,
     federationHostname,
@@ -959,6 +966,7 @@ function PelicanClientProvider({
     setError,
     authorizationRequired,
     authorized,
+    authenticatedNoAccess,
     authReconciled,
     objectUrl,
     federationHostname,

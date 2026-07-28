@@ -14,6 +14,9 @@ export interface PelicanClientContextValue {
   error: string | null;
   authorizationRequired: boolean;
   authorized: boolean;
+  /** Signed in with a valid token, but its scopes grant no storage access (no collections
+   *  can be derived). Distinct from "not logged in" — surface it instead of a login prompt. */
+  authenticatedNoAccess: boolean;
   /** True once page auth-state has been reconciled against the service worker at least once. */
   authReconciled: boolean;
   downloadsInProgress: Record<string, DownloadProgress>;
