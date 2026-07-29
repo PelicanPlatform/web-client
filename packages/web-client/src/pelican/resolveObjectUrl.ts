@@ -1,4 +1,25 @@
 import { parseLinkHeader, parseRecordHeader } from "../util";
+import { Federation } from "../types";
+
+/**
+ * Resolve the concrete URL for a data operation — the single owner of the "is there a
+ * director to resolve against?" decision. In Origin-local mode (`local_origin`) the
+ * federation's endpoint IS the data endpoint, so the URL is returned as-is and no
+ * `?redirect=false` probe is issued; otherwise the director is resolved via
+ * {@link resolveObjectUrl}.
+ */
+export async function resolveDataUrl(
+    federation: Federation,
+    objectPath: string,
+    method: string = "GET",
+    signal?: AbortSignal
+): Promise<string> {
+    const url = `${federation.configuration.director_endpoint}${objectPath}`;
+    if (federation.configuration.local_origin) {
+        return url;
+    }
+    return resolveObjectUrl(url, method, signal);
+}
 
 /**
  * Successful resolutions are cached so repeated operations against the same path re-probe

@@ -111,6 +111,25 @@ function AuthenticatedClient() {
     } catch {}
   }, [namespace, objectUrl]);
 
+  // On a require-token namespace, listing is only possible inside a collection the token
+  // grants read on. When the current path is outside every readable collection (e.g. the
+  // namespace root right after login), the listing can't succeed — show the collections
+  // picker instead of an empty/erroring listing.
+  const pathWithinReadableCollection = useMemo(() => {
+    if (!namespace?.requireToken || !enableAuth) return true;
+    try {
+      const { objectPath } = parseObjectUrl(objectUrl);
+      return collections
+        .filter((c) => c.permissions.includes("read"))
+        .some((c) => {
+          const granted = `${namespace.prefix}${c.href === "/" ? "" : c.href}`;
+          return objectPath === granted || objectPath.startsWith(`${granted}/`);
+        });
+    } catch {
+      return true;
+    }
+  }, [namespace, enableAuth, collections, objectUrl]);
+
   return (
     <Box {...(uploadRef.current?.dragHandlers ?? {})}>
       <Box
@@ -180,7 +199,7 @@ function AuthenticatedClient() {
             </Box>
           </Box>
           <Paper elevation={1}>
-            {showCollections && authorized && enableAuth ? (
+            {(showCollections || !pathWithinReadableCollection) && authorized && enableAuth ? (
               <CollectionView
                 collections={collections}
                 onExplore={(collectionPath: string) => {

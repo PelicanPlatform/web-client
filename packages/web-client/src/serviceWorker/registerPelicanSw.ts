@@ -49,6 +49,38 @@ export function usesServiceWorkerDownload(): boolean {
   return usesServiceWorkerAuth() && !!navigator.serviceWorker?.controller;
 }
 
+/**
+ * Once a wait for a controller has timed out, remember it: an uncontrolled page (e.g. a
+ * hard reload, which bypasses the SW for its whole lifetime) stays uncontrolled unless a
+ * new SW activates and claims it — so later requests shouldn't re-pay the wait.
+ */
+let controllerKnownAbsent = false;
+
+/**
+ * Wait briefly for a service worker to control this page. Resolves immediately when one
+ * already does; resolves null when none arrives in time (e.g. hard reload). Requests that
+ * rely on SW auth injection must await this before tagging — a tagged request issued
+ * before control is established goes to the network with no Authorization and leaks the
+ * routing header.
+ */
+export async function waitForController(timeoutMs = 3000): Promise<ServiceWorker | null> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
+  if (navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+  if (controllerKnownAbsent) return null;
+
+  const controller = await getController(timeoutMs);
+  if (!controller) {
+    controllerKnownAbsent = true;
+    // A newly-activating SW can still claim the page later — start honoring it again.
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      () => { controllerKnownAbsent = false; },
+      { once: true }
+    );
+  }
+  return controller;
+}
+
 export async function registerPelicanSw(
   swUrl = "/pelican/downloadServiceWorker.js",
   scope = "/"

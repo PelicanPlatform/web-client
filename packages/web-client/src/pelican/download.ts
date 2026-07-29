@@ -1,4 +1,4 @@
-import { parseObjectUrl, resolveObjectUrl } from "./index";
+import { parseObjectUrl, resolveDataUrl } from "./index";
 import { buildAuthHeaders, assertAuthorized } from "./authorization";
 import { Federation, Namespace } from "../types";
 import { downloadResponse } from "../util";
@@ -44,14 +44,14 @@ const download = async (
   if (!pageSide) {
     const parts = objectPath.split("/");
     const filename = (parts[parts.length - 1] ?? "object").split("?")[0] ?? "object";
-    const { headers } = buildAuthHeaders(federation, namespace);
+    const { headers } = await buildAuthHeaders(federation, namespace);
     await pelicanFetchAndSave(directorUrl, filename, { headers });
     return;
   }
 
   // Firefox/Safari: resolve, fetch with the page-held token, and save via an in-memory blob.
-  const cacheUrl = await resolveObjectUrl(directorUrl, "GET", signal);
-  const { headers, token } = buildAuthHeaders(federation, namespace);
+  const cacheUrl = await resolveDataUrl(federation, objectPath, "GET", signal);
+  const { headers, token } = await buildAuthHeaders(federation, namespace);
   const response = await fetch(cacheUrl, { headers, signal });
 
   if (response.status === 200) {

@@ -6,6 +6,7 @@ import {
   ObjectList,
   ObjectPrefixStore,
   UnauthenticatedError,
+  UnauthorizedError,
   fetchFederation,
   fetchNamespace,
   fetchOpenIDConfiguration,
@@ -151,7 +152,7 @@ function PelicanClientProvider({
         ...prev,
         [originHost]: {
           hostname: originHost,
-          configuration: { ...(existing?.configuration ?? {}), director_endpoint: originBaseUrl },
+          configuration: { ...(existing?.configuration ?? {}), director_endpoint: originBaseUrl, local_origin: true },
           namespaces: nextNamespaces,
         },
       };
@@ -328,7 +329,7 @@ function PelicanClientProvider({
       // the seeding effect on first render. Reuse seeded state when present (keeps tokens).
       const federation: Federation = federations[federationHostname] ?? {
         hostname: originHost,
-        configuration: { director_endpoint: originBaseUrl },
+        configuration: { director_endpoint: originBaseUrl, local_origin: true },
         namespaces: {},
       };
 
@@ -374,7 +375,7 @@ function PelicanClientProvider({
               ...prev,
               [federationHostname]: {
                 ...f,
-                configuration: { ...f.configuration, director_endpoint: originBaseUrl },
+                configuration: { ...f.configuration, director_endpoint: originBaseUrl, local_origin: true },
                 namespaces: { ...f.namespaces, [namespace.prefix]: { ...f.namespaces[namespace.prefix], ...namespace } },
               },
             };
@@ -510,6 +511,9 @@ function PelicanClientProvider({
    * Results are cached with a TTL to avoid redundant requests.
    */
   const getObjectList = useCallback(async (targetObjectUrl?: string, forceRefresh = false): Promise<ObjectList[]> => {
+    // Kept out of the try so the catch can identify the namespace a failure belongs to.
+    let attemptedNamespace: Namespace | undefined;
+    let attemptedHost: string | undefined;
     try {
       const urlToFetch = (targetObjectUrl || objectUrl);
 
@@ -526,6 +530,29 @@ function PelicanClientProvider({
 
       if (!federation || !namespace) {
         throw new Error("Federation or Namespace metadata is missing");
+      }
+      attemptedNamespace = namespace;
+      attemptedHost = federation.hostname;
+
+      // A require-token namespace can only be listed inside a collection the token grants
+      // read access on — so never PROPFIND before the scopes are known. Without a valid
+      // token, surface the login state (no request fired); with one, only list within a
+      // readable collection — otherwise return nothing and let the UI offer the
+      // collections picker. (requireToken is known up-front in Origin-local mode; for
+      // federated namespaces it's typically unset and the server enforces via 401/403.)
+      if (enableAuth && namespace.requireToken) {
+        if (!verifyToken(namespace.token)) {
+          setAuthorizationRequired(true);
+          return [];
+        }
+        const readable = getTokenCollections(namespace).filter((c) => c.permissions.includes("read"));
+        const withinReadable = readable.some((c) => {
+          const granted = `${namespace.prefix}${c.href === "/" ? "" : c.href}`;
+          return objectPath === granted || objectPath.startsWith(`${granted}/`);
+        });
+        if (!withinReadable) {
+          return [];
+        }
       }
 
       let objects = await list(urlToFetch, federation, namespace);
@@ -594,6 +621,34 @@ function PelicanClientProvider({
       if (e instanceof UnauthenticatedError) {
         setAuthorizationRequired(true);
         cleanExpiredTokens()
+        return [];
+      }
+      // A 403 while holding a VALID token means the server enforces token auth on this
+      // namespace regardless of what its config claimed (e.g. requireToken: false supplied
+      // for an origin that actually protects reads). The server is authoritative: mark the
+      // namespace token-required so the scope gate and collections picker engage, and don't
+      // surface an error bar for a state the UI now handles.
+      if (
+        e instanceof UnauthorizedError &&
+        attemptedNamespace &&
+        attemptedHost &&
+        !attemptedNamespace.requireToken &&
+        verifyToken(attemptedNamespace.token)
+      ) {
+        const host = attemptedHost;
+        const prefix = attemptedNamespace.prefix;
+        setFederations((prev) => {
+          const fed = prev[host];
+          if (!fed?.namespaces?.[prefix]) return prev;
+          return {
+            ...prev,
+            [host]: {
+              ...fed,
+              namespaces: { ...fed.namespaces, [prefix]: { ...fed.namespaces[prefix], requireToken: true } },
+            },
+          };
+        });
+        setActiveNamespace((p) => (p && p.prefix === prefix ? { ...p, requireToken: true } : p));
         return [];
       }
       setError(`Failed to fetch object list for ${targetObjectUrl || objectUrl}: ${e}`);

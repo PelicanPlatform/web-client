@@ -39,6 +39,11 @@ export interface FederationConfiguration {
     director_endpoint?: string;
     namespace_registration_endpoint?: string;
     jwks_uri?: string;
+    /**
+     * Origin-local mode: `director_endpoint` points directly at the Origin's data endpoint —
+     * there is no director, so requests skip `?redirect=false` resolution entirely.
+     */
+    local_origin?: boolean;
 }
 
 export interface OidcConfiguration {

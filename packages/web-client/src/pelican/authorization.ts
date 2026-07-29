@@ -1,7 +1,7 @@
 import { Federation, Namespace, Token } from "../types";
 import getObjectToken from "./getObjectToken";
 import { UnauthenticatedError, UnauthorizedError } from "../errors";
-import { AUTH_REQUIRED_HEADER, NAMESPACE_HEADER, namespaceKey, usesServiceWorkerAuth } from "../serviceWorker";
+import { AUTH_REQUIRED_HEADER, NAMESPACE_HEADER, namespaceKey, usesServiceWorkerAuth, waitForController } from "../serviceWorker";
 
 export interface RequestAuth {
     headers: Headers;
@@ -16,7 +16,12 @@ export interface RequestAuth {
 /**
  * Build the auth for a data request — the single owner of the browser-model split:
  *   - Chromium (service-worker model): tag the request with the non-secret
- *     `X-Pelican-Namespace` routing key; the SW injects the in-memory token.
+ *     `X-Pelican-Namespace` routing key; the SW injects the in-memory token. Tagging only
+ *     happens once a SW actually CONTROLS the page (we wait briefly for first-load
+ *     registration) — a tagged request issued to an uncontrolled page goes to the network
+ *     with no Authorization and leaks the routing header. When no controller arrives (e.g.
+ *     a hard reload, which stays uncontrolled for its whole lifetime), the request goes out
+ *     unauthenticated and a 401/403 classifies as "login required" so the login flow recovers.
  *   - Firefox/Safari (page-side model): attach the page-held token directly as
  *     `Authorization: Bearer`. A claims-only token (no `.value` — the shape the SW model
  *     stores) can't authenticate anything, so it is treated as absent; the request goes out
@@ -24,12 +29,17 @@ export interface RequestAuth {
  *
  * @param base extra headers to include (e.g. `{ Depth: "1" }` for PROPFIND)
  */
-export function buildAuthHeaders(federation: Federation, namespace?: Namespace, base?: HeadersInit): RequestAuth {
+export async function buildAuthHeaders(federation: Federation, namespace?: Namespace, base?: HeadersInit): Promise<RequestAuth> {
     const headers = new Headers(base);
     const raw = namespace ? getObjectToken(namespace) : undefined;
 
     if (usesServiceWorkerAuth()) {
         if (raw && namespace) {
+            const controller = await waitForController();
+            if (!controller) {
+                // SW-held token is unreachable this page load — go out unauthenticated.
+                return { headers, token: undefined };
+            }
             headers.set(NAMESPACE_HEADER, namespaceKey(federation.hostname, namespace.prefix));
         }
         return { headers, token: raw };

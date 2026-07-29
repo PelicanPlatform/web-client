@@ -1,4 +1,4 @@
-import { parseObjectUrl, resolveObjectUrl } from "./index";
+import { parseObjectUrl, resolveDataUrl } from "./index";
 import { buildAuthHeaders, assertAuthorized } from "./authorization";
 import { Federation, Namespace } from "../types";
 
@@ -6,9 +6,9 @@ const put = async (objectUrl: string, file: File, federation: Federation, namesp
     const { objectPath } = parseObjectUrl(objectUrl);
 
     // Resolve to the concrete origin write endpoint, then PUT directly (no auth-stripping redirect).
-    const writeUrl = await resolveObjectUrl(`${federation.configuration.director_endpoint}${objectPath}`, "PUT");
+    const writeUrl = await resolveDataUrl(federation, objectPath, "PUT");
 
-    const { headers, token } = buildAuthHeaders(federation, namespace, { "Content-Length": String(file.size) });
+    const { headers, token } = await buildAuthHeaders(federation, namespace, { "Content-Length": String(file.size) });
     const response = await fetch(writeUrl, {
         method: "PUT",
         headers,

@@ -1,4 +1,4 @@
-import { parseObjectUrl, resolveObjectUrl } from "./index";
+import { parseObjectUrl, resolveDataUrl } from "./index";
 import { buildAuthHeaders, assertAuthorized } from "./authorization";
 import { Federation, Namespace } from "../types";
 
@@ -13,9 +13,9 @@ const get = async (objectUrl: string, federation: Federation, namespace: Namespa
 
     // Resolve the director redirect to a concrete endpoint, then request it directly so the
     // cross-origin redirect (which strips Authorization) is never involved.
-    const cacheUrl = await resolveObjectUrl(`${federation.configuration.director_endpoint}${objectPath}`, "GET");
+    const cacheUrl = await resolveDataUrl(federation, objectPath, "GET");
 
-    const { headers, token } = buildAuthHeaders(federation, namespace);
+    const { headers, token } = await buildAuthHeaders(federation, namespace);
     const response = await fetch(cacheUrl, { headers });
 
     if (response.status === 200) {

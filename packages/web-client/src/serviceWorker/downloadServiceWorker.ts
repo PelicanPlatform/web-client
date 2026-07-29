@@ -118,11 +118,7 @@ if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
     const { request } = event;
     // Parallel/SW-managed download path (also injects auth when tagged with a namespace).
     if (request.headers.has(TRIGGER_HEADER)) {
-      // Pass event.waitUntil down so the background byte-pump can anchor the worker's
-      // lifetime to itself. Without this, respondWith settles as soon as the streamed
-      // Response is returned and Firefox is free to terminate the worker mid-download
-      // (truncating the file and wiping the in-memory tokenStore).
-      event.respondWith(parallelDownload(request, (p: Promise<unknown>) => event.waitUntil(p)));
+      event.respondWith(parallelDownload(request));
       return;
     }
     // Plain request that wants the SW to inject its in-memory token.
@@ -344,7 +340,7 @@ async function authPassthrough(request: Request): Promise<Response> {
 
 // ─── Core logic ──────────────────────────────────────────────────────────────
 
-async function parallelDownload(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
+async function parallelDownload(request: Request): Promise<Response> {
   // Resolve the in-memory token (if any) into an Authorization header up front, so the
   // download helpers can keep operating purely on request.headers. The page never sends
   // Authorization itself — only the non-secret X-Pelican-Namespace routing tag.
@@ -358,15 +354,10 @@ async function parallelDownload(request: Request, keepAlive?: (p: Promise<unknow
     headers.set("Authorization", `Bearer ${accessToken}`);
     request = new Request(request, { headers });
   }
-  return parallelDownloadResolved(request, keepAlive);
+  return parallelDownloadResolved(request);
 }
 
-async function parallelDownloadResolved(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
-
-  // Short-circuit if OPFS isn't supported - Firefox/Safari
-  if (!opfsSupported()) {
-    return downloadWithoutOpfs(request, keepAlive);
-  }
+async function parallelDownloadResolved(request: Request): Promise<Response> {
 
   // If we have a resume download header, try to resume the download instead of starting a new one
   console.log("[Pelican SW] Received request with headers:", Array.from(request.headers.entries()));
@@ -553,103 +544,6 @@ async function resumeDownload(request: Request, id: string): Promise<Response> {
   }
 }
 
-/**
- * Downloads an object sequentially without OPFS, for browsers that don't support it (Firefox/Safari).
- * No resume support — if the connection drops the download must restart from the beginning.
- * Progress tracking and notifications are still supported.
- * Memory usage is bounded to roughly one chunk (~32MB) at a time due to backpressure.
- */
-async function downloadWithoutOpfs(request: Request, keepAlive?: (p: Promise<unknown>) => void): Promise<Response> {
-
-  const db = await openDownloadDb();
-
-  // If this is a resume attempt, delete the old stale record before starting fresh
-  const previousId = request.headers.get(RESUME_HEADER);
-  if (previousId) {
-    await deleteDownloadRecord(db, previousId).catch(() => {});
-  }
-
-  const download: Download = {
-    id: crypto.randomUUID(),
-    filePath: "",
-    objectUrl: request.url,
-    bytesDownloaded: 0,
-    chunkSize: CHUNK_SIZE,
-    status: "in-progress",
-    authenticated: request.headers.get("Authorization") !== null,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  await storeDownloadRecord(db, download);
-  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "in-progress" });
-
-  let totalByteSize: number;
-  let cacheUrl: URL;
-  let totalChunks: number;
-
-  try {
-    ({ objectSize: totalByteSize, cacheUrl } = await getObjectMetadata(request));
-    totalChunks = Math.ceil(totalByteSize / CHUNK_SIZE);
-  } catch (err) {
-    await patchDownloadRecord(db, download.id, { status: "failed" }).catch(() => {});
-    await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize: 0, status: "failed" });
-    return new Response(`Failed to fetch resource for size check: ${err instanceof Error ? err.message : String(err)}`, { status: 500 });
-  }
-
-  await patchDownloadRecord(db, download.id, { totalByteSize });
-  await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: 0, totalByteSize, status: "in-progress" });
-
-  const abort = new AbortController();
-  activeDownloads.set(download.id, { abort, objectUrl: request.url });
-  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
-  const writer = writable.getWriter();
-
-  const pumpDone = (async () => {
-    try {
-      for (let i = 0; i < totalChunks; i++) {
-        if (abort.signal.aborted) break;
-        const range = getByteRange(i, CHUNK_SIZE, totalByteSize);
-        const data = await fetchChunk(cacheUrl, range, request.headers, abort);
-        await writer.write(data);
-        download.bytesDownloaded += data.byteLength;
-        await patchDownloadRecord(db, download.id, { bytesDownloaded: download.bytesDownloaded });
-        await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "in-progress" });
-      }
-      if (abort.signal.aborted) throw new DOMException("Download cancelled", "AbortError");
-      await writer.close();
-      await patchDownloadRecord(db, download.id, { status: "completed" });
-      await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: totalByteSize, totalByteSize, status: "completed" });
-
-      if (Notification.permission === "granted" && !(await anyClientVisible())) {
-        await getSw().registration.showNotification("Download complete", {
-          body: `File Downloaded: ${request.url.split("/").at(-1)?.split("?").at(0) ?? "object"}`,
-          icon: "https://pelicanplatform.org/favicon.ico",
-        });
-      }
-    } catch (err) {
-      await writer.abort(err).catch(() => {});
-      if (cancelledIds.has(download.id)) {
-        cancelledIds.delete(download.id);
-        // cancelDownload already cleaned up the record and notified the page.
-        return;
-      }
-      console.warn("[Pelican SW] Download failed:", err);
-      await patchDownloadRecord(db, download.id, { status: "failed" });
-      await broadcastProgress({ id: download.id, objectUrl: request.url, bytesDownloaded: download.bytesDownloaded, totalByteSize, status: "failed" });
-    } finally {
-      activeDownloads.delete(download.id);
-    }
-  })();
-
-  // Anchor the worker's lifetime to the pump so it isn't terminated mid-download.
-  keepAlive?.(pumpDone);
-
-  const responseHeaders = new Headers();
-  responseHeaders.set("Content-Length", String(totalByteSize));
-  return new Response(readable, { status: 200, headers: responseHeaders });
-}
-
 async function broadcastProgress(update: {
   id: string;
   objectUrl: string;
@@ -763,13 +657,6 @@ async function runWorkers(
     }
   });
   await Promise.all(workers);
-}
-
-function opfsSupported(): boolean {
-  const ua = self.navigator.userAgent;
-  const isFirefox = ua.includes("Firefox/");
-  const isSafari = ua.includes("Safari/") && !ua.includes("Chrome/");
-  return !isFirefox && !isSafari;
 }
 
 function getByteRange(index: number, chunkSize: number, total: number): {start: number, end: number} {

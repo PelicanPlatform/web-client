@@ -1,5 +1,5 @@
 import { Federation, Namespace, ObjectList } from "../types";
-import { parseObjectUrl, resolveObjectUrl } from "./";
+import { parseObjectUrl, resolveDataUrl } from "./";
 import { buildAuthHeaders, assertAuthorized } from "./authorization";
 import { parseWebDavXmlToJson } from "../util";
 
@@ -8,9 +8,9 @@ const list = async (collectionUrl: string, federation: Federation, namespace?: N
 
     // Resolve to the concrete origin/collections endpoint, then PROPFIND it directly — the
     // director's cross-origin redirect strips Authorization and Safari mishandles it for PROPFIND.
-    const collectionEndpoint = await resolveObjectUrl(`${federation.configuration.director_endpoint}${objectPath}`, "PROPFIND");
+    const collectionEndpoint = await resolveDataUrl(federation, objectPath, "PROPFIND");
 
-    const { headers, token } = buildAuthHeaders(federation, namespace, { Depth: "1" });
+    const { headers, token } = await buildAuthHeaders(federation, namespace, { Depth: "1" });
     const response = await fetch(collectionEndpoint, { method: "PROPFIND", headers });
 
     if (response.status === 200 || response.status === 207) {
