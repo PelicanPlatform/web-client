@@ -17,7 +17,8 @@ export interface Namespace {
 
 export interface AuthorizationClient {
     clientId: string;
-    clientSecret: string;
+    /** Absent for public clients (e.g. `pelican-public-client`), which rely on PKCE. */
+    clientSecret?: string;
 }
 
 export interface Token {
