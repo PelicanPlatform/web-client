@@ -14,6 +14,7 @@ import {
   cancelDownload as swCancelDownload,
   list,
   parseObjectUrl,
+  parseOauthState,
   put,
   startAuthorizationCodeFlow,
   silentLogin,
@@ -86,7 +87,13 @@ function PelicanClientProvider({
                                         children
                                       }: PelicanClientProviderProps) {
 
-  const [objectUrl, setObjectUrl] = useState<string>(initialObjectUrl);
+  // On an OAuth return the redirect_uri carries no query, so the URL the user was on travels in
+  // the OIDC state. Resolve it here, before any child effect runs: children's effects run before
+  // ours, and AuthenticatedClient would otherwise mirror initialObjectUrl into ?url= first.
+  const [objectUrl, setObjectUrl] = useState<string>(() => {
+    if (typeof window === "undefined") return initialObjectUrl;
+    return parseOauthState(new URL(window.location.href)).objectUrl || initialObjectUrl;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
