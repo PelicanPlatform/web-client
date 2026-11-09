@@ -49,11 +49,23 @@ export interface OriginClientProps {
  * loop within one load and lets a fresh load re-attempt after the SW lost its token.
  */
 function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
-  const { enableAuth, authorized, authReconciled, namespace, loading, handleLogin, handleSilentLogin } = usePelicanClient();
+  const {
+    enableAuth, authorized, authenticatedNoAccess, authReconciled, namespace, loading, handleLogin, handleSilentLogin,
+  } = usePelicanClient();
   const active = enabled && enableAuth;
+  // Holding a valid token counts as auth having settled, even when its scopes grant no storage
+  // access — the client's no-access page takes it from there. Without this the gate would wait
+  // on `authorized`, which never flips for such a token, until the safety timeout.
+  const hasToken = authorized || authenticatedNoAccess;
 
   const started = useRef<Set<string>>(new Set()); // prefixes we've kicked off a login for this load
-  const sawCode = useRef(false);                   // we returned from an interactive redirect
+  // Whether this load is a return from the interactive redirect. Captured during the first render,
+  // before any effect runs: the provider's useAuthExchange strips ?code from the URL in its first
+  // effect, which (as a parent effect) runs before this gate ever sees `authReconciled` true.
+  const sawCode = useRef<boolean | null>(null);
+  if (sawCode.current === null) {
+    sawCode.current = typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("code");
+  }
   const [settled, setSettled] = useState<Set<string>>(new Set());
   const markSettled = (prefix: string) =>
     setSettled((prev) => (prev.has(prefix) ? prev : new Set(prev).add(prefix)));
@@ -61,22 +73,21 @@ function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children
   const prefix = namespace?.prefix;
 
   useEffect(() => {
-    if (!active || authorized || !prefix) return;
+    // The redirect return is resolved once a token lands; later namespace switches auto-login normally.
+    if (hasToken) sawCode.current = false;
+    if (!active || hasToken || !prefix) return;
     if (settled.has(prefix)) return;
     // Don't trust cached auth until the SW reconcile has run once — otherwise a stale token races
     // us and briefly renders the viewer.
     if (!authReconciled) return;
 
-    const hasCode = !!new URLSearchParams(window.location.search).get("code");
-    if (hasCode) {
-      // Returned from the interactive redirect; useAuthExchange is exchanging the code. Stay on
-      // the skeleton until it resolves — don't start another login.
-      sawCode.current = true;
-      return;
-    }
-    // The post-redirect exchange finished but we're still not authenticated → reveal the UI.
-    if (sawCode.current && !loading) {
+    // Returned from the interactive redirect: while useAuthExchange is exchanging the code
+    // (`loading`), stay on the skeleton and don't start another login. Once it has finished and
+    // we still hold no token → reveal the UI.
+    if (sawCode.current) {
+      if (loading) return;
       console.log("[Pelican AutoLogin] interactive login did not authenticate", prefix);
+      sawCode.current = false;
       markSettled(prefix);
       return;
     }
@@ -94,7 +105,7 @@ function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children
       try {
         if (await handleSilentLogin()) {
           console.log("[Pelican AutoLogin] silent login succeeded for", prefix);
-          return; // `authorized` flips via stored claims → children, no flash
+          return; // token stored → `hasToken` flips → children (viewer or no-access page), no flash
         }
         console.log("[Pelican AutoLogin] silent unavailable; redirecting for", prefix);
       } catch (e) {
@@ -107,7 +118,7 @@ function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children
         markSettled(prefix);
       }
     })();
-  }, [active, authorized, authReconciled, prefix, loading, namespace, handleLogin, handleSilentLogin, settled]);
+  }, [active, hasToken, authReconciled, prefix, loading, namespace, handleLogin, handleSilentLogin, settled]);
 
   // Safety net: never trap the user on a spinner if something unforeseen hangs (incl. the
   // namespace never resolving, when `prefix` stays undefined). Re-arms whenever the active
@@ -115,16 +126,17 @@ function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children
   const [forceReveal, setForceReveal] = useState(false);
   useEffect(() => {
     setForceReveal(false);
-    if (!active || authorized) return;
+    if (!active || hasToken) return;
     const t = setTimeout(() => setForceReveal(true), 15000);
     return () => clearTimeout(t);
-  }, [active, authorized, prefix]);
+  }, [active, hasToken, prefix]);
 
-  // Hold the skeleton until auth is settled. Children show only when we're *confidently*
-  // authorized (after the SW reconcile, so a stale cached token can't flash the viewer), or
-  // we've settled to an unauthenticated UI, or the safety timeout fired.
+  // Hold the skeleton until auth is settled. Children show only when we *confidently* hold a
+  // token (after the SW reconcile, so a stale cached token can't flash the viewer) — authorized,
+  // or signed in without storage access — or we've settled to an unauthenticated UI, or the
+  // safety timeout fired.
   const isSettled = forceReveal || (prefix ? settled.has(prefix) : false);
-  const showLoader = active && !isSettled && !(authReconciled && authorized);
+  const showLoader = active && !isSettled && !(authReconciled && hasToken);
   if (showLoader) {
     // Minimal skeleton standing in for the namespace selector + viewer. Sign-in is usually fast,
     // so this just avoids a layout pop rather than announcing "Signing in…".
