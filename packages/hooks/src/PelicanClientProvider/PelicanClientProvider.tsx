@@ -96,6 +96,9 @@ function PelicanClientProvider({
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Namespace prefixes whose issuer's OIDC configuration could not be discovered on this load,
+  // so there is nothing to sign in to for them (see PelicanClientContextValue.oidcUnavailable).
+  const [oidcUnavailable, setOidcUnavailable] = useState<string[]>([]);
 
   const [federations, setFederations] = useSessionStorage<FederationStore>(
     "pelican-wc-federations",
@@ -362,9 +365,11 @@ function PelicanClientProvider({
             oidcConfiguration = await fetchOpenIDConfiguration(config.issuer);
             console.log("[Pelican Origin] OIDC config for", config.prefix, "→ authorization_endpoint:",
               oidcConfiguration?.authorization_endpoint, "token_endpoint:", oidcConfiguration?.token_endpoint);
+            setOidcUnavailable((prev) => (prev.includes(config.prefix) ? prev.filter((p) => p !== config.prefix) : prev));
           } catch (e) {
             console.warn("[Pelican Origin] OIDC discovery FAILED for", config.prefix, "issuer:", config.issuer,
               "— requireToken:", config.requireToken, "error:", e);
+            setOidcUnavailable((prev) => (prev.includes(config.prefix) ? prev : [...prev, config.prefix]));
             // Public namespaces remain browsable even if their issuer can't be reached.
             if (config.requireToken) throw e;
           }
@@ -1004,6 +1009,7 @@ function PelicanClientProvider({
     authorized,
     authenticatedNoAccess,
     authReconciled,
+    oidcUnavailable,
     objectUrl,
     federationHostname,
     objectPath,
@@ -1030,6 +1036,7 @@ function PelicanClientProvider({
     authorized,
     authenticatedNoAccess,
     authReconciled,
+    oidcUnavailable,
     objectUrl,
     federationHostname,
     objectPath,

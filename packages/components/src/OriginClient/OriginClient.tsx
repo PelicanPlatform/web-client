@@ -42,17 +42,45 @@ export interface OriginClientProps {
  * login UI) until auth is established, so the login page never flashes before the redirect.
  *
  * It reveals `children` once auth has *settled* for the active namespace, so it never spins
- * forever: settled = authorized, OR issuer can't be discovered, OR we returned from the issuer
- * and the exchange didn't produce a token, OR login threw.
+ * forever: settled = authorized, OR we returned from the issuer and the exchange didn't produce
+ * a token, OR login threw.
+ *
+ * It does not attempt a login at all, and reveals `children` straight away, for a namespace that
+ * is readable without a token (`requireToken: false`) or whose issuer could not be discovered:
+ * there is nothing to sign in for, and waiting would only hold the skeleton until the safety
+ * timeout.
  *
  * State is per-namespace and per-page-load (resets on reload), which both prevents a redirect
  * loop within one load and lets a fresh load re-attempt after the SW lost its token.
  */
-function OriginAutoLoginGate({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+function OriginAutoLoginGate({
+  enabled,
+  namespaces,
+  children,
+}: {
+  enabled: boolean;
+  namespaces: OriginNamespaceConfig[];
+  children: React.ReactNode;
+}) {
   const {
-    enableAuth, authorized, authenticatedNoAccess, authReconciled, namespace, loading, handleLogin, handleSilentLogin,
+    enableAuth, authorized, authenticatedNoAccess, authReconciled, oidcUnavailable, namespace, objectPath, loading,
+    handleLogin, handleSilentLogin,
   } = usePelicanClient();
-  const active = enabled && enableAuth;
+
+  // The namespace being opened, from the supplied config rather than the provider's resolved
+  // `namespace`, which lags a namespace switch until its metadata loads.
+  const target = namespaces
+    .filter((ns) => !!objectPath && (objectPath === ns.prefix || objectPath.startsWith(ns.prefix + "/")))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0];
+  // Once resolved, the provider's view wins: it marks a namespace token-required when the server
+  // refuses a read the config said was public.
+  const targetRequiresToken =
+    (namespace && target && namespace.prefix === target.prefix ? namespace.requireToken : target?.requireToken) ?? true;
+  // Nothing to sign in for: the namespace is readable without a token, or its issuer could not be
+  // discovered. Either way waiting on a login would only hold the skeleton until the safety timeout.
+  const skip = !!target && (!targetRequiresToken || oidcUnavailable.includes(target.prefix));
+
+  const active = enabled && enableAuth && !skip;
   // Holding a valid token counts as auth having settled, even when its scopes grant no storage
   // access — the client's no-access page takes it from there. Without this the gate would wait
   // on `authorized`, which never flips for such a token, until the safety timeout.
@@ -219,7 +247,7 @@ export function OriginClient({
       publicClientId={publicClientId}
       initialObjectUrl={initialObjectUrl}
     >
-      <OriginAutoLoginGate enabled={autoLogin}>
+      <OriginAutoLoginGate enabled={autoLogin} namespaces={namespaces}>
         <Box mb={2}>
           <OriginNamespaceSelector originHost={host} namespaces={namespaces} />
         </Box>

@@ -19,6 +19,9 @@ export interface PelicanClientContextValue {
   authenticatedNoAccess: boolean;
   /** True once page auth-state has been reconciled against the service worker at least once. */
   authReconciled: boolean;
+  /** Namespace prefixes whose issuer's OIDC configuration could not be discovered on this page
+   *  load. There is nothing to sign in to for these, so callers should not wait on a login. */
+  oidcUnavailable: string[];
   downloadsInProgress: Record<string, DownloadProgress>;
 
   // Metadata management
