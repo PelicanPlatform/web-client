@@ -13,10 +13,19 @@ import AddCollectionButton from "../AddCollectionButton";
 import {usePelicanClient} from "@pelicanplatform/hooks";
 import {DownloadManager} from "../DownloadManager";
 
+export interface AuthenticatedClientProps {
+  /**
+   * Whether to offer the in-client Login buttons. Defaults to true. Turn it off when the host
+   * page signs the user in itself (for example an Origin's web UI, whose login also authorizes
+   * the client), where a second login inside the client would only confuse.
+   */
+  showLogin?: boolean;
+}
+
 /**
  * Inner component that uses the context
  */
-function AuthenticatedClient() {
+function AuthenticatedClient({ showLogin = true }: AuthenticatedClientProps = {}) {
 
   const {
     enableAuth,
@@ -191,7 +200,7 @@ function AuthenticatedClient() {
                   )}
                 </>
               )}
-              {!authorized && enableAuth && (
+              {!authorized && enableAuth && showLogin && (
                 <Button endIcon={<Login />} variant="contained" size="small" sx={{mb:1}} onClick={handleLogin}>
                   {authenticatedNoAccess ? "Log in again" : "Login"}
                 </Button>
@@ -227,12 +236,16 @@ function AuthenticatedClient() {
               >
                 <Alert severity="warning" sx={{ maxWidth: 520 }}>
                   You are signed in, but your token does not grant access to any collections
-                  {namespace?.prefix ? ` in ${namespace.prefix}` : ""}. Log in again to request
-                  new permissions, or contact your administrator if this keeps happening.
+                  {namespace?.prefix ? ` in ${namespace.prefix}` : ""}.
+                  {showLogin
+                    ? " Log in again to request new permissions, or contact your administrator if this keeps happening."
+                    : " Contact your administrator if you expected access."}
                 </Alert>
-                <Button variant="contained" endIcon={<Login />} onClick={handleLogin}>
-                  Log in again
-                </Button>
+                {showLogin && (
+                  <Button variant="contained" endIcon={<Login />} onClick={handleLogin}>
+                    Log in again
+                  </Button>
+                )}
               </Box>
             ) : (
               <ObjectView
@@ -240,7 +253,7 @@ function AuthenticatedClient() {
                 collectionPath={collectionPath}
                 onDownload={(x) => handleDownload(`pelican://${federation?.hostname}${x}`)}
                 loginRequired={authorizationRequired && !authorized}
-                canLogin={true}
+                canLogin={showLogin}
                 onLoginRequest={handleLogin}
                 namespace={namespace?.prefix}
                 onExplore={(objectHref) => {

@@ -190,6 +190,9 @@ function OriginNamespaceSelector({ originHost, namespaces }: { originHost: strin
  * call local to the Origin — no federation/director discovery — by supplying namespaces and
  * their issuers directly. Reuses the same data, auth, and service-worker layer as the
  * federation client.
+ *
+ * It never shows a Login button: signing in is left to the host page (see the note where
+ * AuthenticatedClient is rendered below).
  */
 export function OriginClient({
   originBaseUrl,
@@ -220,7 +223,10 @@ export function OriginClient({
         <Box mb={2}>
           <OriginNamespaceSelector originHost={host} namespaces={namespaces} />
         </Box>
-        <AuthenticatedClient />
+        {/* The host page owns sign-in: an Origin's web UI logs the user in itself, and that
+            login is what authorizes this client (silently, via autoLogin). A Login button here
+            would start a second, separate login, so it is never offered. */}
+        <AuthenticatedClient showLogin={false} />
       </OriginAutoLoginGate>
     </PelicanClientProvider>
   );
